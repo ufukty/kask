@@ -38,7 +38,7 @@ func absolutify(prefix string, files []string) []string {
 	return files2
 }
 
-func build(dstroot string, uri string, d *directory.Dir, inherited *context, s *UserSettings) error {
+func build(dstroot string, uri string, root, d *directory.Dir, inherited *context, s *UserSettings) error {
 	err := os.MkdirAll(filepath.Join(dstroot, d.InSitePath), 0755)
 	if err != nil {
 		return fmt.Errorf("os.MkdirAll: %w", err)
@@ -102,7 +102,7 @@ func build(dstroot string, uri string, d *directory.Dir, inherited *context, s *
 
 	dt := &Data{
 		Stylesheets:     level.Stylesheets,
-		WebSiteRoot:     nil,
+		WebSiteRoot:     root.Node,
 		MarkdownContent: "",
 		MarkdownTOC:     nil,
 		Time:            time.Now(),
@@ -173,7 +173,7 @@ func build(dstroot string, uri string, d *directory.Dir, inherited *context, s *
 		if err != nil {
 			return fmt.Errorf("url.JoinPath: %w", err)
 		}
-		err = build(dstroot, uri, sub, propagate, s)
+		err = build(dstroot, uri, root, sub, propagate, s)
 		if err != nil {
 			return fmt.Errorf("build: %w", err)
 		}
@@ -192,7 +192,7 @@ func Build(dst string, d *directory.Dir, s *UserSettings) error {
 		Template:    t,
 		Stylesheets: []string{},
 	}
-	err := build(dst, "/", d, i, s)
+	err := build(dst, "/", d, d, i, s)
 	if err != nil {
 		return fmt.Errorf("build: %w", err)
 	}
