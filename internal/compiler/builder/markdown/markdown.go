@@ -10,12 +10,6 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 )
 
-type Renderer struct {
-	parser       *parser.Parser
-	htmlRenderer *html.Renderer
-	codefence    *codefenceRenderer
-}
-
 func ToHtml(src string) (string, *TocNode, error) {
 	p := parser.NewWithExtensions(
 		parser.CommonExtensions |
