@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/ufukty/kask/internal/compiler/builder/bundle"
 	"github.com/ufukty/kask/internal/compiler/builder/directory"
+	"github.com/ufukty/kask/internal/compiler/builder/propagated/bundle"
 )
 
 type Dir struct {
