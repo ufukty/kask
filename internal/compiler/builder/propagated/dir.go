@@ -3,6 +3,7 @@ package propagated
 import (
 	"fmt"
 	"html/template"
+	"maps"
 	"path/filepath"
 	"slices"
 
@@ -38,9 +39,7 @@ type artifacts struct {
 }
 
 func (a *artifacts) merge(b *artifacts) {
-	for k, v := range b.Stylesheets {
-		a.Stylesheets[k] = v
-	}
+	maps.Copy(a.Stylesheets, b.Stylesheets)
 }
 
 func d(dir *directory.Dir, ctx context, args args) (*Dir, *artifacts, error) {
