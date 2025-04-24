@@ -21,7 +21,7 @@ func TestBuild(t *testing.T) {
 
 	fmt.Println("temp folder:", tmp)
 
-	err = Build(tmp, dir, &UserSettings{Domain: "http://localhost:8080"})
+	err = Build(tmp, dir, &Args{Domain: "http://localhost:8080"})
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, Build: %w", err))
 	}

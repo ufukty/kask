@@ -10,7 +10,12 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 )
 
-func ToHtml(src string) (string, *TocNode, error) {
+type Page struct {
+	Content string
+	Toc     *TocNode
+}
+
+func ToHtml(src string) (*Page, error) {
 	p := parser.NewWithExtensions(
 		parser.CommonExtensions |
 			parser.AutoHeadingIDs |
@@ -20,7 +25,7 @@ func ToHtml(src string) (string, *TocNode, error) {
 	)
 	c, err := os.ReadFile(src)
 	if err != nil {
-		return "", nil, fmt.Errorf("os.ReadFile: %w", err)
+		return nil, fmt.Errorf("os.ReadFile: %w", err)
 	}
 	n := p.Parse(c).(*ast.Document)
 
@@ -33,5 +38,5 @@ func ToHtml(src string) (string, *TocNode, error) {
 	})
 	h := markdown.Render(n, r)
 	toc := getTableOfContent(n, r)
-	return string(h), toc, nil
+	return &Page{string(h), toc}, nil
 }

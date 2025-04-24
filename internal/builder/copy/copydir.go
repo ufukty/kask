@@ -1,4 +1,4 @@
-package builder
+package copy
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-func copyFile(dst, src string) error {
+func File(dst, src string) error {
 	srcfile, err := os.Open(src)
 	if err != nil {
 		return err
@@ -31,7 +31,7 @@ func copyFile(dst, src string) error {
 	return os.Chmod(dst, s.Mode())
 }
 
-func copyDir(dst, src string) error {
+func Dir(dst, src string) error {
 	s, err := os.Stat(src)
 	if err != nil {
 		return err
@@ -56,7 +56,7 @@ func copyDir(dst, src string) error {
 		if info.IsDir() {
 			return os.MkdirAll(targetPath, info.Mode())
 		}
-		return copyFile(targetPath, path)
+		return File(targetPath, path)
 	})
 
 	return err
