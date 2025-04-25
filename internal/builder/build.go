@@ -25,8 +25,11 @@ type Args struct {
 }
 
 type builder struct {
-	stylesheets map[string]string // path -> content
-	args        Args
+	args Args
+
+	assets        []string                  // src paths
+	stylesheets   map[string]string         // src path -> content
+	pagesMarkdown map[string]*markdown.Page // src path -> content
 }
 
 func has[K comparable, V any](m map[K]V, k K) bool {
@@ -51,9 +54,21 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 		}
 		children[page]++
 	}
-	if len(duplicates) > 0 {
-		return fmt.Errorf("multiple entries sharing same URL-name in %s: %s", dir.Name, strings.Join(duplicates, ", "))
+	duplicates := []string{}
+	for child, freq := range children {
+		if freq > 1 {
+			duplicates = append(duplicates, child)
+		}
 	}
+	if len(duplicates) > 0 {
+		return fmt.Errorf("multiple entries sharing the same path for those: %s", strings.Join(duplicates, ", "))
+	}
+	for _, sub := range dir.Subdirs {
+		if err := b.checkCompetingEntries(sub); err != nil {
+			return fmt.Errorf("%q: %w", sub.Name, err)
+		}
+	}
+	return nil
 }
 
 // used in assigning destination addresses, bundling css, and propagating tmpl files
@@ -166,28 +181,6 @@ func (b *builder) bundleStylesheets(d *dir2, clone *template.Template) error {
 	}
 
 	return dir2, artf, nil
-}
-
-type File struct {
-	Base, Path string
-}
-
-func (b *builder) assignAddresses(dir *dir2.Dir) {
-
-}
-
-type pageContents struct {
-	Markdown []*markdown.Page
-	Html     []string
-}
-
-type renderable struct {
-	Name        string
-	Assets      string
-	Subdirs     []*renderable
-	Rendered    pageContents
-	Tmpl        *template.Template
-	Stylesheets []string // paths
 }
 
 func (b *builder) renderMarkdown(d *dir2) error {
