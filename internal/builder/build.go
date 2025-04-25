@@ -102,8 +102,8 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 		DstPath:   dstparent,
 		DstAssets: "",
 
-		PagesMarkdown: d.Pages.Markdown,
-		PagesHtml:     d.Pages.Html,
+		PagesMarkdown: d.PagesMarkdown,
+		PagesHtml:     d.PagesHtml,
 		Stylesheets:   nil,
 
 		Tmpl: nil,

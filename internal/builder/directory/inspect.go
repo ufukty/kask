@@ -7,28 +7,17 @@ import (
 	"strings"
 )
 
-// type dirchecks struct {
-// 	HasIndexFile     bool // either html or md
-// 	HasIndexHtmlFile bool // index.html
-// 	HasIndexMdFile   bool // index.md
-// 	HasMetaFile      bool // .kask/meta.yml
-// 	HasAssetDir      bool // assets
-// 	HasPageHtml      bool // .kask/page.html, .kask/propagate/page.html
-// }
-
 type Dir struct {
-	Name    string
-	Assets  string
-	Subdirs []*Dir
-	Pages   struct {
-		Markdown []string
-		Html     []string
-	}
-	Kask *Kask
+	Name          string
+	Assets        string
+	Subdirs       []*Dir
+	PagesMarkdown []string
+	PagesHtml     []string
+	Kask          *Kask
 }
 
 func (d *Dir) subtree() int {
-	c := len(d.Pages.Html) + len(d.Pages.Markdown)
+	c := len(d.PagesHtml) + len(d.PagesMarkdown)
 	for _, s := range d.Subdirs {
 		c += s.subtree()
 	}
@@ -53,10 +42,10 @@ func inspect(root, path string) (*Dir, error) {
 
 		switch {
 		case !isDir && strings.HasSuffix(name, ".html"):
-			d.Pages.Html = append(d.Pages.Html, filepath.Join(root, path, name))
+			d.PagesHtml = append(d.PagesHtml, filepath.Join(path, name))
 
 		case !isDir && strings.HasSuffix(name, ".md"):
-			d.Pages.Markdown = append(d.Pages.Markdown, filepath.Join(root, path, name))
+			d.PagesMarkdown = append(d.PagesMarkdown, filepath.Join(path, name))
 
 		case isDir && name == ".kask":
 			d.Kask, err = inspectKaskFolder(filepath.Join(root, path))
@@ -65,7 +54,7 @@ func inspect(root, path string) (*Dir, error) {
 			}
 
 		case isDir && name == ".assets":
-			d.Assets = filepath.Join(root, path, ".assets")
+			d.Assets = filepath.Join(path, ".assets")
 
 		case isDir:
 			subdirs = append(subdirs, filepath.Join(path, name))
