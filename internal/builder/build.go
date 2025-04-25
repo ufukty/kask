@@ -104,7 +104,7 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 
 		PagesMarkdown: d.Pages.Markdown,
 		PagesHtml:     d.Pages.Html,
-		Stylesheets:   []string{},
+		Stylesheets:   nil,
 
 		Tmpl: nil,
 	}
@@ -114,29 +114,32 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 	return d2
 }
 
-func (b *builder) bundleStylesheets(d *dir2) error {
+func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) error {
+	d.Stylesheets = []string{}
+
 	if d.Kask != nil && d.Kask.Propagate != nil && len(d.Kask.Propagate.Css) > 0 {
 		css, err := bundle.Files(d.Kask.Propagate.Css)
 		if err != nil {
-			return fmt.Errorf("bundling .kask/propagate/*.css: %w", err)
+			return fmt.Errorf("bundling propagated css files: %w", err)
 		}
-		dst := filepath.Join(d.SrcPath, "styles.propagate.css")
+		dst := filepath.Join(d.DstPath, "styles.propagate.css")
 		b.stylesheets[dst] = css
 		d.Stylesheets = append(d.Stylesheets, dst)
+		toPropagate = append(toPropagate, dst)
 	}
 
 	if d.Kask != nil && len(d.Kask.Css) > 0 {
 		css, err := bundle.Files(d.Kask.Css)
 		if err != nil {
-			return fmt.Errorf("bundling .kask/*.css: %w", err)
+			return fmt.Errorf("bundling at-level css files: %w", err)
 		}
-		dst := filepath.Join(d.SrcPath, "styles.css")
+		dst := filepath.Join(d.DstPath, "styles.css")
 		b.stylesheets[dst] = css
 		d.Stylesheets = append(d.Stylesheets, dst)
 	}
 
 	for _, subdir := range d.Subdirs {
-		if err := b.bundleStylesheets(subdir); err != nil {
+		if err := b.bundleAndPropagateStylesheets(subdir, slices.Clone(toPropagate)); err != nil {
 			return fmt.Errorf("%s: %w", subdir.SrcName, err)
 		}
 	}
@@ -393,7 +396,7 @@ func (b *builder) Build(dst, src string) error {
 
 	root2 := b.toDir2(root, "", "")
 
-	if err := b.bundleStylesheets(root2); err != nil {
+	if err := b.bundleAndPropagateStylesheets(root2, []string{}); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 
