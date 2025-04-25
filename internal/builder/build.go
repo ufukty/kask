@@ -102,8 +102,8 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 		DstPath:   dstparent,
 		DstAssets: "",
 
-		PagesMarkdown: []string{},
-		PagesHtml:     []string{},
+		PagesMarkdown: d.Pages.Markdown,
+		PagesHtml:     d.Pages.Html,
 		Stylesheets:   []string{},
 
 		Tmpl: nil,
@@ -178,33 +178,21 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 }
 
 func (b *builder) renderMarkdown(d *dir2) error {
-	d2 := &renderable{
-		Name:    d.Name,
-		Assets:  d.Assets,
-		Subdirs: []*renderable{},
-		Rendered: pageContents{
-			Markdown: []*markdown.Page{},
-			Html:     []string{},
-		},
-	}
-
-	for _, md := range d.Pages.Markdown {
+	for _, md := range d.PagesMarkdown {
 		page, err := markdown.ToHtml(md)
 		if err != nil {
-			return nil, fmt.Errorf("rendering %s: %w", md, err)
+			return fmt.Errorf("rendering %s: %w", md, err)
 		}
-		d2.Rendered.Markdown = append(d2.Rendered.Markdown, page)
+		b.pagesMarkdown[md] = page
 	}
 
 	for _, subdir := range d.Subdirs {
-		subdir2, err := renderMarkdown(subdir)
-		if err != nil {
-			return nil, err
+		if err := b.renderMarkdown(subdir); err != nil {
+			return fmt.Errorf("%s: %w", subdir.SrcName, err)
 		}
-		d2.Subdirs = append(d2.Subdirs, subdir2)
 	}
 
-	return d2, nil
+	return nil
 }
 
 type Node struct {
@@ -413,7 +401,10 @@ func (b *builder) Build(dst, src string) error {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 
-	n := b.renderMarkdown()
+	if err := b.renderMarkdown(root2); err != nil {
+		return fmt.Errorf("rendering markdown pages: %w", err)
+	}
+
 	err = builder.Build(dst, dir2, args)
 	if err != nil {
 		return fmt.Errorf("builder.Build: %w", err)
