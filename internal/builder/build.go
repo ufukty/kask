@@ -15,7 +15,6 @@ import (
 	"github.com/ufukty/kask/cmd/kask/commands/version"
 	"github.com/ufukty/kask/internal/builder/bundle"
 	"github.com/ufukty/kask/internal/builder/directory"
-	"github.com/ufukty/kask/internal/builder/functions"
 	"github.com/ufukty/kask/internal/builder/markdown"
 )
 
@@ -73,6 +72,8 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 
 // used in assigning destination addresses, bundling css, and propagating tmpl files
 type dir2 struct {
+	Kask *directory.Kask
+
 	SrcName, SrcPath, SrcAssets string
 	DstName, DstPath, DstAssets string // path encoded
 
@@ -89,6 +90,8 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 	srcparent = filepath.Join(srcparent, d.Name)
 	dstparent = filepath.Join(dstparent, url.PathEscape(d.Name)) // escaped
 	d2 := &dir2{
+		Kask: d.Kask,
+
 		Subdirs: []*dir2{},
 
 		SrcName:   d.Name,
@@ -111,76 +114,67 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 	return d2
 }
 
-func (b *builder) bundleStylesheets(d *dir2, clone *template.Template) error {
-	tmpl, err := ctx.Template.Clone()
-	if err != nil {
-		return nil, nil, fmt.Errorf("cloning propagated templates: %w", err)
-	}
-
-	dir2 := &dir2{
-		Name:        d.Name,
-		Assets:      d.Assets,
-		Subdirs:     []*dir2{},
-		Pages:       d.Pages,
-		Tmpl:        tmpl,
-		Stylesheets: slices.Clone(ctx.Stylesheets),
-	}
-
-	artf := &artifacts{
-		Stylesheets: map[string]string{},
-	}
-
-	if d.Kask != nil && d.Kask.Propagate != nil {
-		if len(d.Kask.Propagate.Css) > 0 {
-			dst := filepath.Join(ctx.Path, "styles.propagate.css")
-			css, err := bundle.Files(d.Kask.Propagate.Css)
-			if err != nil {
-				return nil, nil, fmt.Errorf("bundling .kask/propagate/*.css: %w", err)
-			}
-			artf.Stylesheets[dst] = css
-			dir2.Stylesheets = append(dir2.Stylesheets, dst)
-		}
-		if len(d.Kask.Propagate.Tmpl) > 0 {
-			propTmpl, err := dir2.Tmpl.ParseFiles(d.Kask.Propagate.Tmpl...)
-			if err != nil {
-				return nil, nil, fmt.Errorf("loading .kask/propagate/*.tmpl: %w", err)
-			}
-			ctx.Template = propTmpl
-			tmpl, err = propTmpl.Clone()
-			if err != nil {
-				return nil, nil, fmt.Errorf("cloning for non-propagated templates at same folder: %w", err)
-			}
-		}
-	}
-
-	if d.Kask != nil {
-		if len(d.Kask.Css) > 0 {
-			dst := filepath.Join(ctx.Path, "styles.css")
-			css, err := bundle.Files(d.Kask.Css)
-			if err != nil {
-				return nil, nil, fmt.Errorf("bundling .kask/*.css: %w", err)
-			}
-			artf.Stylesheets[dst] = css
-			dir2.Stylesheets = append(dir2.Stylesheets, dst)
-		}
-		if len(d.Kask.Tmpl) > 0 {
-			dir2.Tmpl, err = tmpl.ParseFiles(d.Kask.Tmpl...)
-			if err != nil {
-				return nil, nil, fmt.Errorf("loading .kask/*.tmpl: %w", err)
-			}
-		}
-	}
-
-	for _, child := range d.Subdirs {
-		subdir, subartf, err := d(child, ctx, args)
+func (b *builder) bundleStylesheets(d *dir2) error {
+	if d.Kask != nil && d.Kask.Propagate != nil && len(d.Kask.Propagate.Css) > 0 {
+		css, err := bundle.Files(d.Kask.Propagate.Css)
 		if err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", child.Name, err)
+			return fmt.Errorf("bundling .kask/propagate/*.css: %w", err)
 		}
-		dir2.Subdirs = append(dir2.Subdirs, subdir)
-		artf.merge(subartf)
+		dst := filepath.Join(d.SrcPath, "styles.propagate.css")
+		b.stylesheets[dst] = css
+		d.Stylesheets = append(d.Stylesheets, dst)
 	}
 
-	return dir2, artf, nil
+	if d.Kask != nil && len(d.Kask.Css) > 0 {
+		css, err := bundle.Files(d.Kask.Css)
+		if err != nil {
+			return fmt.Errorf("bundling .kask/*.css: %w", err)
+		}
+		dst := filepath.Join(d.SrcPath, "styles.css")
+		b.stylesheets[dst] = css
+		d.Stylesheets = append(d.Stylesheets, dst)
+	}
+
+	for _, subdir := range d.Subdirs {
+		if err := b.bundleStylesheets(subdir); err != nil {
+			return fmt.Errorf("%s: %w", subdir.SrcName, err)
+		}
+	}
+
+	return nil
+}
+
+func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) error {
+	var err error
+
+	if d.Kask != nil && d.Kask.Propagate != nil && len(d.Kask.Propagate.Tmpl) > 0 {
+		toPropagate, err = d.Tmpl.ParseFiles(d.Kask.Propagate.Tmpl...)
+		if err != nil {
+			return fmt.Errorf("parsing to-propagate template files: %w", err)
+		}
+	}
+
+	atLevel, err := toPropagate.Clone()
+	if err != nil {
+		return fmt.Errorf("cloning propagated: %w", err)
+	}
+
+	if d.Kask != nil && len(d.Kask.Tmpl) > 0 {
+		atLevel, err = atLevel.ParseFiles(d.Kask.Tmpl...)
+		if err != nil {
+			return fmt.Errorf("parsing at-level template files: %w", err)
+		}
+	}
+
+	d.Tmpl = atLevel
+
+	for _, subdir := range d.Subdirs {
+		if err := b.propagateTemplates(subdir, toPropagate); err != nil {
+			return nil, nil, fmt.Errorf("%s: %w", subdir.SrcName, err)
+		}
+	}
+
+	return nil
 }
 
 func (b *builder) renderMarkdown(d *dir2) error {
@@ -411,7 +405,11 @@ func (b *builder) Build(dst, src string) error {
 
 	root2 := b.toDir2(root, "", "")
 
-	if err := b.bundleStylesheets(root2, template.New("root")); err != nil {
+	if err := b.bundleStylesheets(root2); err != nil {
+		return fmt.Errorf("bundling stylesheets: %w", err)
+	}
+
+	if err := b.propagateTemplates(root2, template.New("root")); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 
