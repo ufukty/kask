@@ -170,7 +170,7 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 
 	for _, subdir := range d.Subdirs {
 		if err := b.propagateTemplates(subdir, toPropagate); err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", subdir.SrcName, err)
+			return fmt.Errorf("%s: %w", subdir.SrcName, err)
 		}
 	}
 
