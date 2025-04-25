@@ -41,13 +41,13 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 	for _, subdir := range dir.Subdirs {
 		children[subdir.Name] = 1
 	}
-	for _, page := range dir.Pages.Html {
+	for _, page := range dir.PagesHtml {
 		if has(children, page) {
 			children[page] = -1
 		}
 		children[page]++
 	}
-	for _, page := range dir.Pages.Markdown {
+	for _, page := range dir.PagesMarkdown {
 		if has(children, page) {
 			children[page] = -1
 		}
@@ -180,9 +180,9 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 	return nil
 }
 
-func (b *builder) renderMarkdown(d *dir2) error {
+func (b *builder) renderMarkdown(d *dir2, src string) error {
 	for _, md := range d.PagesMarkdown {
-		page, err := markdown.ToHtml(md)
+		page, err := markdown.ToHtml(filepath.Join(src, md))
 		if err != nil {
 			return fmt.Errorf("rendering %s: %w", md, err)
 		}
@@ -190,7 +190,7 @@ func (b *builder) renderMarkdown(d *dir2) error {
 	}
 
 	for _, subdir := range d.Subdirs {
-		if err := b.renderMarkdown(subdir); err != nil {
+		if err := b.renderMarkdown(subdir, src); err != nil {
 			return fmt.Errorf("%s: %w", subdir.SrcName, err)
 		}
 	}
@@ -407,7 +407,7 @@ func (b *builder) Build(dst, src string) error {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 
-	if err := b.renderMarkdown(root2); err != nil {
+	if err := b.renderMarkdown(root2, src); err != nil {
 		return fmt.Errorf("rendering markdown pages: %w", err)
 	}
 
