@@ -24,7 +24,7 @@ type Dir struct {
 		Markdown []string
 		Html     []string
 	}
-	Kask *kask
+	Kask *Kask
 }
 
 func (d *Dir) subtree() int {

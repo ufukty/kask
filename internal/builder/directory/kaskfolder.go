@@ -40,8 +40,8 @@ func inspectPropagateDir(dir string) (*propagate, error) {
 	return prop, nil
 }
 
-// ready-to-use kask folder content (contains propagate content at the folder)
-type kask struct {
+// ready-to-use Kask folder content (contains propagate content at the folder)
+type Kask struct {
 	Propagate *propagate
 
 	Css  []string
@@ -50,13 +50,13 @@ type kask struct {
 	Meta *Meta
 }
 
-func inspectKaskFolder(dir string) (*kask, error) {
+func inspectKaskFolder(dir string) (*Kask, error) {
 	entries, err := os.ReadDir(filepath.Join(dir, ".kask"))
 	if err != nil {
 		return nil, fmt.Errorf("listing directory: %w", err)
 	}
 
-	kask := &kask{}
+	kask := &Kask{}
 	for _, entry := range entries {
 		name, isDir := entry.Name(), entry.IsDir()
 
