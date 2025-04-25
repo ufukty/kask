@@ -198,10 +198,15 @@ func (b *builder) renderMarkdown(d *dir2) error {
 	return nil
 }
 
+// represents those within a unified tree with one Node type:
+// - non-visitable directories
+// - visitable directories (dirs with index.html or README.md files)
+// - pages (*.html or *.md files)
 type Node struct {
-	Children   []*Node
-	Name, Path string
-	Visitable  bool
+	Title            string // markdown h1, meta.yml title or the file name
+	Visitable        bool
+	DstName, DstPath string // to link
+	Children         []*Node
 }
 
 func isVisitable(d *dir2) bool {
@@ -226,15 +231,13 @@ func (b *builder) absolutify(prefix string, files []string) []string {
 // the fields of this struct
 type TemplateContent struct {
 	Stylesheets     []string
-	Node            *rendered.Node
-	WebSiteRoot     *rendered.Node
+	Node, Root      *Node
 	MarkdownContent string
 	MarkdownTOC     *markdown.TocNode
 	Time            time.Time
-	Dir             *directory.Dir
 }
 
-func (b *builder) execTemplates(dstroot string, uri string, root, d *rendered.Node, inherited *context, s *Args) error {
+func (b *builder) execTemplates(dstroot string, uri string, root, d *Node, inherited *context, s *Args) error {
 	err := os.MkdirAll(filepath.Join(dstroot, d.InSitePath), 0755)
 	if err != nil {
 		return fmt.Errorf("os.MkdirAll: %w", err)
@@ -298,7 +301,7 @@ func (b *builder) execTemplates(dstroot string, uri string, root, d *rendered.No
 
 	dt := &TemplateContent{
 		Stylesheets:     level.Stylesheets,
-		WebSiteRoot:     root,
+		Root:            root,
 		MarkdownContent: "",
 		MarkdownTOC:     nil,
 		Time:            time.Now(),
