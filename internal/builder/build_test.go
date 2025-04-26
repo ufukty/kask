@@ -8,11 +8,6 @@ import (
 	"github.com/ufukty/kask/internal/builder/markdown"
 )
 
-var defaults = Args{
-	Domain: "http://localhost:8080",
-	Dev:    false,
-}
-
 func TestBuild(t *testing.T) {
 	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
 	if err != nil {
@@ -20,7 +15,13 @@ func TestBuild(t *testing.T) {
 	}
 	fmt.Println("temp folder:", tmp)
 
-	err = Build(tmp, "testdata/acme", defaults)
+	err = Build(Args{
+		Domain:  "http://localhost:8080",
+		Dev:     false,
+		Src:     "testdata/acme",
+		Dst:     tmp,
+		Verbose: true,
+	})
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, Build: %w", err))
 	}
@@ -34,13 +35,20 @@ func TestBuilder(t *testing.T) {
 	fmt.Println("temp folder:", tmp)
 
 	b := builder{
-		args:          defaults,
+		args: Args{
+			Domain:  "http://localhost:8080",
+			Dev:     false,
+			Src:     "testdata/acme",
+			Dst:     tmp,
+			Verbose: true,
+		},
 		assets:        []string{},
 		stylesheets:   map[string]string{},
 		pagesMarkdown: map[string]*markdown.Page{},
+		leaves:        map[pageref]*Node{},
 	}
 
-	err = b.Build(tmp, "testdata/acme")
+	err = b.Build()
 
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, Build: %w", err))
