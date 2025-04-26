@@ -43,7 +43,6 @@ func TestBuilder(t *testing.T) {
 			Verbose: true,
 		},
 		assets:        []string{},
-		stylesheets:   map[string]string{},
 		pagesMarkdown: map[string]*markdown.Page{},
 		leaves:        map[pageref]*Node{},
 	}

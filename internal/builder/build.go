@@ -2,6 +2,7 @@ package builder
 
 import (
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -36,7 +37,6 @@ type builder struct {
 	start time.Time
 
 	assets        []string                  // src paths
-	stylesheets   map[string]string         // src path -> content
 	pagesMarkdown map[string]*markdown.Page // src path -> content
 	leaves        map[pageref]*Node         // to access nodes built for sitemap beforehand
 }
@@ -124,16 +124,36 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 	return d2
 }
 
+func write(dst, content string) error {
+	fmt.Println("writing", dst)
+	err := os.MkdirAll(filepath.Dir(dst), 0755)
+	if err != nil {
+		return fmt.Errorf("creating directory: %w", err)
+	}
+	f, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("creating: %w", err)
+	}
+	defer f.Close()
+	_, err = io.Copy(f, strings.NewReader(content))
+	if err != nil {
+		return fmt.Errorf("copying: %w", err)
+	}
+	return nil
+}
+
 func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) error {
 	d.Stylesheets = []string{}
 
 	if d.Kask != nil && d.Kask.Propagate != nil && len(d.Kask.Propagate.Css) > 0 {
 		css, err := bundle.Files(d.Kask.Propagate.Css)
 		if err != nil {
-			return fmt.Errorf("bundling propagated css files: %w", err)
+			return fmt.Errorf("bundling propagated css file: %w", err)
 		}
-		dst := filepath.Join(d.DstPath, "styles.propagate.css")
-		b.stylesheets[dst] = css
+		dst := "/" + filepath.Join(d.DstPath, "styles.propagate.css")
+		if err := write(filepath.Join(b.args.Dst, dst), css); err != nil {
+			return fmt.Errorf("writing propagated css file: %w", err)
+		}
 		d.Stylesheets = append(d.Stylesheets, dst)
 		toPropagate = append(toPropagate, dst)
 	}
@@ -141,10 +161,12 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 	if d.Kask != nil && len(d.Kask.Css) > 0 {
 		css, err := bundle.Files(d.Kask.Css)
 		if err != nil {
-			return fmt.Errorf("bundling at-level css files: %w", err)
+			return fmt.Errorf("bundling at-level css file: %w", err)
 		}
-		dst := filepath.Join(d.DstPath, "styles.css")
-		b.stylesheets[dst] = css
+		dst := "/" + filepath.Join(d.DstPath, "styles.css")
+		if err := write(filepath.Join(b.args.Dst, dst), css); err != nil {
+			return fmt.Errorf("writing at-level css file: %w", err)
+		}
 		d.Stylesheets = append(d.Stylesheets, dst)
 	}
 
@@ -419,7 +441,6 @@ func (b *builder) Build() error {
 
 func Build(args Args) error {
 	b := &builder{
-		stylesheets:   map[string]string{},
 		args:          args,
 		start:         time.Now(),
 		assets:        []string{},
