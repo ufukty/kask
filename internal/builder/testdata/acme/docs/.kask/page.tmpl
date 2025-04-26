@@ -1,3 +1,14 @@
+{{define "children"}}
+<ul>
+  <a href="{{.Href}}">{{.Title}}</a>
+  {{with .Children}}
+  {{range .}}
+  <li>{{template "children" .}}</li>
+  {{end}}
+  {{end}}
+</ul>
+{{end}}
+
 {{define "page"}}
 <!DOCTYPE html>
 <html lang="en">
@@ -11,13 +22,7 @@
     <link rel="stylesheet" href="">
     <style>
       * {
-        margin: 0;
-        padding: 0;
         box-sizing: border-box;
-        font-size: inherit;
-        font-family: inherit;
-        color: inherit;
-        font-weight: inherit;
       }
 
       html {
@@ -26,24 +31,14 @@
         color: #444444;
         font-weight: 400;
       }
-
-      a {
-        text-decoration: none;
-      }
-
-      html,
-      body {
-        width: 100%;
-        height: 100%;
-      }
-
-      body {
-        position: relative;
-      }
     </style>
   </head>
 
   <body>
+    <nav>
+      {{template "children" .Root}}
+    </nav>
+
     <aside aria-label="Table of Contents">
       {{.Markdown.Toc}}
     </aside>
