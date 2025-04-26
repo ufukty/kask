@@ -245,14 +245,14 @@ func (b *builder) toNode(d *dir2) *Node {
 	}
 
 	if isVisitable(d) {
-		n.Href = filepath.Join(d.DstPath) // TODO: domain prefix
+		n.Href = "/" + filepath.Join(d.DstPath) // TODO: domain prefix
 	}
 
 	for _, page := range d.PagesHtml {
 		if filepath.Base(page) != "index.html" {
 			c := &Node{
 				Title:    filepath.Base(strings.ToTitle(page)),
-				Href:     filepath.Join(d.DstPath, url.PathEscape(filepath.Base(page))),
+				Href:     "/" + filepath.Join(d.DstPath, url.PathEscape(filepath.Base(page))),
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
 			b.leaves[pageref{d, page}] = c
@@ -270,7 +270,7 @@ func (b *builder) toNode(d *dir2) *Node {
 		} else {
 			c := &Node{
 				Title:    title,
-				Href:     filepath.Join(d.DstPath, url.PathEscape(filepath.Base(page))),
+				Href:     "/" + filepath.Join(d.DstPath, url.PathEscape(strings.TrimSuffix(filepath.Base(page), ".md")+".html")),
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
 			b.leaves[pageref{d, page}] = c
