@@ -8,13 +8,11 @@ import (
 	"strings"
 
 	"github.com/ufukty/kask/cmd/kask/commands/build"
-	"github.com/ufukty/kask/cmd/kask/commands/serve"
 	"github.com/ufukty/kask/cmd/kask/commands/version"
 )
 
 func Main() error {
 	cmdmap := map[string]func() error{
-		"serve":   serve.Run,
 		"build":   build.Run,
 		"version": version.Run,
 	}
