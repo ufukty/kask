@@ -8,10 +8,11 @@ import (
 )
 
 type args struct {
-	In     string
-	Out    string
-	Domain string
-	Dev    bool
+	In      string
+	Out     string
+	Domain  string
+	Dev     bool
+	Verbose bool
 }
 
 var zero args
@@ -22,6 +23,7 @@ func readargs() (*args, error) {
 	flag.StringVar(&a.Out, "out", "", "output directory path")
 	flag.StringVar(&a.Domain, "domain", "", "domain that will be used to prefix each link to static assets, pages and css files")
 	flag.BoolVar(&a.Dev, "dev", false, "adds unique suffixes to the bundled CSS to prevent browsers reusing cached stylesheets")
+	flag.BoolVar(&a.Verbose, "v", false, "enables verbose output")
 
 	flag.Parse()
 
@@ -37,9 +39,12 @@ func Run() error {
 	if err != nil {
 		return fmt.Errorf("reading args: %w", err)
 	}
-	err = builder.Build(a.Out, a.In, builder.Args{
-		Domain: a.Domain,
-		Dev:    a.Dev,
+	err = builder.Build(builder.Args{
+		Dev:     a.Dev,
+		Domain:  a.Domain,
+		Dst:     a.Out,
+		Src:     a.In,
+		Verbose: a.Verbose,
 	})
 	if err != nil {
 		return fmt.Errorf("building: %w", err)
