@@ -125,8 +125,10 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 	return d2
 }
 
-func write(dst, content string) error {
-	fmt.Println("writing", dst)
+func (b *builder) write(dst, content string) error {
+	if b.args.Verbose {
+		fmt.Println("writing", dst)
+	}
 	err := os.MkdirAll(filepath.Dir(dst), 0755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
@@ -152,7 +154,7 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 			return fmt.Errorf("bundling propagated css file: %w", err)
 		}
 		dst := "/" + filepath.Join(d.DstPath, "styles.propagate.css")
-		if err := write(filepath.Join(b.args.Dst, dst), css); err != nil {
+		if err := b.write(filepath.Join(b.args.Dst, dst), css); err != nil {
 			return fmt.Errorf("writing propagated css file: %w", err)
 		}
 		d.Stylesheets = append(d.Stylesheets, dst)
@@ -165,7 +167,7 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 			return fmt.Errorf("bundling at-level css file: %w", err)
 		}
 		dst := "/" + filepath.Join(d.DstPath, "styles.css")
-		if err := write(filepath.Join(b.args.Dst, dst), css); err != nil {
+		if err := b.write(filepath.Join(b.args.Dst, dst), css); err != nil {
 			return fmt.Errorf("writing at-level css file: %w", err)
 		}
 		d.Stylesheets = append(d.Stylesheets, dst)
@@ -406,7 +408,9 @@ func (b *builder) copyAssetsFolders(d *dir2) error {
 
 		dst := filepath.Join(b.args.Dst, d.SrcAssets)
 		src := filepath.Join(b.args.Src, d.SrcAssets)
-		fmt.Println("copying", dst)
+		if b.args.Verbose {
+			fmt.Println("copying", dst)
+		}
 
 		err = copy.Dir(dst, src)
 		if err != nil {
