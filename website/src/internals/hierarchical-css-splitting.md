@@ -30,7 +30,7 @@ Hierarchical CSS splitting in Kask "bundles" each `/**/.kask/propagate` folder c
 
 Templates named `"page"` and `"markdown-page"` are expected to include all bundles passed to them inside `<head>` tag:
 
-```html
+```go-html-template
 {{define "page"}}
 <html>
     <head>
