@@ -12,12 +12,12 @@ type Dir struct {
 	Assets        string
 	Subdirs       []*Dir
 	PagesMarkdown []string
-	PagesHtml     []string
+	PagesTmpl     []string
 	Kask          *Kask
 }
 
 func (d *Dir) subtree() int {
-	c := len(d.PagesHtml) + len(d.PagesMarkdown)
+	c := len(d.PagesTmpl) + len(d.PagesMarkdown)
 	for _, s := range d.Subdirs {
 		c += s.subtree()
 	}
@@ -41,8 +41,8 @@ func inspect(root, path string) (*Dir, error) {
 		var name, isDir = entry.Name(), entry.IsDir()
 
 		switch {
-		case !isDir && strings.HasSuffix(name, ".html"):
-			d.PagesHtml = append(d.PagesHtml, filepath.Join(path, name))
+		case !isDir && strings.HasSuffix(name, ".tmpl"):
+			d.PagesTmpl = append(d.PagesTmpl, filepath.Join(path, name))
 
 		case !isDir && strings.HasSuffix(name, ".md"):
 			d.PagesMarkdown = append(d.PagesMarkdown, filepath.Join(path, name))

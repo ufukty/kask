@@ -17,7 +17,7 @@ func spaces(depth int) string {
 func (d *Dir) String() string {
 	return fmt.Sprint(
 		"Name:", d.Name, " ",
-		"(Html:", strings.Join(d.PagesHtml, ","), ") ",
+		"(Tmpl:", strings.Join(d.PagesTmpl, ","), ") ",
 		"(Markdown:", strings.Join(d.PagesMarkdown, ","), ") ",
 		"(Assets:", d.Assets != "", ") ",
 		"(Kask:", d.Kask != nil, ")",

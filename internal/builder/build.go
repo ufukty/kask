@@ -54,7 +54,7 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 	for _, subdir := range dir.Subdirs {
 		children[subdir.Name] = 1
 	}
-	for _, page := range dir.PagesHtml {
+	for _, page := range dir.PagesTmpl {
 		if has(children, page) {
 			children[page] = -1
 		}
@@ -93,7 +93,7 @@ type dir2 struct {
 	Subdirs []*dir2
 
 	PagesMarkdown []string // src paths
-	PagesHtml     []string // src paths
+	PagesTmpl     []string // src paths
 	Stylesheets   []string // dst paths
 
 	Tmpl *template.Template
@@ -116,7 +116,7 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 		DstAssets: filepath.Join(dstparent, ".assets"),
 
 		PagesMarkdown: d.PagesMarkdown,
-		PagesHtml:     d.PagesHtml,
+		PagesTmpl:     d.PagesTmpl,
 		Stylesheets:   nil,
 
 		Tmpl: nil,
@@ -237,8 +237,8 @@ func (b *builder) renderMarkdown(d *dir2) error {
 
 // represents a sitemap node which can be either of:
 //   - non-visitable directories
-//   - directories with "index.html" or "README.md" file
-//   - pages corresponding to .html or .md files
+//   - directories with "index.tmpl" or "README.md" file
+//   - pages corresponding to .tmpl or .md files
 type Node struct {
 	Title    string // markdown h1, meta.yml title or the file name
 	Href     string // Visitable when filled
@@ -246,8 +246,8 @@ type Node struct {
 }
 
 func containsIndexHtml(d *dir2) bool {
-	return slices.ContainsFunc(d.PagesHtml, func(path string) bool {
-		return filepath.Base(path) == "index.html"
+	return slices.ContainsFunc(d.PagesTmpl, func(path string) bool {
+		return filepath.Base(path) == "index.tmpl"
 	})
 }
 
@@ -272,11 +272,11 @@ func (b *builder) toNode(d *dir2) *Node {
 	}
 
 	if isVisitable(d) {
-		n.Href = "/" + filepath.Join(d.DstPath) // TODO: domain prefix
+		n.Href = "/" + d.DstPath // TODO: domain prefix
 	}
 
-	for _, page := range d.PagesHtml {
-		if filepath.Base(page) != "index.html" {
+	for _, page := range d.PagesTmpl {
+		if filepath.Base(page) != "index.tmpl" {
 			c := &Node{
 				Title:    filepath.Base(strings.ToTitle(page)),
 				Href:     "/" + filepath.Join(d.DstPath, url.PathEscape(filepath.Base(page))),
@@ -347,8 +347,11 @@ func (b *builder) execDir(d *dir2) error {
 		return fmt.Errorf("creating directory: %w", err)
 	}
 
-	for _, page := range d.PagesHtml {
-		dst2 := filepath.Join(b.args.Dst, page)
+	for _, page := range d.PagesTmpl {
+		dst2 := filepath.Join(b.args.Dst, d.SrcPath, "index.html")
+		if filepath.Base(page) != "index.tmpl" {
+			dst2 = filepath.Join(b.args.Dst, d.SrcPath, strings.TrimSuffix(filepath.Base(page), ".tmpl")+".html")
+		}
 		content := &TemplateContent{
 			Stylesheets: d.Stylesheets,
 			Node:        nil,
@@ -356,7 +359,7 @@ func (b *builder) execDir(d *dir2) error {
 			Markdown:    nil,
 			Time:        b.start,
 		}
-		if filepath.Base(page) == "index.html" {
+		if filepath.Base(page) == "index.tmpl" {
 			content.Node = b.leaves[pageref{d, ""}]
 		} else {
 			content.Node = b.leaves[pageref{d, page}]
