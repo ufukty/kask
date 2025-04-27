@@ -377,7 +377,7 @@ func (b *builder) execDir(d *dir2, root *Node) error {
 			Markdown:    b.pagesMarkdown[page],
 			Time:        b.start,
 		}
-		if filepath.Base(page) == "index.html" {
+		if filepath.Base(page) == "README.md" {
 			content.Node = b.leaves[pageref{d, ""}]
 		} else {
 			content.Node = b.leaves[pageref{d, page}]
