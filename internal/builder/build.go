@@ -13,6 +13,7 @@ import (
 
 	"github.com/ufukty/kask/cmd/kask/commands/version"
 	"github.com/ufukty/kask/internal/builder/bundle"
+	"github.com/ufukty/kask/internal/builder/copy"
 	"github.com/ufukty/kask/internal/builder/directory"
 	"github.com/ufukty/kask/internal/builder/markdown"
 )
@@ -110,7 +111,7 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 
 		DstName:   url.PathEscape(d.Name),
 		DstPath:   dstparent,
-		DstAssets: "",
+		DstAssets: filepath.Join(dstparent, ".assets"),
 
 		PagesMarkdown: d.PagesMarkdown,
 		PagesHtml:     d.PagesHtml,
@@ -387,15 +388,34 @@ func (b *builder) execDir(d *dir2, root *Node) error {
 		}
 	}
 
-	// if d.Checks.HasAssetDir {
-	// 	err := copy.Dir(filepath.Join(dstroot, d.InSitePath, ".assets"), filepath.Join(d.SiteRoot, d.InSitePath, ".assets"))
-	// 	if err != nil {
-	// 		return fmt.Errorf("copyDir: %w", err)
-	// 	}
-	// }
-
 	for _, subdir := range d.Subdirs {
 		if err := b.execDir(subdir, root); err != nil {
+			return fmt.Errorf("%q: %w", subdir.SrcName, err)
+		}
+	}
+
+	return nil
+}
+
+func (b *builder) copyAssetsFolders(d *dir2) error {
+	if d.SrcAssets != "" {
+		err := os.MkdirAll(filepath.Join(b.args.Dst, d.SrcPath), 0755)
+		if err != nil {
+			return fmt.Errorf("creating directory: %w", err)
+		}
+
+		dst := filepath.Join(b.args.Dst, d.SrcAssets)
+		src := filepath.Join(b.args.Src, d.SrcAssets)
+		fmt.Println("copying", dst)
+
+		err = copy.Dir(dst, src)
+		if err != nil {
+			return fmt.Errorf("copy dir: %w", err)
+		}
+	}
+
+	for _, subdir := range d.Subdirs {
+		if err := b.copyAssetsFolders(subdir); err != nil {
 			return fmt.Errorf("%q: %w", subdir.SrcName, err)
 		}
 	}
@@ -434,6 +454,10 @@ func (b *builder) Build() error {
 
 	if err := b.execDir(root2, root3); err != nil {
 		return fmt.Errorf("executing templates: %w", err)
+	}
+
+	if err := b.copyAssetsFolders(root2); err != nil {
+		return fmt.Errorf("copying assets folders: %w", err)
 	}
 
 	return nil
