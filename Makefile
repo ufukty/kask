@@ -2,7 +2,7 @@ all:
 	$(MAKE) -C docs
 
 VERSION := $(shell git describe --tags --always --dirty)
-LDFLAGS := -ldflags "-X 'kask/cmd/kask/commands/version.Version=$(VERSION)'"
+LDFLAGS := -ldflags "-X 'github.com/ufukty/kask/cmd/kask/commands/version.Version=$(VERSION)'"
 
 .PHONY: build test install
 
