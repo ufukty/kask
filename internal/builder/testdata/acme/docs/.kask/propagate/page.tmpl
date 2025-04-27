@@ -1,0 +1,51 @@
+{{define "children"}}
+<ul>
+  <a href="{{.Href}}">{{.Title}}</a>
+  {{with .Children}}
+  {{range .}}
+  <li>{{template "children" .}}</li>
+  {{end}}
+  {{end}}
+</ul>
+{{end}}
+
+{{define "markdown-page"}}
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Node.Title}}</title>
+    <meta name="description" content="">
+    {{range .Stylesheets}}
+    <link rel="stylesheet" href="{{.}}">{{end}}
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        font-size: 16px;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: #444444;
+        font-weight: 400;
+      }
+    </style>
+  </head>
+
+  <body>
+    <nav>
+      {{template "children" .Root}}
+    </nav>
+
+    <aside aria-label="Table of Contents">
+      {{.Markdown.Toc}}
+    </aside>
+
+    {{.Markdown.Content}}
+  </body>
+
+</html>
+{{end}}

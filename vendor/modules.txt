@@ -41,9 +41,6 @@ github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
 github.com/gomarkdown/markdown/html
 github.com/gomarkdown/markdown/parser
-# github.com/google/uuid v1.6.0
-## explicit
-github.com/google/uuid
 # github.com/stretchr/testify v1.8.1
 ## explicit; go 1.13
 # gopkg.in/yaml.v3 v3.0.1
