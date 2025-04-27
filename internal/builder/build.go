@@ -172,7 +172,7 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 
 	for _, subdir := range d.Subdirs {
 		if err := b.bundleAndPropagateStylesheets(subdir, slices.Clone(toPropagate)); err != nil {
-			return fmt.Errorf("%s: %w", subdir.SrcName, err)
+			return fmt.Errorf("%q: %w", subdir.SrcName, err)
 		}
 	}
 
@@ -205,7 +205,7 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 
 	for _, subdir := range d.Subdirs {
 		if err := b.propagateTemplates(subdir, toPropagate); err != nil {
-			return fmt.Errorf("%s: %w", subdir.SrcName, err)
+			return fmt.Errorf("%q: %w", subdir.SrcName, err)
 		}
 	}
 
@@ -223,7 +223,7 @@ func (b *builder) renderMarkdown(d *dir2) error {
 
 	for _, subdir := range d.Subdirs {
 		if err := b.renderMarkdown(subdir); err != nil {
-			return fmt.Errorf("%s: %w", subdir.SrcName, err)
+			return fmt.Errorf("%q: %w", subdir.SrcName, err)
 		}
 	}
 
@@ -396,7 +396,7 @@ func (b *builder) execDir(d *dir2, root *Node) error {
 
 	for _, subdir := range d.Subdirs {
 		if err := b.execDir(subdir, root); err != nil {
-			return fmt.Errorf("%s: %w", subdir.SrcName, err)
+			return fmt.Errorf("%q: %w", subdir.SrcName, err)
 		}
 	}
 
