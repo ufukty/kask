@@ -318,7 +318,7 @@ type TemplateContent struct {
 	Time        time.Time
 }
 
-func (b *builder) execPage(dst string, tmpl *template.Template, content *TemplateContent) error {
+func (b *builder) execPage(dst string, tmpl *template.Template, name string, content *TemplateContent) error {
 	if b.args.Verbose {
 		fmt.Printf("printing %s\n", dst)
 	}
@@ -330,7 +330,7 @@ func (b *builder) execPage(dst string, tmpl *template.Template, content *Templat
 	if _, err := fmt.Fprintln(f, fileheader); err != nil {
 		return fmt.Errorf("writing the autogen notice: %w", err)
 	}
-	if err := tmpl.ExecuteTemplate(f, "page", content); err != nil {
+	if err := tmpl.ExecuteTemplate(f, name, content); err != nil {
 		return fmt.Errorf("executing: %w", err)
 	}
 	return nil
@@ -360,7 +360,7 @@ func (b *builder) execDir(d *dir2, root *Node) error {
 		if err != nil {
 			return fmt.Errorf("parsing page template %q: %w", filepath.Base(page), err)
 		}
-		if err := b.execPage(dst2, tmpl, content); err != nil {
+		if err := b.execPage(dst2, tmpl, "page", content); err != nil {
 			return fmt.Errorf("page %q: %w", filepath.Base(page), err)
 		}
 	}
@@ -382,7 +382,7 @@ func (b *builder) execDir(d *dir2, root *Node) error {
 		} else {
 			content.Node = b.leaves[pageref{d, page}]
 		}
-		if err := b.execPage(dst2, d.Tmpl, content); err != nil {
+		if err := b.execPage(dst2, d.Tmpl, "markdown-page", content); err != nil {
 			return fmt.Errorf("page %q: %w", filepath.Base(page), err)
 		}
 	}
