@@ -25,9 +25,6 @@ func inspectPropagateDir(dir string) (*propagate, error) {
 		name, isDir := entry.Name(), entry.IsDir()
 
 		switch {
-		case !isDir && name == "page.html":
-			prop.Page = filepath.Join(dir, ".kask/propagate/page.html")
-
 		case !isDir && strings.HasSuffix(name, ".css"):
 			prop.Css = append(prop.Css, filepath.Join(dir, ".kask/propagate", name))
 
@@ -61,9 +58,6 @@ func inspectKaskFolder(dir string) (*Kask, error) {
 		name, isDir := entry.Name(), entry.IsDir()
 
 		switch {
-		case !isDir && name == "page.html":
-			kask.Page = filepath.Join(dir, ".kask/page.html")
-
 		case !isDir && strings.HasSuffix(name, ".css"):
 			kask.Css = append(kask.Css, filepath.Join(dir, ".kask", name))
 
