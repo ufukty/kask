@@ -186,7 +186,7 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 	var err error
 
 	if d.Kask != nil && d.Kask.Propagate != nil && len(d.Kask.Propagate.Tmpl) > 0 {
-		toPropagate, err = d.Tmpl.ParseFiles(d.Kask.Propagate.Tmpl...)
+		toPropagate, err = toPropagate.ParseFiles(d.Kask.Propagate.Tmpl...)
 		if err != nil {
 			return fmt.Errorf("parsing to-propagate template files: %w", err)
 		}
