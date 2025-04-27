@@ -23,3 +23,6 @@ build:
 
 install:
 	go build $(LDFLAGS) -o ~/bin/kask  ./cmd/kask
+
+all:
+	$(MAKE) -C website

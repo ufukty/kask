@@ -1,0 +1,106 @@
+{{define "sitemap"}}
+<ul>
+  {{if ne .Href ""}}
+  <a href="{{.Href}}">{{.Title}}</a>
+  {{else}}
+  <span>{{.Title}}</span>
+  {{end}}
+  {{with .Children}}{{range .}}{{template "sitemap" .}}{{end}}{{end}}
+</ul>
+{{end}}
+
+{{define "markdown-page"}}
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <meta name="description" content="">
+    {{range .Stylesheets}}
+    <link rel="stylesheet" href="{{.}}">{{end}}
+  </head>
+
+  <body>
+    <div id="markdown-page-column-layout">
+
+      <header>
+        <nav id="sitemap">
+          <details open>
+            <summary>Site map</summary>
+            <div class="summarized">
+              {{template "sitemap" .Root}}
+            </div>
+          </details>
+        </nav>
+
+        {{with .Markdown.Toc}}
+        <nav id="toc">
+          <details open>
+            <summary>In this page</summary>
+            <div class="summarized">
+              <ul>
+                {{range .Children}}
+                <li>
+                  <a href="#{{.ID}}" class="toc{{.Level}}">{{.Title}}</a>
+                  {{if gt (len .Children) 0}}
+                  <ul>
+                    {{range .Children}}
+                    <li>
+                      <a href="#{{.ID}}" class="toc{{.Level}}">{{.Title}}</a>
+                      {{if gt (len .Children) 0}}
+                      <ul>
+                        {{range .Children}}
+                        <li>
+                          <a href="#{{.ID}}" class="toc{{.Level}}">{{.Title}}</a>
+                        </li>{{end}}
+                      </ul>{{end}}
+                    </li>{{end}}
+                  </ul>{{end}}
+                </li>{{end}}
+              </ul>
+            </div>
+          </details>
+        </nav>{{end}}
+      </header>
+
+      <script>
+        function onChange(eval, callback) {
+          let last;
+          return () => {
+            let next = eval()
+            if (last != next) {
+              last = next
+              callback()
+            }
+          }
+        }
+        function detailsElemStateAdjuster() {
+          let elems = document.querySelectorAll("nav>details")
+          let summaries = document.querySelectorAll("nav>details>summary")
+          return () => {
+            elems.forEach(e => {
+              e.open = window.innerWidth >= 700
+            })
+            summaries.forEach(e => {
+              e.style.display = window.innerWidth >= 700 ? "none" : "block"
+              e.onclick = window.innerWidth >= 700 ? (e) => { e.preventDefault() } : undefined
+            })
+          }
+        }
+        let adjuster = detailsElemStateAdjuster()
+        adjuster()
+        window.addEventListener("resize", onChange(() => { return window.innerWidth >= 700 }, adjuster, 100))
+      </script>
+
+      <main class="markdown">
+        {{.Markdown.Content}}
+      </main>
+
+    </div>
+  </body>
+
+</html>
+{{end}}
