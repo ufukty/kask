@@ -366,7 +366,7 @@ func (b *builder) execDir(d *dir2, root *Node) error {
 	}
 
 	for _, page := range d.PagesMarkdown {
-		dst2 := filepath.Join(b.args.Dst, d.SrcPath)
+		dst2 := filepath.Join(b.args.Dst, d.SrcPath, "index.html")
 		if filepath.Base(page) != "README.md" {
 			dst2 = filepath.Join(b.args.Dst, d.SrcPath, strings.TrimSuffix(filepath.Base(page), ".md")+".html")
 		}
