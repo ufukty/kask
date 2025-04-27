@@ -40,6 +40,8 @@ type builder struct {
 	assets        []string                  // src paths
 	pagesMarkdown map[string]*markdown.Page // src path -> content
 	leaves        map[pageref]*Node         // to access nodes built for sitemap beforehand
+
+	root3 *Node // for testing
 }
 
 func has[K comparable, V any](m map[K]V, k K) bool {
@@ -146,7 +148,7 @@ func (b *builder) write(dst, content string) error {
 }
 
 func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) error {
-	d.Stylesheets = []string{}
+	d.Stylesheets = slices.Clone(toPropagate)
 
 	if d.Kask != nil && d.Kask.Propagate != nil && len(d.Kask.Propagate.Css) > 0 {
 		css, err := bundle.Files(d.Kask.Propagate.Css)
@@ -339,7 +341,7 @@ func (b *builder) execPage(dst string, tmpl *template.Template, name string, con
 	return nil
 }
 
-func (b *builder) execDir(d *dir2, root *Node) error {
+func (b *builder) execDir(d *dir2) error {
 	err := os.MkdirAll(filepath.Join(b.args.Dst, d.SrcPath), 0755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
@@ -350,7 +352,7 @@ func (b *builder) execDir(d *dir2, root *Node) error {
 		content := &TemplateContent{
 			Stylesheets: d.Stylesheets,
 			Node:        nil,
-			Root:        root,
+			Root:        b.root3,
 			Markdown:    nil,
 			Time:        b.start,
 		}
@@ -376,7 +378,7 @@ func (b *builder) execDir(d *dir2, root *Node) error {
 		content := &TemplateContent{
 			Stylesheets: d.Stylesheets,
 			Node:        nil,
-			Root:        root,
+			Root:        b.root3,
 			Markdown:    b.pagesMarkdown[page],
 			Time:        b.start,
 		}
@@ -391,7 +393,7 @@ func (b *builder) execDir(d *dir2, root *Node) error {
 	}
 
 	for _, subdir := range d.Subdirs {
-		if err := b.execDir(subdir, root); err != nil {
+		if err := b.execDir(subdir); err != nil {
 			return fmt.Errorf("%q: %w", subdir.SrcName, err)
 		}
 	}
@@ -454,9 +456,9 @@ func (b *builder) Build() error {
 		return fmt.Errorf("rendering markdown pages: %w", err)
 	}
 
-	root3 := b.toNode(root2)
+	b.root3 = b.toNode(root2)
 
-	if err := b.execDir(root2, root3); err != nil {
+	if err := b.execDir(root2); err != nil {
 		return fmt.Errorf("executing templates: %w", err)
 	}
 
