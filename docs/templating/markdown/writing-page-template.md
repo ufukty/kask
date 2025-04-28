@@ -1,4 +1,4 @@
-# Writing Page Template to Render Markdown Pages
+# Markdown Page Template
 
 Kask will use any template with name of `"markdown-page"` to pass HTML translation of markdown files. You can create a `*.tmpl` file to define this template on any of the `.kask/propagate` folders either at the level of your `*.md` file or above, or in the `.kask` folder at the level of it.
 
