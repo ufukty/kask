@@ -1,6 +1,6 @@
 module github.com/ufukty/kask
 
-go 1.23
+go 1.24.2
 
 require (
 	github.com/alecthomas/chroma v0.10.0
