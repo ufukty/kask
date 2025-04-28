@@ -1,6 +1,3 @@
-all:
-	$(MAKE) -C docs
-
 VERSION := $(shell git describe --tags --always --dirty)
 LDFLAGS := -ldflags "-X 'github.com/ufukty/kask/cmd/kask/commands/version.Version=$(VERSION)'"
 
@@ -24,5 +21,8 @@ build:
 install:
 	go build $(LDFLAGS) -o ~/bin/kask  ./cmd/kask
 
-all:
-	$(MAKE) -C website
+docs-build: $(shell find docs -type f)
+	rm -rfv docs-build
+	kask build -in docs -out docs-build -domain / -v
+
+all: docs-build

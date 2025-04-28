@@ -1,3 +1,4 @@
+.DS_Store
 /build
 /certs
-.DS_Store
+/docs-build
