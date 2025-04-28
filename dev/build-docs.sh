@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -ve
 
 git fetch --tags --quiet
 git checkout "$(git tag --list 'v*' | sort -Vr | head -n 1)"
