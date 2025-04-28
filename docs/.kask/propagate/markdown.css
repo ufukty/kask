@@ -10,6 +10,12 @@ body {
     max-width: 600px;
   }
 
+  >p:not(:has(img)),
+  >li:not(:has(pre)),
+  >blockquote {
+    width: 600px;
+  }
+
   >p:has(img),
   >table,
   >pre.chroma,
