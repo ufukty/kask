@@ -18,6 +18,21 @@ func linearize(n *Node) string {
 	return s
 }
 
+func breadcrumbs(n *Node) string {
+	s := ""
+	if n.Parent != nil {
+		s += breadcrumbs(n.Parent)
+	}
+	return s + "/" + n.Title
+}
+
+func dfs(n *Node, v func(*Node)) {
+	v(n)
+	for _, c := range n.Children {
+		dfs(c, v)
+	}
+}
+
 func check(tmp, path string) bool {
 	_, err := os.Stat(filepath.Join(tmp, path))
 	return err == nil
@@ -79,6 +94,26 @@ func TestBuild(t *testing.T) {
 | | | Getting Started
 | products`
 		if got := linearize(b.root3); got != expected {
+			t.Fatalf("expected:\n\n%s\n\ngot:\n%s", expected, got)
+		}
+	})
+
+	t.Run("breadcrumbs", func(t *testing.T) {
+		got := ""
+		dfs(b.root3, func(n *Node) {
+			got += "\n" + breadcrumbs(n)
+		})
+		expected := `
+/.
+/./career
+/./Docs
+/./Docs/ACME Bird Seed
+/./Docs/Download
+/./Docs/ACME Magnet
+/./Docs/tutorials
+/./Docs/tutorials/Getting Started
+/./products`
+		if got != expected {
 			t.Fatalf("expected:\n\n%s\n\ngot:\n%s", expected, got)
 		}
 	})
