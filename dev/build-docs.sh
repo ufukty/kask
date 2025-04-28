@@ -2,6 +2,7 @@
 
 set -e
 
+git fetch --tags --quiet
 git checkout "$(git tag | grep -e '^v' | sort -r | head -n 1)"
 go install ./cmd/kask
 
