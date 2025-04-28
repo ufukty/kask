@@ -242,6 +242,7 @@ func (b *builder) renderMarkdown(d *dir2) error {
 type Node struct {
 	Title    string // markdown h1, meta.yml title or the file name
 	Href     string // Visitable when filled
+	Parent   *Node
 	Children []*Node
 }
 
@@ -264,10 +265,11 @@ func isVisitable(d *dir2) bool {
 // TODO: consider prefixing [Node.Href] with the domain for absolute links
 // TODO: consider setting [Node.Children] on leaves to nil
 // DONE: overwrite dir title with README.md header
-func (b *builder) toNode(d *dir2) *Node {
+func (b *builder) toNode(d *dir2, parent *Node) *Node {
 	n := &Node{
 		Title:    d.SrcName,
 		Href:     "",
+		Parent:   parent,
 		Children: []*Node{},
 	}
 
@@ -280,6 +282,7 @@ func (b *builder) toNode(d *dir2) *Node {
 			c := &Node{
 				Title:    filepath.Base(strings.ToTitle(page)),
 				Href:     "/" + filepath.Join(d.DstPath, url.PathEscape(filepath.Base(page))),
+				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
 			b.leaves[pageref{d, page}] = c
@@ -298,6 +301,7 @@ func (b *builder) toNode(d *dir2) *Node {
 			c := &Node{
 				Title:    title,
 				Href:     "/" + filepath.Join(d.DstPath, url.PathEscape(strings.TrimSuffix(filepath.Base(page), ".md")+".html")),
+				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
 			b.leaves[pageref{d, page}] = c
@@ -308,7 +312,7 @@ func (b *builder) toNode(d *dir2) *Node {
 	b.leaves[pageref{d, ""}] = n
 
 	for _, subdir := range d.Subdirs {
-		n.Children = append(n.Children, b.toNode(subdir))
+		n.Children = append(n.Children, b.toNode(subdir, n))
 	}
 
 	return n
@@ -459,7 +463,7 @@ func (b *builder) Build() error {
 		return fmt.Errorf("rendering markdown pages: %w", err)
 	}
 
-	b.root3 = b.toNode(root2)
+	b.root3 = b.toNode(root2, nil)
 
 	if err := b.execDir(root2); err != nil {
 		return fmt.Errorf("executing templates: %w", err)

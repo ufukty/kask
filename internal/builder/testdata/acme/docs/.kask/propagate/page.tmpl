@@ -1,12 +1,17 @@
-{{define "children"}}
+{{define "sitemap-item"}}
 <ul>
-  <a href="{{.Href}}">{{.Title}}</a>
+  {{if ne .Href ""}}<a href="{{.Href}}">{{.Title}}</a>{{else}}<span>{{.Title}}</span>{{end}}
   {{with .Children}}
   {{range .}}
-  <li>{{template "children" .}}</li>
+  <li>{{template "sitemap-item" .}}</li>
   {{end}}
   {{end}}
 </ul>
+{{end}}
+
+{{define "breadcrumb-item"}}
+{{with .Parent}}{{template "breadcrumb-item" .}}<span class="sep">/</span>{{end}}
+{{if ne .Href ""}}<a href="{{.Href}}">{{.Title}}</a>{{else}}<span>{{.Title}}</span>{{end}}
 {{end}}
 
 {{define "markdown-page"}}
@@ -37,7 +42,11 @@
 
   <body>
     <nav>
-      {{template "children" .Root}}
+      {{template "sitemap-item" .Root}}
+    </nav>
+
+    <nav id="breadcrumbs">
+      {{template "breadcrumb-item" .Node}}
     </nav>
 
     <aside aria-label="Table of Contents">
