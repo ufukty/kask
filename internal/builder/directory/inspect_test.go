@@ -3,7 +3,6 @@ package directory
 import (
 	"fmt"
 	"strings"
-	"testing"
 )
 
 func spaces(depth int) string {
@@ -31,10 +30,16 @@ func printTree(d *Dir, depth int) {
 	}
 }
 
-func Test_Inspect(t *testing.T) {
+func ExampleInspect() {
 	root, err := Inspect("testdata/acme")
 	if err != nil {
-		t.Fatal(fmt.Errorf("act: %w", err))
+		panic(fmt.Errorf("act: %w", err))
 	}
 	printTree(root, 0)
+	// Output:
+	// Name:. (Tmpl:index.tmpl) (Markdown:) (Assets:false) (Kask:false)
+	//     Name:career (Tmpl:career/index.tmpl) (Markdown:) (Assets:false) (Kask:false)
+	//     Name:docs (Tmpl:) (Markdown:docs/birdseed.md,docs/magnet.md) (Assets:false) (Kask:true)
+	//     Name:products (Tmpl:products/index.tmpl) (Markdown:) (Assets:false) (Kask:false)
+
 }
