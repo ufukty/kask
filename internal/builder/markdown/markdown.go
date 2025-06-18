@@ -18,6 +18,7 @@ type Page struct {
 func ToHtml(src string) (*Page, error) {
 	p := parser.NewWithExtensions(
 		parser.CommonExtensions |
+			parser.Attributes |
 			parser.AutoHeadingIDs |
 			parser.NoEmptyLineBeforeBlock |
 			parser.Mmark |
