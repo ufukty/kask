@@ -48,11 +48,8 @@ func (r *Renderer) htmlHighlight(w io.Writer, lexer chroma.Lexer, source []byte)
 	return nil
 }
 
-func (r *Renderer) RenderNodeHook(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
-	if code, ok := node.(*ast.CodeBlock); ok {
-		var lexer = getBestLexerFor(code.Literal, code.Info)
-		r.htmlHighlight(w, lexer, code.Literal)
-		return ast.GoToNext, true
-	}
-	return ast.GoToNext, false
+func (r *Renderer) RenderNodeHook(w io.Writer, node *ast.CodeBlock, entering bool) (ast.WalkStatus, bool) {
+	lexer := getBestLexerFor(node.Literal, node.Info)
+	r.htmlHighlight(w, lexer, node.Literal)
+	return ast.GoToNext, true
 }
