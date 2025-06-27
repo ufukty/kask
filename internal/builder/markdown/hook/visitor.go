@@ -12,7 +12,9 @@ type visitor struct {
 }
 
 func NewVisitor() *visitor {
-	return &visitor{}
+	return &visitor{
+		cf: codefence.NewRenderer(),
+	}
 }
 
 func (v visitor) Visit(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
