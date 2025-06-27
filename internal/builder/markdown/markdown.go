@@ -8,6 +8,7 @@ import (
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
+	"github.com/ufukty/kask/internal/builder/markdown/hook"
 )
 
 type Page struct {
@@ -30,12 +31,9 @@ func ToHtml(src string) (*Page, error) {
 	}
 	n := p.Parse(c).(*ast.Document)
 
-	v := visitor{
-		cf: newCodefenceRenderer(),
-	}
 	r := html.NewRenderer(html.RendererOptions{
 		Flags:          html.CommonFlags | html.HrefTargetBlank,
-		RenderNodeHook: v.Hook,
+		RenderNodeHook: hook.NewVisitor().Visit,
 	})
 	h := markdown.Render(n, r)
 	toc := getTableOfContent(n, r)

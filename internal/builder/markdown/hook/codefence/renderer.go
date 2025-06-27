@@ -1,4 +1,4 @@
-package markdown
+package codefence
 
 import (
 	"fmt"
@@ -12,13 +12,13 @@ import (
 	"github.com/alecthomas/chroma/styles"
 )
 
-type codefenceRenderer struct {
+type Renderer struct {
 	formatter *html.Formatter
 	style     *chroma.Style
 }
 
-func newCodefenceRenderer() *codefenceRenderer {
-	return &codefenceRenderer{
+func NewRenderer() *Renderer {
+	return &Renderer{
 		formatter: html.New(html.WithClasses(true), html.TabWidth(4)),
 		style:     styles.Get("monokailight"),
 	}
@@ -36,7 +36,7 @@ func getBestLexerFor(source, lang []byte) chroma.Lexer {
 	return chroma.Coalesce(lexer)
 }
 
-func (r *codefenceRenderer) htmlHighlight(w io.Writer, lexer chroma.Lexer, source []byte) error {
+func (r *Renderer) htmlHighlight(w io.Writer, lexer chroma.Lexer, source []byte) error {
 	var iterator, err = lexer.Tokenise(nil, string(source))
 	if err != nil {
 		return fmt.Errorf("calling tokenise: %w", err)
@@ -48,7 +48,7 @@ func (r *codefenceRenderer) htmlHighlight(w io.Writer, lexer chroma.Lexer, sourc
 	return nil
 }
 
-func (r *codefenceRenderer) RenderNodeHook(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
+func (r *Renderer) RenderNodeHook(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
 	if code, ok := node.(*ast.CodeBlock); ok {
 		var lexer = getBestLexerFor(code.Literal, code.Info)
 		r.htmlHighlight(w, lexer, code.Literal)
