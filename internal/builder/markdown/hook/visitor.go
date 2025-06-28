@@ -2,18 +2,21 @@ package hook
 
 import (
 	"io"
+	"path/filepath"
 
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/ufukty/kask/internal/builder/markdown/hook/codefence"
 )
 
 type visitor struct {
-	cf *codefence.Renderer
+	cf      *codefence.Renderer
+	pageDir string
 }
 
-func NewVisitor() *visitor {
+func NewVisitor(page string) *visitor {
 	return &visitor{
-		cf: codefence.NewRenderer(),
+		cf:      codefence.NewRenderer(),
+		pageDir: filepath.Dir(page),
 	}
 }
 
@@ -25,7 +28,7 @@ func (v visitor) Visit(w io.Writer, node ast.Node, entering bool) (ast.WalkStatu
 		// TODO: change destination
 
 	case *ast.Link:
-		links(node)
+		return v.links(node)
 	}
 	return ast.GoToNext, false
 }

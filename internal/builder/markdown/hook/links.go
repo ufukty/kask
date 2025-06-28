@@ -2,21 +2,42 @@ package hook
 
 import (
 	"cmp"
+	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/gomarkdown/markdown/ast"
 )
 
-func links(node *ast.Link) {
+func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
 	dest := string(node.Destination)
+	fmt.Println("dir", v.pageDir, "dest in start:", dest)
+
 	isExternal := cmp.Or(
 		strings.HasPrefix(dest, "http://"),
 		strings.HasPrefix(dest, "https://"),
 		strings.HasPrefix(dest, "/"),
 	)
 	if isExternal {
-		return
+		return ast.GoToNext, false
 	}
-	// dest = filepath.Clean(filepath.Join(r.folderpath, dest))
-	// fmt.Println(dest)
+
+	if isDir := strings.HasSuffix(dest, "README.md"); isDir {
+		dest = strings.TrimSuffix(dest, "README.md")
+	}
+
+	if isPage := strings.HasSuffix(dest, ".md"); isPage {
+		dest = strings.TrimSuffix(dest, ".md") + ".html"
+	}
+
+	// TODO: absolute paths => trim the prefix WORKING DIR in the PATH (?)
+	dest = filepath.Clean(filepath.Join(v.pageDir, dest))
+
+	if dest == "." {
+		dest = "/"
+	}
+	fmt.Println("dir", v.pageDir, "dest in end:", dest)
+	node.Destination = []byte(dest)
+
+	return ast.GoToNext, false
 }

@@ -3,6 +3,7 @@ package markdown
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/ast"
@@ -16,7 +17,7 @@ type Page struct {
 	Toc     *TocNode
 }
 
-func ToHtml(src string) (*Page, error) {
+func ToHtml(root, page string) (*Page, error) {
 	p := parser.NewWithExtensions(
 		parser.CommonExtensions |
 			parser.Attributes |
@@ -25,7 +26,7 @@ func ToHtml(src string) (*Page, error) {
 			parser.Mmark |
 			parser.MathJax,
 	)
-	c, err := os.ReadFile(src)
+	c, err := os.ReadFile(filepath.Join(root, page))
 	if err != nil {
 		return nil, fmt.Errorf("os.ReadFile: %w", err)
 	}
@@ -33,7 +34,7 @@ func ToHtml(src string) (*Page, error) {
 
 	r := html.NewRenderer(html.RendererOptions{
 		Flags:          html.CommonFlags | html.HrefTargetBlank,
-		RenderNodeHook: hook.NewVisitor().Visit,
+		RenderNodeHook: hook.NewVisitor(page).Visit,
 	})
 	h := markdown.Render(n, r)
 	toc := getTableOfContent(n, r)

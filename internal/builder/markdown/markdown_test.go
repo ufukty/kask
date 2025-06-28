@@ -6,7 +6,7 @@ import (
 )
 
 func Test_FromFile(t *testing.T) {
-	p, err := ToHtml("testdata/input.md")
+	p, err := ToHtml("testdata", "input.md")
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
 	}
