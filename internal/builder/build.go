@@ -219,7 +219,7 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 
 func (b *builder) renderMarkdown(d *dir2) error {
 	for _, md := range d.PagesMarkdown {
-		page, err := markdown.ToHtml(filepath.Join(b.args.Src, md))
+		page, err := markdown.ToHtml(b.args.Src, md)
 		if err != nil {
 			return fmt.Errorf("rendering %s: %w", md, err)
 		}
