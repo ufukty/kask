@@ -2,7 +2,6 @@ package hook
 
 import (
 	"cmp"
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -11,7 +10,6 @@ import (
 
 func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
 	dest := string(node.Destination)
-	fmt.Println("dir", v.pageDir, "dest in start:", dest)
 
 	isExternal := cmp.Or(
 		strings.HasPrefix(dest, "http://"),
@@ -36,7 +34,6 @@ func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
 	if dest == "." {
 		dest = "/"
 	}
-	fmt.Println("dir", v.pageDir, "dest in end:", dest)
 	node.Destination = []byte(dest)
 
 	return ast.GoToNext, false
