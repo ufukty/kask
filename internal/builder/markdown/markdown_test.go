@@ -74,8 +74,7 @@ func TestToHtml_links(t *testing.T) {
 	for link, expected := range expected {
 		if _, ok := got[link]; !ok {
 			t.Errorf("for %q expected %q got nothing", link, expected)
-		}
-		if expected != got[link] {
+		} else if expected != got[link] {
 			t.Errorf("for %q expected %q got %q", link, expected, got[link])
 		}
 	}

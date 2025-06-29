@@ -2,7 +2,9 @@
 [../..](../..)
 [../../](../../)
 [../../a.md](../../a.md)
+[./../../a.md](./../../a.md)
 [../../README.md](../../README.md)
+[./../../README.md](./../../README.md)
 [../](../)
 [../a.md](../a.md)
 [../README.md](../README.md)
@@ -14,6 +16,8 @@
 [./../a.md](./../a.md)
 [./../README.md](./../README.md)
 
+[a](a)
+[./a](./a)
 [./a.md](./a.md)
 [./a/b.md](./a/b.md)
 [./a/README.md](./a/README.md)
