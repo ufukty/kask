@@ -24,20 +24,18 @@ func NewRenderer() *Renderer {
 	}
 }
 
-func getBestLexerFor(source, lang []byte) chroma.Lexer {
-	var langstr = string(lang)
-	var lexer = lexers.Get(langstr)
-	if lexer == nil {
-		lexer = lexers.Analyse(string(source))
+func getBestLexerForLang(source, lang []byte) chroma.Lexer {
+	if l := lexers.Get(string(lang)); l != nil {
+		return l
 	}
-	if lexer == nil {
-		lexer = lexers.Fallback
+	if l := lexers.Analyse(string(source)); l != nil {
+		return l
 	}
-	return chroma.Coalesce(lexer)
+	return lexers.Fallback
 }
 
 func (r *Renderer) htmlHighlight(w io.Writer, lexer chroma.Lexer, source []byte) error {
-	var iterator, err = lexer.Tokenise(nil, string(source))
+	iterator, err := lexer.Tokenise(nil, string(source))
 	if err != nil {
 		return fmt.Errorf("calling tokenise: %w", err)
 	}
@@ -49,7 +47,7 @@ func (r *Renderer) htmlHighlight(w io.Writer, lexer chroma.Lexer, source []byte)
 }
 
 func (r *Renderer) RenderNodeHook(w io.Writer, node *ast.CodeBlock, entering bool) (ast.WalkStatus, bool) {
-	lexer := getBestLexerFor(node.Literal, node.Info)
+	lexer := chroma.Coalesce(getBestLexerForLang(node.Literal, node.Info))
 	r.htmlHighlight(w, lexer, node.Literal)
 	return ast.GoToNext, true
 }
