@@ -1,6 +1,6 @@
 module github.com/ufukty/kask
 
-go 1.24.2
+go 1.24.4
 
 require (
 	github.com/alecthomas/chroma v0.10.0
@@ -11,4 +11,5 @@ require (
 require (
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
+	github.com/ufukty/diagramer v0.1.0 // indirect
 )
