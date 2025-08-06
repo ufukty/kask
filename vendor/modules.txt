@@ -43,6 +43,11 @@ github.com/gomarkdown/markdown/html
 github.com/gomarkdown/markdown/parser
 # github.com/stretchr/testify v1.8.1
 ## explicit; go 1.13
+# github.com/ufukty/diagramer v0.1.0
+## explicit; go 1.24.4
+github.com/ufukty/diagramer/pkg/sequence/parser
+github.com/ufukty/diagramer/pkg/sequence/parser/parse
+github.com/ufukty/diagramer/pkg/sequence/parser/parse/ast
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
