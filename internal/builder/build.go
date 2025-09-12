@@ -277,7 +277,7 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 		n.Href = "/" + d.DstPath // TODO: domain prefix
 	}
 
-	if containsIndexHtml(d) && d.Kask != nil && d.Kask.Meta != nil {
+	if !containsReadmeMd(d) && d.Kask != nil && d.Kask.Meta != nil {
 		n.Title = d.Kask.Meta.Title
 	}
 
