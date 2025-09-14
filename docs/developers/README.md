@@ -1,13 +1,15 @@
-# Navigation
+# For Developers
+
+## Folder structure
 
 Kask creates a structure of sitemap which:
 
--   Visitable directories ends with the directory name,
--   Pages end with page name with file extension.
+- Visitable directories ends with the directory name,
+- Pages end with page name with file extension.
 
-Visitable directories are the ones contain either of `index.html` or `README.md`. Pages are always rendered with ending of `.html` regardles the source file ends with `.tmpl` or `.md`.
+Visitable directories are the ones contain either of `index.tmpl` or `README.md`. Pages are always rendered with ending of `.html` regardles the source file ends with `.tmpl` or `.md`.
 
-## Example
+### Example
 
 Let's say this the folder structure for pages and directories you supplied to Kask:
 
