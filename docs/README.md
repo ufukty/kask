@@ -4,24 +4,23 @@
 
 👋 Welcome to Kask documentation.
 
-## Repository
+Kask is a website compiler that enables:
 
-Repository is on [GitHub](https://github.com/ufukty/kask)
+- Content writers to:
+  - Work on the website content without the clutter of developer files, directly in their file system using folders and markdown files.
+  - Use the whatever Markdown editor they are most comfortable with.
+- Developers to:
+  - Easily create websites with both Markdown based pages and custom HTML pages.
+  - Arrange page sections and shared page components within individual files with Go templates.
+  - Out of the box best client side performance with CSS splitting
 
-## Install
+In collaboration, the writers are expected to "hand over" the latest copy of "content directory" to the developer to perform compilation of website with Kask and deploying it to servers. If the writer is comfortable, they can also use GitHub or similar platform to "sync" the content directory between each other.
 
-To embed the version information into binary (and produced files for reproducibility):
+Because of the Kask rules, opening the content directory in a Markdown editor won't show the developer files, as either they are hidden files, or stored inside hidden folders (eg. `.kask`).
 
-```sh
-cd "$(mktemp -d)"
-git clone https://github.com/ufukty/kask
-cd kask
-git fetch --tags --quiet
-git checkout "$(git tag --list 'v*' | sort -Vr | head -n 1)"
-make install
-```
+## GitHub
 
-Make sure you have the `make`, `git` and `go` commands accessible by your `PATH`. Users don't care about the version number stamping can as well use the `go install` command directlty.
+Repository is on the [GitHub](https://github.com/ufukty/kask).
 
 ## License
 
