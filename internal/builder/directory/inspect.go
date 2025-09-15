@@ -14,6 +14,7 @@ type Dir struct {
 	PagesMarkdown []string
 	PagesTmpl     []string
 	Kask          *Kask
+	Meta          *Meta
 }
 
 func (d *Dir) subtree() int {
@@ -46,6 +47,12 @@ func inspect(root, path string) (*Dir, error) {
 
 		case !isDir && strings.HasSuffix(name, ".md"):
 			d.PagesMarkdown = append(d.PagesMarkdown, filepath.Join(path, name))
+
+		case !isDir && name == ".kask.yml":
+			d.Meta, err = readMeta(filepath.Join(root, path, name))
+			if err != nil {
+				return nil, fmt.Errorf("reading meta file at %q: %w", filepath.Join(path, name), err)
+			}
 
 		case isDir && name == ".kask":
 			d.Kask, err = inspectKaskFolder(filepath.Join(root, path))

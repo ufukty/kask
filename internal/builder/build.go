@@ -88,6 +88,7 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 // used in assigning destination addresses, bundling css, and propagating tmpl files
 type dir2 struct {
 	Kask *directory.Kask
+	Meta *directory.Meta
 
 	SrcName, SrcPath, SrcAssets string
 	DstName, DstPath, DstAssets string // path encoded
@@ -106,6 +107,7 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 	dstparent = filepath.Join(dstparent, url.PathEscape(d.Name)) // escaped
 	d2 := &dir2{
 		Kask: d.Kask,
+		Meta: d.Meta,
 
 		Subdirs: []*dir2{},
 
@@ -285,8 +287,8 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 		n.Href = "/" + d.DstPath // TODO: domain prefix
 	}
 
-	if !containsReadmeMd(d) && d.Kask != nil && d.Kask.Meta != nil {
-		n.Title = d.Kask.Meta.Title
+	if !containsReadmeMd(d) && d.Meta != nil {
+		n.Title = d.Meta.Title
 	}
 
 	for _, page := range d.PagesTmpl {
