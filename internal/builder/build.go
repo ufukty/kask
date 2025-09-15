@@ -91,7 +91,7 @@ type dir2 struct {
 	Meta *directory.Meta
 
 	SrcName, SrcPath, SrcAssets string
-	DstName, DstPath, DstAssets string // path encoded
+	DstName, DstPathEncoded     string // path encoded
 
 	Subdirs []*dir2
 
@@ -104,7 +104,8 @@ type dir2 struct {
 
 func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 	srcparent = filepath.Join(srcparent, d.Name)
-	dstparent = filepath.Join(dstparent, url.PathEscape(d.Name)) // escaped
+	dstname := url.PathEscape(stripOrdering(d.Name))
+	dstparent = filepath.Join(dstparent, dstname) // escaped
 	d2 := &dir2{
 		Kask: d.Kask,
 		Meta: d.Meta,
@@ -115,9 +116,8 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 		SrcPath:   srcparent,
 		SrcAssets: d.Assets,
 
-		DstName:   url.PathEscape(d.Name),
-		DstPath:   dstparent,
-		DstAssets: filepath.Join(dstparent, ".assets"),
+		DstName:        dstname,
+		DstPathEncoded: dstparent,
 
 		PagesMarkdown: d.PagesMarkdown,
 		PagesTmpl:     d.PagesTmpl,
@@ -159,7 +159,7 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 		if err != nil {
 			return fmt.Errorf("bundling propagated css file: %w", err)
 		}
-		dst := "/" + filepath.Join(d.DstPath, "styles.propagate.css")
+		dst := "/" + filepath.Join(d.DstPathEncoded, "styles.propagate.css")
 		if err := b.write(filepath.Join(b.args.Dst, dst), css); err != nil {
 			return fmt.Errorf("writing propagated css file: %w", err)
 		}
@@ -172,7 +172,7 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 		if err != nil {
 			return fmt.Errorf("bundling at-level css file: %w", err)
 		}
-		dst := "/" + filepath.Join(d.DstPath, "styles.css")
+		dst := "/" + filepath.Join(d.DstPathEncoded, "styles.css")
 		if err := b.write(filepath.Join(b.args.Dst, dst), css); err != nil {
 			return fmt.Errorf("writing at-level css file: %w", err)
 		}
@@ -284,7 +284,7 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 	}
 
 	if isVisitable(d) {
-		n.Href = "/" + d.DstPath // TODO: domain prefix
+		n.Href = "/" + d.DstPathEncoded // TODO: domain prefix
 	}
 
 	if !containsReadmeMd(d) && d.Meta != nil {
@@ -296,7 +296,7 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 			title := titleFromFilename(page, ".tmpl") // TODO: pre-render page for its title tag (like preflight?)
 			c := &Node{
 				Title:    title,
-				Href:     "/" + filepath.Join(d.DstPath, url.PathEscape(strings.TrimSuffix(filepath.Base(page), ".tmpl")+".html")),
+				Href:     "/" + filepath.Join(d.DstPathEncoded, url.PathEscape(strings.TrimSuffix(filepath.Base(page), ".tmpl")+".html")),
 				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
@@ -315,7 +315,7 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 		} else {
 			c := &Node{
 				Title:    title,
-				Href:     "/" + filepath.Join(d.DstPath, url.PathEscape(strings.TrimSuffix(filepath.Base(page), ".md")+".html")),
+				Href:     "/" + filepath.Join(d.DstPathEncoded, url.PathEscape(strings.TrimSuffix(filepath.Base(page), ".md")+".html")),
 				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
