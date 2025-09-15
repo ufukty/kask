@@ -8,10 +8,7 @@ import (
 )
 
 type Meta struct {
-	Title       string `yaml:"title"`
-	Shortname   string `yaml:"short"`
-	Breadcrumbs bool   `yaml:"breadcrumbs"`
-	Hidden      bool   `yaml:"hidden"`
+	Title     string `yaml:"title"`
 }
 
 func readMeta(path string) (*Meta, error) {
