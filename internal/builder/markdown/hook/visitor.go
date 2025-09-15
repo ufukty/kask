@@ -2,7 +2,6 @@ package hook
 
 import (
 	"io"
-	"path/filepath"
 	"strings"
 
 	"github.com/gomarkdown/markdown/ast"
@@ -10,14 +9,14 @@ import (
 )
 
 type visitor struct {
-	cf      *codefence.Renderer
-	pageDir string
+	cf     *codefence.Renderer
+	dstDir string
 }
 
-func NewVisitor(page string) *visitor {
+func NewVisitor(dstdir string) *visitor {
 	return &visitor{
-		cf:      codefence.NewRenderer(),
-		pageDir: "/" + strings.TrimPrefix(filepath.Dir(page), "/"),
+		cf:     codefence.NewRenderer(),
+		dstDir: "/" + strings.TrimPrefix(dstdir, "/"),
 	}
 }
 

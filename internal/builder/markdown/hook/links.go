@@ -29,7 +29,7 @@ func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
 	}
 
 	// TODO: absolute paths => trim the prefix WORKING DIR in the PATH (?)
-	dest = filepath.Clean(filepath.Join(v.pageDir, dest))
+	dest = filepath.Clean(filepath.Join(v.dstDir, dest))
 
 	if dest == "." {
 		dest = "/"
