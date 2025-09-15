@@ -28,6 +28,10 @@ func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
 		dest = strings.TrimSuffix(dest, ".md") + ".html"
 	}
 
+	if isPage := strings.HasSuffix(dest, ".tmpl"); isPage {
+		dest = strings.TrimSuffix(dest, ".tmpl") + ".html"
+	}
+
 	// TODO: absolute paths => trim the prefix WORKING DIR in the PATH (?)
 	dest = filepath.Clean(filepath.Join(v.dstDir, dest))
 
