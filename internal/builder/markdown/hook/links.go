@@ -1,7 +1,6 @@
 package hook
 
 import (
-	"cmp"
 	"path/filepath"
 	"strings"
 
@@ -11,11 +10,10 @@ import (
 func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
 	dest := string(node.Destination)
 
-	isExternal := cmp.Or(
-		strings.HasPrefix(dest, "http://"),
-		strings.HasPrefix(dest, "https://"),
-		strings.HasPrefix(dest, "/"),
-	)
+	isExternal := false ||
+		strings.HasPrefix(dest, "http://") ||
+		strings.HasPrefix(dest, "https://") ||
+		strings.HasPrefix(dest, "/")
 	if isExternal {
 		return ast.GoToNext, false
 	}
