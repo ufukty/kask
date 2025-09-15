@@ -91,7 +91,7 @@ type dir2 struct {
 	Meta *directory.Meta
 
 	SrcName, SrcPath, SrcAssets string
-	DstName, DstPathEncoded     string // path encoded
+	DstPath, DstPathEncoded     string
 
 	Subdirs []*dir2
 
@@ -116,7 +116,6 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 		SrcPath:   srcparent,
 		SrcAssets: d.Assets,
 
-		DstName:        dstname,
 		DstPathEncoded: dstparent,
 
 		PagesMarkdown: d.PagesMarkdown,
