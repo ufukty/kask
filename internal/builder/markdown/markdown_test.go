@@ -72,10 +72,12 @@ func TestToHtml_links(t *testing.T) {
 		t.Errorf("expected len(expected) = len(got) got %d != %d", len(expected), len(got))
 	}
 	for link, expected := range expected {
-		if _, ok := got[link]; !ok {
-			t.Errorf("for %q expected %q got nothing", link, expected)
-		} else if expected != got[link] {
-			t.Errorf("for %q expected %q got %q", link, expected, got[link])
-		}
+		t.Run(link, func(t *testing.T) {
+			if _, ok := got[link]; !ok {
+				t.Errorf("for %q expected %q got nothing", link, expected)
+			} else if expected != got[link] {
+				t.Errorf("for %q expected %q got %q", link, expected, got[link])
+			}
+		})
 	}
 }
