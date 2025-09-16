@@ -62,3 +62,22 @@ func TestHrefFromFilename(t *testing.T) {
 		})
 	}
 }
+
+func TestTargetFromFilename(t *testing.T) {
+	type tc struct {
+		testname               string
+		dst, dstPath, filename string
+	}
+	tcs := map[tc]string{
+		{"repl extension", "/a", "b/c", "d.md"}:   "/a/b/c/d.html",
+		{"strip ordering", "/a", "b/c", "3 d.md"}: "/a/b/c/d.html",
+	}
+	for input, expected := range tcs {
+		t.Run(input.testname, func(t *testing.T) {
+			got := targetFromFilename(input.dst, input.dstPath, input.filename)
+			if got != expected {
+				t.Errorf("expected %q got %q", expected, got)
+			}
+		})
+	}
+}

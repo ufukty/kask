@@ -29,8 +29,8 @@ func hrefFromFilename(dstPathEncoded, filename string) string {
 	return "/" + filepath.Join(dstPathEncoded, base+".html")
 }
 
-func targetFromFilename(dst, dstPath, file, ext string) string {
-	base := stripOrdering(filepath.Base(file))
-	base = strings.TrimSuffix(base, ext)
+func targetFromFilename(dst, dstPath, filename string) string {
+	base := stripOrdering(filename)
+	base = strings.TrimSuffix(base, filepath.Ext(filename))
 	return filepath.Join(dst, dstPath, base+".html")
 }
