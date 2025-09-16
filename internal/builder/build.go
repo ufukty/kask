@@ -290,7 +290,7 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 			title := titleFromFilename(page, ".tmpl") // TODO: pre-render page for its title tag (like preflight?)
 			c := &Node{
 				Title:    title,
-				Href:     hrefFromFilename(d.DstPathEncoded, page, ".tmpl"),
+				Href:     hrefFromFilename(d.DstPathEncoded, filepath.Base(page)),
 				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
@@ -309,7 +309,7 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 		} else {
 			c := &Node{
 				Title:    title,
-				Href:     hrefFromFilename(d.DstPathEncoded, page, ".md"),
+				Href:     hrefFromFilename(d.DstPathEncoded, filepath.Base(page)),
 				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
