@@ -11,13 +11,13 @@ import (
 
 type visitor struct {
 	cf      *codefence.Renderer
-	pageDir string
+	pagedir string
 }
 
 func NewVisitor(page string) *visitor {
 	return &visitor{
 		cf:      codefence.NewRenderer(),
-		pageDir: "/" + strings.TrimPrefix(filepath.Dir(page), "/"),
+		pagedir: "/" + strings.TrimPrefix(filepath.Dir(page), "/"),
 	}
 }
 

@@ -86,9 +86,10 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 // used in assigning destination addresses, bundling css, and propagating tmpl files
 type dir2 struct {
 	Kask *directory.Kask
+	Meta *directory.Meta
 
-	SrcName, SrcPath, SrcAssets string
-	DstName, DstPath, DstAssets string // path encoded
+	SrcName, SrcPath, SrcAssets      string
+	DstName, DstPath, DstPathEncoded string
 
 	Subdirs []*dir2
 
@@ -99,21 +100,24 @@ type dir2 struct {
 	Tmpl *template.Template
 }
 
-func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
-	srcparent = filepath.Join(srcparent, d.Name)
-	dstparent = filepath.Join(dstparent, url.PathEscape(d.Name)) // escaped
+func (b *builder) toDir2(d *directory.Dir, srcParent, dstParent, dstParentEncoded string) *dir2 {
+	srcParent = filepath.Join(srcParent, d.Name)
+	dstName := stripOrdering(d.Name)
+	dstParent = filepath.Join(dstParent, dstName)
+	dstParentEncoded = filepath.Join(dstParentEncoded, url.PathEscape(dstName))
 	d2 := &dir2{
 		Kask: d.Kask,
+		Meta: d.Meta,
 
 		Subdirs: []*dir2{},
 
 		SrcName:   d.Name,
-		SrcPath:   srcparent,
+		SrcPath:   srcParent,
 		SrcAssets: d.Assets,
 
-		DstName:   url.PathEscape(d.Name),
-		DstPath:   dstparent,
-		DstAssets: filepath.Join(dstparent, ".assets"),
+		DstName:        dstName,
+		DstPath:        dstParent,
+		DstPathEncoded: dstParentEncoded,
 
 		PagesMarkdown: d.PagesMarkdown,
 		PagesTmpl:     d.PagesTmpl,
@@ -122,7 +126,7 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 		Tmpl: nil,
 	}
 	for _, subdir := range d.Subdirs {
-		d2.Subdirs = append(d2.Subdirs, b.toDir2(subdir, srcparent, dstparent))
+		d2.Subdirs = append(d2.Subdirs, b.toDir2(subdir, srcParent, dstParent, dstParentEncoded))
 	}
 	return d2
 }
@@ -267,21 +271,26 @@ func isVisitable(d *dir2) bool {
 // DONE: overwrite dir title with README.md header
 func (b *builder) toNode(d *dir2, parent *Node) *Node {
 	n := &Node{
-		Title:    d.SrcName,
+		Title:    d.DstName,
 		Href:     "",
 		Parent:   parent,
 		Children: []*Node{},
 	}
 
 	if isVisitable(d) {
-		n.Href = "/" + d.DstPath // TODO: domain prefix
+		n.Href = "/" + d.DstPathEncoded // TODO: domain prefix
+	}
+
+	if !containsReadmeMd(d) && d.Meta != nil {
+		n.Title = d.Meta.Title
 	}
 
 	for _, page := range d.PagesTmpl {
 		if filepath.Base(page) != "index.tmpl" {
+			title := titleFromFilename(page, ".tmpl") // TODO: pre-render page for its title tag (like preflight?)
 			c := &Node{
-				Title:    filepath.Base(strings.ToTitle(page)),
-				Href:     "/" + filepath.Join(d.DstPath, url.PathEscape(filepath.Base(page))),
+				Title:    title,
+				Href:     hrefFromFilename(d.DstPathEncoded, filepath.Base(page)),
 				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
@@ -291,7 +300,7 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 	}
 
 	for _, page := range d.PagesMarkdown {
-		title := filepath.Base(strings.ToTitle(page)) // default
+		title := titleFromFilename(page, ".md")
 		if md, ok := b.pagesMarkdown[page]; ok && md.Toc != nil && len(md.Toc.Children) > 0 {
 			title = md.Toc.Children[0].Title
 		}
@@ -300,7 +309,7 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 		} else {
 			c := &Node{
 				Title:    title,
-				Href:     "/" + filepath.Join(d.DstPath, url.PathEscape(strings.TrimSuffix(filepath.Base(page), ".md")+".html")),
+				Href:     hrefFromFilename(d.DstPathEncoded, filepath.Base(page)),
 				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
@@ -346,15 +355,15 @@ func (b *builder) execPage(dst string, tmpl *template.Template, name string, con
 }
 
 func (b *builder) execDir(d *dir2) error {
-	err := os.MkdirAll(filepath.Join(b.args.Dst, d.SrcPath), 0755)
+	err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
 
 	for _, page := range d.PagesTmpl {
-		dst2 := filepath.Join(b.args.Dst, d.SrcPath, "index.html")
+		dst2 := filepath.Join(b.args.Dst, d.DstPath, "index.html")
 		if filepath.Base(page) != "index.tmpl" {
-			dst2 = filepath.Join(b.args.Dst, d.SrcPath, strings.TrimSuffix(filepath.Base(page), ".tmpl")+".html")
+			dst2 = targetFromFilename(b.args.Dst, d.DstPath, filepath.Base(page))
 		}
 		content := &TemplateContent{
 			Stylesheets: d.Stylesheets,
@@ -378,9 +387,9 @@ func (b *builder) execDir(d *dir2) error {
 	}
 
 	for _, page := range d.PagesMarkdown {
-		dst2 := filepath.Join(b.args.Dst, d.SrcPath, "index.html")
+		dst2 := filepath.Join(b.args.Dst, d.DstPath, "index.html")
 		if filepath.Base(page) != "README.md" {
-			dst2 = filepath.Join(b.args.Dst, d.SrcPath, strings.TrimSuffix(filepath.Base(page), ".md")+".html")
+			dst2 = targetFromFilename(b.args.Dst, d.DstPath, filepath.Base(page))
 		}
 		content := &TemplateContent{
 			Stylesheets: d.Stylesheets,
@@ -410,12 +419,12 @@ func (b *builder) execDir(d *dir2) error {
 
 func (b *builder) copyAssetsFolders(d *dir2) error {
 	if d.SrcAssets != "" {
-		err := os.MkdirAll(filepath.Join(b.args.Dst, d.SrcPath), 0755)
+		err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0755)
 		if err != nil {
 			return fmt.Errorf("creating directory: %w", err)
 		}
 
-		dst := filepath.Join(b.args.Dst, d.SrcAssets)
+		dst := filepath.Join(b.args.Dst, d.DstPath, ".assets")
 		src := filepath.Join(b.args.Src, d.SrcAssets)
 		if b.args.Verbose {
 			fmt.Println("copying", dst)
@@ -449,7 +458,7 @@ func (b *builder) Build() error {
 		return fmt.Errorf("checking competing files and folders: %w", err)
 	}
 
-	root2 := b.toDir2(root, "", "")
+	root2 := b.toDir2(root, "", "", "")
 
 	if err := b.bundleAndPropagateStylesheets(root2, []string{}); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)

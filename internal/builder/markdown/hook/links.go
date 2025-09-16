@@ -1,7 +1,6 @@
 package hook
 
 import (
-	"cmp"
 	"path/filepath"
 	"strings"
 
@@ -11,25 +10,25 @@ import (
 func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
 	dest := string(node.Destination)
 
-	isExternal := cmp.Or(
-		strings.HasPrefix(dest, "http://"),
-		strings.HasPrefix(dest, "https://"),
-		strings.HasPrefix(dest, "/"),
-	)
+	isExternal := false ||
+		strings.HasPrefix(dest, "http://") ||
+		strings.HasPrefix(dest, "https://") ||
+		strings.HasPrefix(dest, "/")
 	if isExternal {
 		return ast.GoToNext, false
 	}
 
-	if isDir := strings.HasSuffix(dest, "README.md"); isDir {
-		dest = strings.TrimSuffix(dest, "README.md")
-	}
+	dest = strings.TrimSuffix(dest, "README.md")
+	dest = strings.TrimSuffix(dest, "index.tmpl")
 
-	if isPage := strings.HasSuffix(dest, ".md"); isPage {
+	if strings.HasSuffix(dest, ".md") {
 		dest = strings.TrimSuffix(dest, ".md") + ".html"
+	} else if strings.HasSuffix(dest, ".tmpl") {
+		dest = strings.TrimSuffix(dest, ".tmpl") + ".html"
 	}
 
 	// TODO: absolute paths => trim the prefix WORKING DIR in the PATH (?)
-	dest = filepath.Clean(filepath.Join(v.pageDir, dest))
+	dest = filepath.Clean(filepath.Join(v.pagedir, dest))
 
 	if dest == "." {
 		dest = "/"
