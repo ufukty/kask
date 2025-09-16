@@ -27,7 +27,7 @@ func unmarshal(content string) map[string]string {
 func TestToHtml_links(t *testing.T) {
 	p, err := ToHtml("testdata", "subdir/subsubdir/README.md")
 	if err != nil {
-		panic(fmt.Errorf("act, ToHtml: %w", err))
+		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
 	}
 	expected := map[string]string{
 		// links to parents
