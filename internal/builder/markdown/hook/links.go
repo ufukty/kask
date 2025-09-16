@@ -18,9 +18,8 @@ func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
 		return ast.GoToNext, false
 	}
 
-	if isDir := strings.HasSuffix(dest, "README.md"); isDir {
-		dest = strings.TrimSuffix(dest, "README.md")
-	}
+	dest = strings.TrimSuffix(dest, "README.md")
+	dest = strings.TrimSuffix(dest, "index.tmpl")
 
 	if isPage := strings.HasSuffix(dest, ".md"); isPage {
 		dest = strings.TrimSuffix(dest, ".md") + ".html"
