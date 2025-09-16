@@ -48,9 +48,10 @@ func TestHrefFromFilename(t *testing.T) {
 		filename       string
 	}
 	tcs := map[tc]string{
-		{"extension repl", "a/b/c", "d.md"}:  "/a/b/c/d.html",
-		{"encoded path", "a/b%20/c", "d.md"}: "/a/b%20/c/d.html",
-		{"filename enc", "a/b/c", "d .md"}:   "/a/b/c/d%20.html",
+		{"extension repl", "a/b/c", "d.md"}:   "/a/b/c/d.html",
+		{"encoded path", "a/b%20/c", "d.md"}:  "/a/b%20/c/d.html",
+		{"filename enc", "a/b/c", "d .md"}:    "/a/b/c/d%20.html",
+		{"strip ordering", "a/b/c", "3.d.md"}: "/a/b/c/d.html",
 	}
 	for input, expected := range tcs {
 		t.Run(input.testname, func(t *testing.T) {
