@@ -251,7 +251,7 @@ func isVisitable(d *dir2) bool {
 // TODO: consider prefixing [Node.Href] with the domain for absolute links
 // TODO: consider setting [Node.Children] on leaves to nil
 // DONE: overwrite dir title with README.md header
-func (b *builder) toNode(d *dir2, parent *Node) *Node {
+func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	n := &Node{
 		Title:    d.DstName,
 		Href:     "",
@@ -282,10 +282,11 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 	}
 
 	for _, page := range d.PagesMarkdown {
-		title := titleFromFilename(page, ".md")
-		if md, ok := b.pagesMarkdown[page]; ok && md.Toc != nil && len(md.Toc.Children) > 0 {
-			title = md.Toc.Children[0].Title
+		title, err := titleForMarkdownPage(page)
+		if err != nil {
+			return nil, fmt.Errorf("title: %w", err)
 		}
+
 		if filepath.Base(page) == "README.md" {
 			n.Title = title
 		} else {
@@ -303,10 +304,14 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 	b.leaves[pageref{d, ""}] = n
 
 	for _, subdir := range d.Subdirs {
-		n.Children = append(n.Children, b.toNode(subdir, n))
+		s, err := b.toNode(subdir, n)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", d.SrcName, err)
+		}
+		n.Children = append(n.Children, s)
 	}
 
-	return n
+	return n, nil
 }
 
 func (b *builder) renderMarkdown(d *dir2) error {
@@ -468,7 +473,10 @@ func (b *builder) Build() error {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 
-	b.root3 = b.toNode(root2, nil)
+	b.root3, err = b.toNode(root2, nil)
+	if err != nil {
+		return fmt.Errorf("structuring node tree: %w", err)
+	}
 
 	if err := b.renderMarkdown(root2); err != nil {
 		return fmt.Errorf("rendering markdown pages: %w", err)
