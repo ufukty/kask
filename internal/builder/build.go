@@ -221,24 +221,6 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 	return nil
 }
 
-func (b *builder) renderMarkdown(d *dir2) error {
-	for _, md := range d.PagesMarkdown {
-		page, err := markdown.ToHtml(b.args.Src, md)
-		if err != nil {
-			return fmt.Errorf("rendering %s: %w", md, err)
-		}
-		b.pagesMarkdown[md] = page
-	}
-
-	for _, subdir := range d.Subdirs {
-		if err := b.renderMarkdown(subdir); err != nil {
-			return fmt.Errorf("%q: %w", subdir.SrcName, err)
-		}
-	}
-
-	return nil
-}
-
 // represents a sitemap node which can be either of:
 //   - non-visitable directories
 //   - directories with "index.tmpl" or "README.md" file
@@ -325,6 +307,24 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 	}
 
 	return n
+}
+
+func (b *builder) renderMarkdown(d *dir2) error {
+	for _, md := range d.PagesMarkdown {
+		page, err := markdown.ToHtml(b.args.Src, md)
+		if err != nil {
+			return fmt.Errorf("rendering %s: %w", md, err)
+		}
+		b.pagesMarkdown[md] = page
+	}
+
+	for _, subdir := range d.Subdirs {
+		if err := b.renderMarkdown(subdir); err != nil {
+			return fmt.Errorf("%q: %w", subdir.SrcName, err)
+		}
+	}
+
+	return nil
 }
 
 // template files should access necessary information through
