@@ -468,11 +468,11 @@ func (b *builder) Build() error {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 
+	b.root3 = b.toNode(root2, nil)
+
 	if err := b.renderMarkdown(root2); err != nil {
 		return fmt.Errorf("rendering markdown pages: %w", err)
 	}
-
-	b.root3 = b.toNode(root2, nil)
 
 	if err := b.execDir(root2); err != nil {
 		return fmt.Errorf("executing templates: %w", err)
