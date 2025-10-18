@@ -282,7 +282,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	}
 
 	for _, page := range d.PagesMarkdown {
-		title, err := titleForMarkdownPage(page)
+		title, err := titleForMarkdownPage(filepath.Join(b.args.Src, page))
 		if err != nil {
 			return nil, fmt.Errorf("title: %w", err)
 		}
