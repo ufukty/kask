@@ -221,24 +221,6 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 	return nil
 }
 
-func (b *builder) renderMarkdown(d *dir2) error {
-	for _, md := range d.PagesMarkdown {
-		page, err := markdown.ToHtml(b.args.Src, md)
-		if err != nil {
-			return fmt.Errorf("rendering %s: %w", md, err)
-		}
-		b.pagesMarkdown[md] = page
-	}
-
-	for _, subdir := range d.Subdirs {
-		if err := b.renderMarkdown(subdir); err != nil {
-			return fmt.Errorf("%q: %w", subdir.SrcName, err)
-		}
-	}
-
-	return nil
-}
-
 // represents a sitemap node which can be either of:
 //   - non-visitable directories
 //   - directories with "index.tmpl" or "README.md" file
@@ -269,7 +251,7 @@ func isVisitable(d *dir2) bool {
 // TODO: consider prefixing [Node.Href] with the domain for absolute links
 // TODO: consider setting [Node.Children] on leaves to nil
 // DONE: overwrite dir title with README.md header
-func (b *builder) toNode(d *dir2, parent *Node) *Node {
+func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	n := &Node{
 		Title:    d.DstName,
 		Href:     "",
@@ -281,13 +263,14 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 		n.Href = "/" + d.DstPathEncoded // TODO: domain prefix
 	}
 
-	if !containsReadmeMd(d) && d.Meta != nil {
-		n.Title = d.Meta.Title
-	}
-
 	for _, page := range d.PagesTmpl {
-		if filepath.Base(page) != "index.tmpl" {
-			title := titleFromFilename(page, ".tmpl") // TODO: pre-render page for its title tag (like preflight?)
+		title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".html")
+		if err != nil {
+			return nil, fmt.Errorf("decide on title: %w", err)
+		}
+		if filepath.Base(page) == "index.tmpl" {
+			n.Title = title
+		} else {
 			c := &Node{
 				Title:    title,
 				Href:     hrefFromFilename(d.DstPathEncoded, filepath.Base(page)),
@@ -300,10 +283,11 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 	}
 
 	for _, page := range d.PagesMarkdown {
-		title := titleFromFilename(page, ".md")
-		if md, ok := b.pagesMarkdown[page]; ok && md.Toc != nil && len(md.Toc.Children) > 0 {
-			title = md.Toc.Children[0].Title
+		title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".md")
+		if err != nil {
+			return nil, fmt.Errorf("decide on title: %w", err)
 		}
+
 		if filepath.Base(page) == "README.md" {
 			n.Title = title
 		} else {
@@ -318,13 +302,39 @@ func (b *builder) toNode(d *dir2, parent *Node) *Node {
 		}
 	}
 
+	if n.Title == "" && d.Meta != nil {
+		n.Title = d.Meta.Title
+	}
+
 	b.leaves[pageref{d, ""}] = n
 
 	for _, subdir := range d.Subdirs {
-		n.Children = append(n.Children, b.toNode(subdir, n))
+		s, err := b.toNode(subdir, n)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", d.SrcName, err)
+		}
+		n.Children = append(n.Children, s)
 	}
 
-	return n
+	return n, nil
+}
+
+func (b *builder) renderMarkdown(d *dir2) error {
+	for _, md := range d.PagesMarkdown {
+		page, err := markdown.ToHtml(b.args.Src, md)
+		if err != nil {
+			return fmt.Errorf("rendering %s: %w", md, err)
+		}
+		b.pagesMarkdown[md] = page
+	}
+
+	for _, subdir := range d.Subdirs {
+		if err := b.renderMarkdown(subdir); err != nil {
+			return fmt.Errorf("%q: %w", subdir.SrcName, err)
+		}
+	}
+
+	return nil
 }
 
 // template files should access necessary information through
@@ -468,11 +478,14 @@ func (b *builder) Build() error {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 
+	b.root3, err = b.toNode(root2, nil)
+	if err != nil {
+		return fmt.Errorf("structuring node tree: %w", err)
+	}
+
 	if err := b.renderMarkdown(root2); err != nil {
 		return fmt.Errorf("rendering markdown pages: %w", err)
 	}
-
-	b.root3 = b.toNode(root2, nil)
 
 	if err := b.execDir(root2); err != nil {
 		return fmt.Errorf("executing templates: %w", err)
