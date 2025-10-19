@@ -269,7 +269,10 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 
 	for _, page := range d.PagesTmpl {
 		if filepath.Base(page) != "index.tmpl" {
-			title := titleFromFilename(page, ".tmpl") // TODO: pre-render page for its title tag (like preflight?)
+			title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".tmpl")
+			if err != nil {
+				return nil, fmt.Errorf("decide on title: %w", err)
+			}
 			c := &Node{
 				Title:    title,
 				Href:     hrefFromFilename(d.DstPathEncoded, filepath.Base(page)),
@@ -282,9 +285,9 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	}
 
 	for _, page := range d.PagesMarkdown {
-		title, err := decideOnTitle(filepath.Join(b.args.Src, page))
+		title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".md")
 		if err != nil {
-			return nil, fmt.Errorf("title: %w", err)
+			return nil, fmt.Errorf("decide on title: %w", err)
 		}
 
 		if filepath.Base(page) == "README.md" {

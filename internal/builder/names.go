@@ -39,7 +39,7 @@ func targetFromFilename(dst, dstPath, filename string) string {
 
 var titleExtractors = map[string]*regexp.Regexp{
 	".md":   regexp.MustCompile(`(?m)^#\s+(.+)$`),
-	".tmpl": regexp.MustCompile(`(?i)<title>(.*?)</title>`),
+	".html": regexp.MustCompile(`(?i)<title>(.*?)</title>`),
 }
 
 func titleFromContent(content, ext string) string {
@@ -54,14 +54,17 @@ func titleFromContent(content, ext string) string {
 	return submatches[1]
 }
 
-func decideOnTitle(src string) (string, error) {
+// 1. title from content, if available
+// 2. title from file name, if visitable
+// 3. title from folder name
+func decideOnTitle(src, ext string) (string, error) {
 	bs, err := os.ReadFile(src)
 	if err != nil {
 		return "", fmt.Errorf("read file: %w", err)
 	}
-	title := titleFromContent(string(bs), ".md")
+	title := titleFromContent(string(bs), ext)
 	if title != "" {
 		return title, nil
 	}
-	return titleFromFilename(src, ".md"), nil
+	return titleFromFilename(src, ext), nil
 }
