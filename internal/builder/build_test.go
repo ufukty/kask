@@ -120,21 +120,21 @@ func TestBuild(t *testing.T) {
 	t.Run("breadcrumbs", func(t *testing.T) {
 		expected := []string{
 			"Acme",
-			"Acme/career",
+			"Acme/Careers at ACME",
 			"Acme/Docs",
 			"Acme/Docs/ACME Bird Seed",
 			"Acme/Docs/Download",
 			"Acme/Docs/ACME Magnet",
 			"Acme/Docs/tutorials",
 			"Acme/Docs/tutorials/Getting Started",
-			"Acme/products",
+			"Acme/ACME Products",
 		}
 
 		got := titlePaths(forest(b.root3))
 		for _, e := range expected {
 			t.Run("breadcrumbs for "+strings.ReplaceAll(e, "/", "\\"), func(t *testing.T) {
 				if !slices.Contains(got, e) {
-					t.Errorf("not found")
+					t.Errorf("not found among:\n- %s", strings.Join(got, "\n- "))
 				}
 			})
 		}

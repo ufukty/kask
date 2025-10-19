@@ -263,16 +263,14 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		n.Href = "/" + d.DstPathEncoded // TODO: domain prefix
 	}
 
-	if !containsReadmeMd(d) && d.Meta != nil {
-		n.Title = d.Meta.Title
-	}
-
 	for _, page := range d.PagesTmpl {
-		if filepath.Base(page) != "index.tmpl" {
-			title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".tmpl")
-			if err != nil {
-				return nil, fmt.Errorf("decide on title: %w", err)
-			}
+		title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".html")
+		if err != nil {
+			return nil, fmt.Errorf("decide on title: %w", err)
+		}
+		if filepath.Base(page) == "index.tmpl" {
+			n.Title = title
+		} else {
 			c := &Node{
 				Title:    title,
 				Href:     hrefFromFilename(d.DstPathEncoded, filepath.Base(page)),
@@ -302,6 +300,10 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 			b.leaves[pageref{d, page}] = c
 			n.Children = append(n.Children, c)
 		}
+	}
+
+	if n.Title == "" && d.Meta != nil {
+		n.Title = d.Meta.Title
 	}
 
 	b.leaves[pageref{d, ""}] = n
