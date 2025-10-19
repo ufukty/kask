@@ -132,7 +132,7 @@ func TestBuild(t *testing.T) {
 
 		got := titlePaths(forest(b.root3))
 		for _, e := range expected {
-			t.Run("sitemap for "+strings.ReplaceAll(e, "/", "\\"), func(t *testing.T) {
+			t.Run("breadcrumbs for "+strings.ReplaceAll(e, "/", "\\"), func(t *testing.T) {
 				if !slices.Contains(got, e) {
 					t.Errorf("not found")
 				}
