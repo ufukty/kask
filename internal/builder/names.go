@@ -37,25 +37,29 @@ func targetFromFilename(dst, dstPath, filename string) string {
 	return filepath.Join(dst, dstPath, base+".html")
 }
 
-var titleSelector = regexp.MustCompile(`^# (.*)$`)
+var titleExtractors = map[string]*regexp.Regexp{
+	".md":   regexp.MustCompile(`(?m)^#\s+(.+)$`),
+	".tmpl": regexp.MustCompile(`(?i)<title>(.*?)</title>`),
+}
 
-func titleFromMarkdownPage(src string) (string, error) {
+func titleFromContent(content, ext string) string {
+	extractor, ok := titleExtractors[ext]
+	if !ok {
+		return ""
+	}
+	submatches := extractor.FindStringSubmatch(content)
+	if len(submatches) < 2 {
+		return ""
+	}
+	return submatches[1]
+}
+
+func decideOnTitle(src string) (string, error) {
 	bs, err := os.ReadFile(src)
 	if err != nil {
 		return "", fmt.Errorf("read file: %w", err)
 	}
-	ss := titleSelector.FindSubmatch(bs)
-	if len(ss) == 0 {
-		return "", nil
-	}
-	return string(ss[1]), nil
-}
-
-func titleForMarkdownPage(src string) (string, error) {
-	title, err := titleFromMarkdownPage(src)
-	if err != nil {
-		return "", fmt.Errorf("from page: %w", err)
-	}
+	title := titleFromContent(string(bs), ".md")
 	if title != "" {
 		return title, nil
 	}

@@ -1,6 +1,9 @@
 package builder
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -77,6 +80,33 @@ func TestTargetFromFilename(t *testing.T) {
 			got := targetFromFilename(input.dst, input.dstPath, input.filename)
 			if got != expected {
 				t.Errorf("expected %q got %q", expected, got)
+			}
+		})
+	}
+}
+
+func TestExtractors(t *testing.T) {
+
+	tcs := map[string]string{ // paths to expected titles
+		"career/index.tmpl":                 "Careers",
+		"docs/birdseed.md":                  "ACME Bird Seed",
+		"docs/download.md":                  "Download",
+		"docs/magnet.md":                    "ACME Magnet",
+		"docs/README.md":                    "Docs",
+		"docs/tutorials/getting-started.md": "Getting Started",
+		"index.tmpl":                        "Acme",
+		"products/index.tmpl":               "Products",
+	}
+
+	for path, expected := range tcs {
+		t.Run(strings.ReplaceAll(path, "/", "\\"), func(t *testing.T) {
+			c, err := os.ReadFile(filepath.Join("testdata/acme", path))
+			if err != nil {
+				t.Fatalf("prep, read file: %v", err)
+			}
+			got := titleFromContent(string(c), filepath.Ext(path))
+			if got != expected {
+				t.Errorf("assert, expected %q got %q", expected, got)
 			}
 		})
 	}
