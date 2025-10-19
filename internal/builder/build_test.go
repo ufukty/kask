@@ -119,15 +119,15 @@ func TestBuild(t *testing.T) {
 
 	t.Run("breadcrumbs", func(t *testing.T) {
 		expected := []string{
-			".",
-			"./career",
-			"./Docs",
-			"./Docs/ACME Bird Seed",
-			"./Docs/Download",
-			"./Docs/ACME Magnet",
-			"./Docs/tutorials",
-			"./Docs/tutorials/Getting Started",
-			"./products",
+			"Acme",
+			"Acme/career",
+			"Acme/Docs",
+			"Acme/Docs/ACME Bird Seed",
+			"Acme/Docs/Download",
+			"Acme/Docs/ACME Magnet",
+			"Acme/Docs/tutorials",
+			"Acme/Docs/tutorials/Getting Started",
+			"Acme/products",
 		}
 
 		got := titlePaths(forest(b.root3))
