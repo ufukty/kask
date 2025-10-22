@@ -40,6 +40,7 @@ type builder struct {
 	assets        []string                  // src paths
 	pagesMarkdown map[string]*markdown.Page // src path -> content
 	leaves        map[pageref]*Node         // to access nodes built for sitemap beforehand
+	links         map[string]string         // src path -> dst href (with stripped orderings)
 
 	root3 *Node // for testing
 }
@@ -271,12 +272,14 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		if filepath.Base(page) == "index.tmpl" {
 			n.Title = title
 		} else {
+			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page))
 			c := &Node{
 				Title:    title,
-				Href:     hrefFromFilename(d.DstPathEncoded, filepath.Base(page)),
+				Href:     href,
 				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
+			b.links[page] = href
 			b.leaves[pageref{d, page}] = c
 			n.Children = append(n.Children, c)
 		}
@@ -291,12 +294,14 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		if filepath.Base(page) == "README.md" {
 			n.Title = title
 		} else {
+			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page))
 			c := &Node{
 				Title:    title,
-				Href:     hrefFromFilename(d.DstPathEncoded, filepath.Base(page)),
+				Href:     href,
 				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
+			b.links[page] = href
 			b.leaves[pageref{d, page}] = c
 			n.Children = append(n.Children, c)
 		}
@@ -305,7 +310,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	if n.Title == "" && d.Meta != nil {
 		n.Title = d.Meta.Title
 	}
-
+	b.links[d.SrcPath] = d.DstPathEncoded
 	b.leaves[pageref{d, ""}] = n
 
 	for _, subdir := range d.Subdirs {
@@ -505,6 +510,7 @@ func Build(args Args) error {
 		assets:        []string{},
 		pagesMarkdown: map[string]*markdown.Page{},
 		leaves:        map[pageref]*Node{},
+		links:         map[string]string{},
 	}
 	return b.Build()
 }
