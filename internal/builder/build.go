@@ -503,8 +503,9 @@ func (b *builder) Build() error {
 	return nil
 }
 
-func Build(args Args) error {
-	b := &builder{
+// split for testing
+func newBuilder(args Args) *builder {
+	return &builder{
 		args:          args,
 		start:         time.Now(),
 		assets:        []string{},
@@ -512,5 +513,8 @@ func Build(args Args) error {
 		leaves:        map[pageref]*Node{},
 		links:         map[string]string{},
 	}
-	return b.Build()
+}
+
+func Build(args Args) error {
+	return newBuilder(args).Build()
 }
