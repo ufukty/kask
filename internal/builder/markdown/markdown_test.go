@@ -72,7 +72,7 @@ func TestToHtml_links(t *testing.T) {
 		t.Errorf("expected len(expected) = len(got) got %d != %d", len(expected), len(got))
 	}
 	for link, expected := range expected {
-		t.Run(link, func(t *testing.T) {
+		t.Run(strings.ReplaceAll(link, "/", "\\"), func(t *testing.T) {
 			if _, ok := got[link]; !ok {
 				t.Errorf("for %q expected %q got nothing", link, expected)
 			} else if expected != got[link] {
