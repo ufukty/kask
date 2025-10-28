@@ -21,14 +21,12 @@ func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
 	dest = strings.TrimSuffix(dest, "README.md")
 	dest = strings.TrimSuffix(dest, "index.tmpl")
 
-	if strings.HasSuffix(dest, ".md") {
-		dest = strings.TrimSuffix(dest, ".md") + ".html"
-	} else if strings.HasSuffix(dest, ".tmpl") {
-		dest = strings.TrimSuffix(dest, ".tmpl") + ".html"
-	}
-
 	// TODO: absolute paths => trim the prefix WORKING DIR in the PATH (?)
 	dest = filepath.Clean(filepath.Join(v.pagedir, dest))
+
+	if rewritten, ok := v.links_[dest]; ok {
+		dest = rewritten
+	}
 
 	if dest == "." {
 		dest = "/"

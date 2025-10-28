@@ -12,12 +12,14 @@ import (
 type visitor struct {
 	cf      *codefence.Renderer
 	pagedir string
+	links_  map[string]string
 }
 
-func NewVisitor(page string) *visitor {
+func NewVisitor(page string, links map[string]string) *visitor {
 	return &visitor{
 		cf:      codefence.NewRenderer(),
 		pagedir: "/" + strings.TrimPrefix(filepath.Dir(page), "/"),
+		links_:  links,
 	}
 }
 

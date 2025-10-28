@@ -326,7 +326,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 
 func (b *builder) renderMarkdown(d *dir2) error {
 	for _, md := range d.PagesMarkdown {
-		page, err := markdown.ToHtml(b.args.Src, md)
+		page, err := markdown.ToHtml(b.args.Src, md, b.links)
 		if err != nil {
 			return fmt.Errorf("rendering %s: %w", md, err)
 		}
