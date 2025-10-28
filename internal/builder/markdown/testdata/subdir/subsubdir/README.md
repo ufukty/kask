@@ -31,3 +31,8 @@
 [../subsubdir/a.md](a.md)
 [../subsubdir/a/b.md](a/b.md)
 [../subsubdir/a/README.md](a/README.md)
+
+[1. lorem](1.%20lorem/)
+[1. lorem/1. ipsum.md](1.%20lorem/1.%20ipsum.md)
+[3. sit](3.%20sit)
+[3. sit/2. consectetur.md](3.%20sit/2.%20consectetur.md)
