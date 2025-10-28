@@ -3,11 +3,12 @@ package markdown
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 )
 
 func Test_FromFile(t *testing.T) {
-	p, err := ToHtml("testdata", "input.md")
+	p, err := ToHtml("testdata", "input.md", map[string]string{})
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
 	}
@@ -25,7 +26,21 @@ func unmarshal(content string) map[string]string {
 }
 
 func TestToHtml_links(t *testing.T) {
-	p, err := ToHtml("testdata", "subdir/subsubdir/README.md")
+	r := map[string]string{
+		"/a.md":                                      "/a.html",
+		"/README.md":                                 "/",
+		"/subdir/a.md":                               "/subdir/a.html",
+		"/subdir/README.md":                          "/subdir/",
+		"/subdir/subsubdir/a.md":                     "/subdir/subsubdir/a.html",
+		"/subdir/subsubdir/README.md":                "/subdir/subsubdir/",
+		"/subdir/subsubdir/a/b.md":                   "/subdir/subsubdir/a/b.html",
+		"/subdir/subsubdir/a/README.md":              "/subdir/subsubdir/a/",
+		"/subdir/subsubdir/3. sit":                   "/subdir/subsubdir/sit/",
+		"/subdir/subsubdir/3. sit/2. consectetur.md": "/subdir/subsubdir/sit/consectetur.html",
+		"/subdir/subsubdir/1. lorem":                 "/subdir/subsubdir/lorem/",
+		"/subdir/subsubdir/1. lorem/1. ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
+	}
+	p, err := ToHtml("testdata", "subdir/subsubdir/README.md", r)
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
 	}
@@ -66,6 +81,12 @@ func TestToHtml_links(t *testing.T) {
 		"../subsubdir/a.md":          "/subdir/subsubdir/a.html",
 		"../subsubdir/a/b.md":        "/subdir/subsubdir/a/b.html",
 		"../subsubdir/a/README.md":   "/subdir/subsubdir/a",
+
+		// links to paths with stripped ordering
+		"1. lorem":                 "/subdir/subsubdir/lorem/",
+		"1. lorem/1. ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
+		"3. sit":                   "/subdir/subsubdir/sit/",
+		"3. sit/2. consectetur.md": "/subdir/subsubdir/sit/consectetur.html",
 	}
 	got := unmarshal(p.Content)
 	if len(expected) != len(got) {
