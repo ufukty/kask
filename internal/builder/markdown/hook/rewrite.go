@@ -5,28 +5,37 @@ import (
 	"strings"
 )
 
-func rewrite(url, pagedir string, rewrites map[string]string) string {
-	isExternal := false ||
+func isExternal(url string) bool {
+	return false ||
 		strings.HasPrefix(url, "http://") ||
-		strings.HasPrefix(url, "https://") ||
-		strings.HasPrefix(url, "/")
-	if isExternal {
+		strings.HasPrefix(url, "https://")
+}
+
+func isRelative(url string) bool {
+	return !strings.HasPrefix(url, "/")
+}
+
+func has(m map[string]string, k string) bool {
+	_, ok := m[k]
+	return ok
+}
+
+func rewrite(url, currentdir string, rewrites map[string]string) string {
+	if isExternal(url) {
 		return url
 	}
-
-	url = strings.TrimSuffix(url, "README.md")
-	url = strings.TrimSuffix(url, "index.tmpl")
-
-	// TODO: absolute paths => trim the prefix WORKING DIR in the PATH (?)
-	url = filepath.Clean(filepath.Join(pagedir, url))
-
-	if rewritten, ok := rewrites[url]; ok {
-		url = rewritten
+	if isRelative(url) {
+		url = filepath.Join(currentdir, url)
 	}
-
+	url = filepath.Clean(url)
 	if url == "." {
-		url = "/"
+		url = ""
 	}
-
+	if isRelative(url) {
+		url = "/" + url
+	}
+	if has(rewrites, url) {
+		url = rewrites[url]
+	}
 	return url
 }
