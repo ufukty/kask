@@ -1,6 +1,7 @@
 package hook
 
 import (
+	"net/url"
 	"path/filepath"
 	"strings"
 )
@@ -20,22 +21,31 @@ func has(m map[string]string, k string) bool {
 	return ok
 }
 
-func rewrite(url, currentdir string, rewrites map[string]string) string {
-	if isExternal(url) {
-		return url
+func unescape(target string) string {
+	t2, err := url.PathUnescape(target)
+	if err != nil {
+		return target
 	}
-	if isRelative(url) {
-		url = filepath.Join(currentdir, url)
+	return t2
+}
+
+func rewrite(target, currentdir string, rewrites map[string]string) string {
+	if isExternal(target) {
+		return target
 	}
-	url = filepath.Clean(url)
-	if url == "." {
-		url = ""
+	target = unescape(target)
+	if isRelative(target) {
+		target = filepath.Join(currentdir, target)
 	}
-	if isRelative(url) {
-		url = "/" + url
+	target = filepath.Clean(target)
+	if target == "." {
+		target = ""
 	}
-	if has(rewrites, url) {
-		url = rewrites[url]
+	if isRelative(target) {
+		target = "/" + target
 	}
-	return url
+	if has(rewrites, target) {
+		target = rewrites[target]
+	}
+	return target
 }
