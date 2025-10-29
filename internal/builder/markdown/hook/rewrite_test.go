@@ -54,7 +54,7 @@ func TestRewrite_linksToParents(t *testing.T) {
 			got := rewrite(link, "/subdir/subsubdir", rewrites)
 			expected := tcs[link]
 			if expected != got {
-				t.Errorf("for %q expected %q got %q", link, expected, got)
+				t.Errorf("expected %q got %q", expected, got)
 			}
 		})
 	}
@@ -77,7 +77,7 @@ func TestRewrite_linksToSubdirs(t *testing.T) {
 			got := rewrite(link, "/subdir/subsubdir", rewrites)
 			expected := tcs[link]
 			if expected != got {
-				t.Errorf("for %q expected %q got %q", link, expected, got)
+				t.Errorf("expected %q got %q", expected, got)
 			}
 		})
 	}
@@ -98,7 +98,7 @@ func TestRewrite_linksWithReduntantSegments(t *testing.T) {
 			got := rewrite(link, "/subdir/subsubdir", rewrites)
 			expected := tcs[link]
 			if expected != got {
-				t.Errorf("for %q expected %q got %q", link, expected, got)
+				t.Errorf("expected %q got %q", expected, got)
 			}
 		})
 	}
@@ -127,7 +127,7 @@ func TestRewrite_linksWithPathsWithStrippedOrdering(t *testing.T) {
 			got := rewrite(link, "/subdir/subsubdir", rewrites)
 			expected := tcs[link]
 			if expected != got {
-				t.Errorf("for %q expected %q got %q", link, expected, got)
+				t.Errorf("expected %q got %q", expected, got)
 			}
 		})
 	}
