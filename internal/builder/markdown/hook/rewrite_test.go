@@ -22,15 +22,19 @@ var rewrites = map[string]string{
 	"/subdir/subsubdir/1. lorem/1. ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
 }
 
+func testname(tn string) string {
+	tn = strings.ReplaceAll(tn, "/", "\\")
+	tn = strings.ReplaceAll(tn, "%20", " ")
+	return tn
+}
+
 func TestRewrite_linksToParents(t *testing.T) {
 	tcs := map[string]string{
 		"..":                "/subdir",
 		"../..":             "/",
 		"../../":            "/",
 		"../../a.md":        "/a.html",
-		"./../../a.md":      "/",
 		"../../README.md":   "/subdir",
-		"./../../README.md": "/subdir/a.html",
 		"../":               "/subdir",
 		"../a.md":           "/subdir/subsubdir",
 		"../README.md":      "/subdir",
@@ -38,17 +42,18 @@ func TestRewrite_linksToParents(t *testing.T) {
 		"./..":              "/",
 		"./../..":           "/subdir",
 		"./../../":          "/subdir/a.html",
+		"./../../a.md":      "/",
+		"./../../README.md": "/subdir/a.html",
 		"./../":             "/subdir",
 		"./../a.md":         "/a.html",
 		"./../README.md":    "/",
 	}
 
 	for _, link := range slices.Sorted(maps.Keys(tcs)) {
-		expected := tcs[link]
-		testname := strings.ReplaceAll(link, "/", "\\")
-		testname = strings.ReplaceAll(testname, "%20", " ")
-		t.Run(testname, func(t *testing.T) {
-			if got := rewrite(link, "/", rewrites); expected != got {
+		t.Run(testname(link), func(t *testing.T) {
+			got := rewrite(link, "/subdir/subsubdir", rewrites)
+			expected := tcs[link]
+			if expected != got {
 				t.Errorf("for %q expected %q got %q", link, expected, got)
 			}
 		})
@@ -57,22 +62,21 @@ func TestRewrite_linksToParents(t *testing.T) {
 
 func TestRewrite_linksToSubdirs(t *testing.T) {
 	tcs := map[string]string{
-		"a":             "/subdir/subsubdir/a",
-		"./a":           "/subdir/subsubdir/a",
 		"./a.md":        "/subdir/subsubdir/a.html",
+		"./a":           "/subdir/subsubdir/a",
 		"./a/b.md":      "/subdir/subsubdir/a/b.html",
 		"./a/README.md": "/subdir/subsubdir/a",
 		"a.md":          "/subdir/subsubdir/a.html",
+		"a":             "/subdir/subsubdir/a",
 		"a/b.md":        "/subdir/subsubdir/a/b.html",
 		"a/README.md":   "/subdir/subsubdir/a",
 	}
 
 	for _, link := range slices.Sorted(maps.Keys(tcs)) {
-		expected := tcs[link]
-		testname := strings.ReplaceAll(link, "/", "\\")
-		testname = strings.ReplaceAll(testname, "%20", " ")
-		t.Run(testname, func(t *testing.T) {
-			if got := rewrite(link, "/", rewrites); expected != got {
+		t.Run(testname(link), func(t *testing.T) {
+			got := rewrite(link, "/subdir/subsubdir", rewrites)
+			expected := tcs[link]
+			if expected != got {
 				t.Errorf("for %q expected %q got %q", link, expected, got)
 			}
 		})
@@ -81,20 +85,19 @@ func TestRewrite_linksToSubdirs(t *testing.T) {
 
 func TestRewrite_linksWithReduntantSegments(t *testing.T) {
 	tcs := map[string]string{
-		"./../subsubdir/a.md":        "/subdir/subsubdir/a.html",
-		"./../subsubdir/a/b.md":      "/subdir/subsubdir/a/b.html",
-		"./../subsubdir/a/README.md": "/subdir/subsubdir/a",
 		"../subsubdir/a.md":          "/subdir/subsubdir/a.html",
 		"../subsubdir/a/b.md":        "/subdir/subsubdir/a/b.html",
 		"../subsubdir/a/README.md":   "/subdir/subsubdir/a",
+		"./../subsubdir/a.md":        "/subdir/subsubdir/a.html",
+		"./../subsubdir/a/b.md":      "/subdir/subsubdir/a/b.html",
+		"./../subsubdir/a/README.md": "/subdir/subsubdir/a",
 	}
 
 	for _, link := range slices.Sorted(maps.Keys(tcs)) {
-		expected := tcs[link]
-		testname := strings.ReplaceAll(link, "/", "\\")
-		testname = strings.ReplaceAll(testname, "%20", " ")
-		t.Run(testname, func(t *testing.T) {
-			if got := rewrite(link, "/", rewrites); expected != got {
+		t.Run(testname(link), func(t *testing.T) {
+			got := rewrite(link, "/subdir/subsubdir", rewrites)
+			expected := tcs[link]
+			if expected != got {
 				t.Errorf("for %q expected %q got %q", link, expected, got)
 			}
 		})
@@ -103,6 +106,16 @@ func TestRewrite_linksWithReduntantSegments(t *testing.T) {
 
 func TestRewrite_linksWithPathsWithStrippedOrdering(t *testing.T) {
 	tcs := map[string]string{
+		"../subsubdir/1.%20lorem/":                  "/subdir/subsubdir/lorem/",
+		"../subsubdir/1.%20lorem/1.%20ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
+		"../subsubdir/3.%20sit":                     "/subdir/subsubdir/sit/",
+		"../subsubdir/3.%20sit/2.%20consectetur.md": "/subdir/subsubdir/sit/consectetur.html",
+
+		"./1.%20lorem/":                  "/subdir/subsubdir/lorem/",
+		"./1.%20lorem/1.%20ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
+		"./3.%20sit":                     "/subdir/subsubdir/sit/",
+		"./3.%20sit/2.%20consectetur.md": "/subdir/subsubdir/sit/consectetur.html",
+
 		"1.%20lorem/":                  "/subdir/subsubdir/lorem/",
 		"1.%20lorem/1.%20ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
 		"3.%20sit":                     "/subdir/subsubdir/sit/",
@@ -110,11 +123,10 @@ func TestRewrite_linksWithPathsWithStrippedOrdering(t *testing.T) {
 	}
 
 	for _, link := range slices.Sorted(maps.Keys(tcs)) {
-		expected := tcs[link]
-		testname := strings.ReplaceAll(link, "/", "\\")
-		testname = strings.ReplaceAll(testname, "%20", " ")
-		t.Run(testname, func(t *testing.T) {
-			if got := rewrite(link, "/", rewrites); expected != got {
+		t.Run(testname(link), func(t *testing.T) {
+			got := rewrite(link, "/subdir/subsubdir", rewrites)
+			expected := tcs[link]
+			if expected != got {
 				t.Errorf("for %q expected %q got %q", link, expected, got)
 			}
 		})
