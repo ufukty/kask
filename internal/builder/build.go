@@ -249,6 +249,16 @@ func isVisitable(d *dir2) bool {
 	return containsIndexHtml(d) || containsReadmeMd(d)
 }
 
+func canonicalize(dst string) string {
+	if !strings.HasPrefix(dst, "/") {
+		dst = "/" + dst
+	}
+	if dst == "/." {
+		dst = "/"
+	}
+	return dst
+}
+
 // TODO: consider prefixing [Node.Href] with the domain for absolute links
 // TODO: consider setting [Node.Children] on leaves to nil
 // DONE: overwrite dir title with README.md header
@@ -279,7 +289,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
-			b.links[page] = href
+			b.links[canonicalize(page)] = href
 			b.leaves[pageref{d, page}] = c
 			n.Children = append(n.Children, c)
 		}
@@ -301,7 +311,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
-			b.links[page] = href
+			b.links[canonicalize(page)] = href
 			b.leaves[pageref{d, page}] = c
 			n.Children = append(n.Children, c)
 		}
@@ -310,7 +320,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	if n.Title == "" && d.Meta != nil {
 		n.Title = d.Meta.Title
 	}
-	b.links[d.SrcPath] = d.DstPathEncoded
+	b.links[canonicalize(d.SrcPath)] = d.DstPathEncoded
 	b.leaves[pageref{d, ""}] = n
 
 	for _, subdir := range d.Subdirs {
