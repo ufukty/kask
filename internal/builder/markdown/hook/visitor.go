@@ -23,6 +23,11 @@ func NewVisitor(page string, links map[string]string) *visitor {
 	}
 }
 
+func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
+	node.Destination = []byte(rewrite(string(node.Destination), v.pagedir, v.links_))
+	return ast.GoToNext, false
+}
+
 func (v visitor) Visit(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
 	switch node := node.(type) {
 	case *ast.CodeBlock:
