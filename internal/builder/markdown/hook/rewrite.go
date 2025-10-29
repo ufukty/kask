@@ -29,11 +29,16 @@ func unescape(target string) string {
 	return t2
 }
 
+func isDir(target string) bool {
+	return !strings.Contains(filepath.Base(target), ".")
+}
+
 func rewrite(target, currentdir string, rewrites map[string]string) string {
 	if isExternal(target) {
 		return target
 	}
 	target = unescape(target)
+	isDir := isDir(target)
 	if isRelative(target) {
 		target = filepath.Join(currentdir, target)
 	}
@@ -46,6 +51,9 @@ func rewrite(target, currentdir string, rewrites map[string]string) string {
 	}
 	if has(rewrites, target) {
 		target = rewrites[target]
+	}
+	if isDir && !strings.HasSuffix(target, "/") {
+		target = target + "/"
 	}
 	return target
 }
