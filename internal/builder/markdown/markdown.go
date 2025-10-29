@@ -17,7 +17,7 @@ type Page struct {
 	Toc     *TocNode
 }
 
-func ToHtml(root, page string) (*Page, error) {
+func ToHtml(root, page string, links map[string]string) (*Page, error) {
 	p := parser.NewWithExtensions(
 		parser.CommonExtensions |
 			parser.Attributes |
@@ -34,7 +34,7 @@ func ToHtml(root, page string) (*Page, error) {
 
 	r := html.NewRenderer(html.RendererOptions{
 		Flags:          html.CommonFlags | html.HrefTargetBlank,
-		RenderNodeHook: hook.NewVisitor(page).Visit,
+		RenderNodeHook: hook.NewVisitor(page, links).Visit,
 	})
 	h := markdown.Render(n, r)
 	toc := getTableOfContent(n, r)

@@ -40,6 +40,7 @@ type builder struct {
 	assets        []string                  // src paths
 	pagesMarkdown map[string]*markdown.Page // src path -> content
 	leaves        map[pageref]*Node         // to access nodes built for sitemap beforehand
+	links         map[string]string         // src path -> dst href (with stripped orderings)
 
 	root3 *Node // for testing
 }
@@ -248,6 +249,16 @@ func isVisitable(d *dir2) bool {
 	return containsIndexHtml(d) || containsReadmeMd(d)
 }
 
+func canonicalize(dst string) string {
+	if !strings.HasPrefix(dst, "/") {
+		dst = "/" + dst
+	}
+	if dst == "/." {
+		dst = "/"
+	}
+	return dst
+}
+
 // TODO: consider prefixing [Node.Href] with the domain for absolute links
 // TODO: consider setting [Node.Children] on leaves to nil
 // DONE: overwrite dir title with README.md header
@@ -271,12 +282,14 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		if filepath.Base(page) == "index.tmpl" {
 			n.Title = title
 		} else {
+			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page))
 			c := &Node{
 				Title:    title,
-				Href:     hrefFromFilename(d.DstPathEncoded, filepath.Base(page)),
+				Href:     href,
 				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
+			b.links[canonicalize(page)] = href
 			b.leaves[pageref{d, page}] = c
 			n.Children = append(n.Children, c)
 		}
@@ -291,12 +304,14 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		if filepath.Base(page) == "README.md" {
 			n.Title = title
 		} else {
+			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page))
 			c := &Node{
 				Title:    title,
-				Href:     hrefFromFilename(d.DstPathEncoded, filepath.Base(page)),
+				Href:     href,
 				Parent:   n,
 				Children: []*Node{}, // initialized and empty TODO: consider nil
 			}
+			b.links[canonicalize(page)] = href
 			b.leaves[pageref{d, page}] = c
 			n.Children = append(n.Children, c)
 		}
@@ -305,7 +320,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	if n.Title == "" && d.Meta != nil {
 		n.Title = d.Meta.Title
 	}
-
+	b.links[canonicalize(d.SrcPath)] = d.DstPathEncoded
 	b.leaves[pageref{d, ""}] = n
 
 	for _, subdir := range d.Subdirs {
@@ -321,7 +336,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 
 func (b *builder) renderMarkdown(d *dir2) error {
 	for _, md := range d.PagesMarkdown {
-		page, err := markdown.ToHtml(b.args.Src, md)
+		page, err := markdown.ToHtml(b.args.Src, md, b.links)
 		if err != nil {
 			return fmt.Errorf("rendering %s: %w", md, err)
 		}
@@ -498,13 +513,18 @@ func (b *builder) Build() error {
 	return nil
 }
 
-func Build(args Args) error {
-	b := &builder{
+// split for testing
+func newBuilder(args Args) *builder {
+	return &builder{
 		args:          args,
 		start:         time.Now(),
 		assets:        []string{},
 		pagesMarkdown: map[string]*markdown.Page{},
 		leaves:        map[pageref]*Node{},
+		links:         map[string]string{},
 	}
-	return b.Build()
+}
+
+func Build(args Args) error {
+	return newBuilder(args).Build()
 }

@@ -7,8 +7,6 @@ import (
 	"slices"
 	"strings"
 	"testing"
-
-	"github.com/ufukty/kask/internal/builder/markdown"
 )
 
 // returns the DFS forest
@@ -57,18 +55,13 @@ func TestBuild(t *testing.T) {
 	}
 	fmt.Println("temp folder:", tmp)
 
-	b := builder{
-		args: Args{
-			Domain:  "http://localhost:8080",
-			Dev:     false,
-			Src:     "testdata/acme",
-			Dst:     tmp,
-			Verbose: true,
-		},
-		assets:        []string{},
-		pagesMarkdown: map[string]*markdown.Page{},
-		leaves:        map[pageref]*Node{},
-	}
+	b := newBuilder(Args{
+		Domain:  "http://localhost:8080",
+		Dev:     false,
+		Src:     "testdata/acme",
+		Dst:     tmp,
+		Verbose: true,
+	})
 
 	t.Run("building", func(t *testing.T) {
 		err = b.Build()
