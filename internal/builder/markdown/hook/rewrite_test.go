@@ -30,21 +30,21 @@ func testname(tn string) string {
 
 func TestRewrite_linksToParents(t *testing.T) {
 	tcs := map[string]string{
-		"..":                "/subdir",
+		"..":                "/subdir/",
 		"../..":             "/",
 		"../../":            "/",
 		"../../a.md":        "/a.html",
-		"../../README.md":   "/subdir",
-		"../":               "/subdir",
-		"../a.md":           "/subdir/subsubdir",
-		"../README.md":      "/subdir",
+		"../../README.md":   "/subdir/",
+		"../":               "/subdir/",
+		"../a.md":           "/subdir/subsubdir/",
+		"../README.md":      "/subdir/",
 		".":                 "/",
 		"./..":              "/",
-		"./../..":           "/subdir",
+		"./../..":           "/subdir/",
 		"./../../":          "/subdir/a.html",
 		"./../../a.md":      "/",
 		"./../../README.md": "/subdir/a.html",
-		"./../":             "/subdir",
+		"./../":             "/subdir/",
 		"./../a.md":         "/a.html",
 		"./../README.md":    "/",
 	}
@@ -63,13 +63,13 @@ func TestRewrite_linksToParents(t *testing.T) {
 func TestRewrite_linksToSubdirs(t *testing.T) {
 	tcs := map[string]string{
 		"./a.md":        "/subdir/subsubdir/a.html",
-		"./a":           "/subdir/subsubdir/a",
+		"./a":           "/subdir/subsubdir/a/",
 		"./a/b.md":      "/subdir/subsubdir/a/b.html",
-		"./a/README.md": "/subdir/subsubdir/a",
+		"./a/README.md": "/subdir/subsubdir/a/",
 		"a.md":          "/subdir/subsubdir/a.html",
-		"a":             "/subdir/subsubdir/a",
+		"a":             "/subdir/subsubdir/a/",
 		"a/b.md":        "/subdir/subsubdir/a/b.html",
-		"a/README.md":   "/subdir/subsubdir/a",
+		"a/README.md":   "/subdir/subsubdir/a/",
 	}
 
 	for _, link := range slices.Sorted(maps.Keys(tcs)) {
@@ -87,10 +87,10 @@ func TestRewrite_linksWithReduntantSegments(t *testing.T) {
 	tcs := map[string]string{
 		"../subsubdir/a.md":          "/subdir/subsubdir/a.html",
 		"../subsubdir/a/b.md":        "/subdir/subsubdir/a/b.html",
-		"../subsubdir/a/README.md":   "/subdir/subsubdir/a",
+		"../subsubdir/a/README.md":   "/subdir/subsubdir/a/",
 		"./../subsubdir/a.md":        "/subdir/subsubdir/a.html",
 		"./../subsubdir/a/b.md":      "/subdir/subsubdir/a/b.html",
-		"./../subsubdir/a/README.md": "/subdir/subsubdir/a",
+		"./../subsubdir/a/README.md": "/subdir/subsubdir/a/",
 	}
 
 	for _, link := range slices.Sorted(maps.Keys(tcs)) {
