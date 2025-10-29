@@ -33,6 +33,7 @@ func isDir(target string) bool {
 	return !strings.Contains(filepath.Base(target), ".")
 }
 
+// TODO: check path handling with query and browser parameters
 func rewrite(target, currentdir string, rewrites map[string]string) string {
 	if isExternal(target) {
 		return target
