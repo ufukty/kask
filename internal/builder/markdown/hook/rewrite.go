@@ -13,7 +13,7 @@ func isExternal(url string) bool {
 }
 
 func isRelative(url string) bool {
-	return !strings.HasPrefix(url, "/")
+	return !filepath.IsAbs(url)
 }
 
 func has(m map[string]string, k string) bool {
