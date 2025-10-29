@@ -1,12 +1,13 @@
 package hook
 
 import (
-	"fmt"
+	"maps"
+	"slices"
 	"strings"
 	"testing"
 )
 
-func TestToHtml_links(t *testing.T) {
+func TestRewrite(t *testing.T) {
 	r := map[string]string{
 		"/a.md":                                      "/a.html",
 		"/README.md":                                 "/",
@@ -21,29 +22,26 @@ func TestToHtml_links(t *testing.T) {
 		"/subdir/subsubdir/1. lorem":                 "/subdir/subsubdir/lorem/",
 		"/subdir/subsubdir/1. lorem/1. ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
 	}
-	p, err := ToHtml("testdata", "subdir/subsubdir/README.md", r)
-	if err != nil {
-		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
-	}
-	expected := map[string]string{
+
+	tcs := map[string]string{
 		// links to parents
 		"..":                "/subdir",
 		"../..":             "/",
 		"../../":            "/",
 		"../../a.md":        "/a.html",
-		"../../README.md":   "/",
+		"./../../a.md":      "/",
+		"../../README.md":   "/subdir",
+		"./../../README.md": "/subdir/a.html",
 		"../":               "/subdir",
-		"../a.md":           "/subdir/a.html",
+		"../a.md":           "/subdir/subsubdir",
 		"../README.md":      "/subdir",
-		".":                 "/subdir/subsubdir",
-		"./..":              "/subdir",
-		"./../..":           "/",
-		"./../../":          "/",
+		".":                 "/",
+		"./..":              "/",
+		"./../..":           "/subdir",
+		"./../../":          "/subdir/a.html",
 		"./../":             "/subdir",
-		"./../a.md":         "/subdir/a.html",
-		"./../README.md":    "/subdir",
-		"./../../a.md":      "/a.html",
-		"./../../README.md": "/",
+		"./../a.md":         "/a.html",
+		"./../README.md":    "/",
 
 		// links to subdirs
 		"a":             "/subdir/subsubdir/a",
@@ -64,21 +62,19 @@ func TestToHtml_links(t *testing.T) {
 		"../subsubdir/a/README.md":   "/subdir/subsubdir/a",
 
 		// links to paths with stripped ordering
-		"1. lorem":                 "/subdir/subsubdir/lorem/",
-		"1. lorem/1. ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
-		"3. sit":                   "/subdir/subsubdir/sit/",
-		"3. sit/2. consectetur.md": "/subdir/subsubdir/sit/consectetur.html",
+		"1.%20lorem/":                  "/subdir/subsubdir/lorem/",
+		"1.%20lorem/1.%20ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
+		"3.%20sit":                     "/subdir/subsubdir/sit/",
+		"3.%20sit/2.%20consectetur.md": "/subdir/subsubdir/sit/consectetur.html",
 	}
-	got := unmarshal(p.Content)
-	if len(expected) != len(got) {
-		t.Errorf("expected len(expected) = len(got) got %d != %d", len(expected), len(got))
-	}
-	for link, expected := range expected {
-		t.Run(strings.ReplaceAll(link, "/", "\\"), func(t *testing.T) {
-			if _, ok := got[link]; !ok {
-				t.Errorf("for %q expected %q got nothing", link, expected)
-			} else if expected != got[link] {
-				t.Errorf("for %q expected %q got %q", link, expected, got[link])
+
+	for _, link := range slices.Sorted(maps.Keys(tcs)) {
+		expected := tcs[link]
+		testname := strings.ReplaceAll(link, "/", "\\")
+		testname = strings.ReplaceAll(testname, "%20", " ")
+		t.Run(testname, func(t *testing.T) {
+			if got := rewrite(link, "/", r); expected != got {
+				t.Errorf("for %q expected %q got %q", link, expected, got)
 			}
 		})
 	}
