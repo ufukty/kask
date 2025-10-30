@@ -99,12 +99,12 @@ func ExampleBuild_sitemap() {
 	// Output:
 	// /.
 	// /career/
+	// /products/
 	// /docs/
 	// /docs/birdseed.html
 	// /docs/download.html
 	// /docs/magnet.html
 	// /docs/tutorials/getting-started.html
-	// /products/
 }
 
 func ExampleBuild_breadcrumbs() {
@@ -137,11 +137,11 @@ func ExampleBuild_breadcrumbs() {
 	// Output:
 	// Acme
 	// Acme/Careers at ACME
+	// Acme/ACME Products
 	// Acme/Docs
 	// Acme/Docs/ACME Bird Seed
 	// Acme/Docs/Download
 	// Acme/Docs/ACME Magnet
 	// Acme/Docs/tutorials
 	// Acme/Docs/tutorials/Getting Started
-	// Acme/ACME Products
 }
