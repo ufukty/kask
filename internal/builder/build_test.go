@@ -96,7 +96,7 @@ func ExampleBuild_sitemap() {
 		fmt.Println(node.Href)
 	}
 	// Output:
-	// /.
+	// /
 	// /career/
 	// /products/
 	// /docs/
