@@ -103,6 +103,7 @@ func ExampleBuild_sitemap() {
 	// /docs/birdseed.html
 	// /docs/download.html
 	// /docs/magnet.html
+	//
 	// /docs/tutorials/getting-started.html
 }
 
