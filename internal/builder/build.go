@@ -236,20 +236,8 @@ type Node struct {
 	Children []*Node
 }
 
-func containsIndexHtml(d *dir2) bool {
-	return slices.ContainsFunc(d.PagesTmpl, func(path string) bool {
-		return filepath.Base(path) == "index.tmpl"
-	})
-}
-
-func containsReadmeMd(d *dir2) bool {
-	return slices.ContainsFunc(d.PagesMarkdown, func(path string) bool {
-		return filepath.Base(path) == "README.md"
-	})
-}
-
-func isVisitable(d *dir2) bool {
-	return containsIndexHtml(d) || containsReadmeMd(d)
+func isToStrip(d *dir2) bool {
+	return d != nil && d.Meta != nil && d.Meta.StripOrdering
 }
 
 func canonicalize(dst string) string {
@@ -262,10 +250,7 @@ func canonicalize(dst string) string {
 	return dst
 }
 
-// TODO: consider prefixing [Node.Href] with the domain for absolute links
-// TODO: consider setting [Node.Children] on leaves to nil
-// DONE: overwrite dir title with README.md header
-func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
+func (b *builder) toNode(d, p *dir2, parent *Node) (*Node, error) {
 	n := &Node{
 		Title:    d.DstName,
 		Href:     "",
@@ -273,26 +258,26 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		Children: []*Node{},
 	}
 
-	if isVisitable(d) {
-		n.Href = "/" + d.DstPathEncoded // TODO: domain prefix
-	}
-
-	so := d.Meta != nil && d.Meta.StripOrdering
-
 	for _, page := range slices.Concat(d.PagesTmpl, d.PagesMarkdown) {
-		title, err := decideOnTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), so)
-		if err != nil {
-			return nil, fmt.Errorf("decide on title: %w", err)
-		}
 		if base := filepath.Base(page); base == "index.tmpl" || base == "README.md" {
+			n.Href = "/" + d.DstPathEncoded // TODO: domain prefix
+			title, err := decideOnTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), isToStrip(p))
+			if err != nil {
+				return nil, fmt.Errorf("decide on title: %w", err)
+			}
 			n.Title = title
+
 		} else {
-			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page), so)
+			title, err := decideOnTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), isToStrip(d))
+			if err != nil {
+				return nil, fmt.Errorf("decide on title: %w", err)
+			}
+			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page), isToStrip(d))
 			c := &Node{
 				Title:    title,
 				Href:     href,
 				Parent:   n,
-				Children: []*Node{}, // initialized and empty TODO: consider nil
+				Children: []*Node{},
 			}
 			b.links[canonicalize(page)] = href
 			b.leaves[pageref{d, page}] = c
@@ -300,14 +285,11 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		}
 	}
 
-	if n.Title == "" && d.Meta != nil {
-		n.Title = d.Meta.Title
-	}
 	b.links[canonicalize(d.SrcPath)] = d.DstPathEncoded
 	b.leaves[pageref{d, ""}] = n
 
 	for _, subdir := range d.Subdirs {
-		s, err := b.toNode(subdir, n)
+		s, err := b.toNode(subdir, d, n)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", d.SrcName, err)
 		}
@@ -476,7 +458,7 @@ func (b *builder) Build() error {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 
-	b.root3, err = b.toNode(root2, nil)
+	b.root3, err = b.toNode(root2, nil, nil)
 	if err != nil {
 		return fmt.Errorf("structuring node tree: %w", err)
 	}
