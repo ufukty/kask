@@ -36,7 +36,7 @@ func TestTitleFromFilename(t *testing.T) {
 	}
 	for input, expected := range tcs {
 		t.Run(input, func(t *testing.T) {
-			got := titleFromFilename(input, ".tmpl")
+			got := titleFromFilename(input, ".tmpl", true)
 			if got != expected {
 				t.Errorf("expected %q got %q", expected, got)
 			}

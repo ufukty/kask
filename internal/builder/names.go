@@ -20,8 +20,12 @@ func stripOrdering(s string) string {
 
 var titler = cases.Title(language.Und, cases.NoLower)
 
-func titleFromFilename(src, ext string) string {
-	return titler.String(strings.TrimSuffix(stripOrdering(filepath.Base(src)), ext))
+func titleFromFilename(base, ext string, strippedOrdering bool) string {
+	base = filepath.Base(base)
+	if strippedOrdering {
+		base = stripOrdering(base)
+	}
+	return titler.String(strings.TrimSuffix(base, ext))
 }
 
 func hrefFromFilename(dstPathEncoded, filename string, strippedOrdering bool) string {
@@ -60,7 +64,7 @@ func titleFromContent(content, ext string) string {
 // 1. title from content, if available
 // 2. title from file name, if visitable
 // 3. title from folder name
-func decideOnTitle(src, ext string) (string, error) {
+func decideOnTitle(src, ext string, strippedOrdering bool) (string, error) {
 	bs, err := os.ReadFile(src)
 	if err != nil {
 		return "", fmt.Errorf("read file: %w", err)
@@ -69,5 +73,5 @@ func decideOnTitle(src, ext string) (string, error) {
 	if title != "" {
 		return title, nil
 	}
-	return titleFromFilename(src, ext), nil
+	return titleFromFilename(src, ext, strippedOrdering), nil
 }

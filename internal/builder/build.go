@@ -278,9 +278,9 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	}
 
 	so := d.Meta != nil && d.Meta.StripOrdering
-	
+
 	for _, page := range d.PagesTmpl {
-		title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".html")
+		title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".html", so)
 		if err != nil {
 			return nil, fmt.Errorf("decide on title: %w", err)
 		}
@@ -301,7 +301,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	}
 
 	for _, page := range d.PagesMarkdown {
-		title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".md")
+		title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".md", so)
 		if err != nil {
 			return nil, fmt.Errorf("decide on title: %w", err)
 		}
