@@ -78,14 +78,13 @@ func ExampleBuild_sitemap() {
 	if err != nil {
 		panic(fmt.Errorf("os.MkdirTemp: %w", err))
 	}
-	fmt.Println("temp folder:", tmp)
 
 	b := newBuilder(Args{
 		Domain:  "http://localhost:8080",
 		Dev:     false,
 		Src:     "testdata/acme",
 		Dst:     tmp,
-		Verbose: true,
+		Verbose: false,
 	})
 
 	err = b.Build()
@@ -112,14 +111,13 @@ func ExampleBuild_breadcrumbs() {
 	if err != nil {
 		panic(fmt.Errorf("os.MkdirTemp: %w", err))
 	}
-	fmt.Println("temp folder:", tmp)
 
 	b := newBuilder(Args{
 		Domain:  "http://localhost:8080",
 		Dev:     false,
 		Src:     "testdata/acme",
 		Dst:     tmp,
-		Verbose: true,
+		Verbose: false,
 	})
 
 	err = b.Build()
