@@ -255,7 +255,7 @@ func canonicalize(dst string) string {
 	return dst
 }
 
-func (b *builder) toNode(d, p *dir2, parent *Node) (*Node, error) {
+func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	n := &Node{
 		Title:    d.DstName,
 		Href:     "",
@@ -290,7 +290,7 @@ func (b *builder) toNode(d, p *dir2, parent *Node) (*Node, error) {
 	b.leaves[pageref{d, ""}] = n
 
 	for _, subdir := range d.Subdirs {
-		s, err := b.toNode(subdir, d, n)
+		s, err := b.toNode(subdir, n)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", d.SrcName, err)
 		}
@@ -459,7 +459,7 @@ func (b *builder) Build() error {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 
-	b.root3, err = b.toNode(root2, nil, nil)
+	b.root3, err = b.toNode(root2, nil)
 	if err != nil {
 		return fmt.Errorf("structuring node tree: %w", err)
 	}
