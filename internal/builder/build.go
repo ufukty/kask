@@ -103,7 +103,10 @@ type dir2 struct {
 
 func (b *builder) toDir2(d *directory.Dir, srcParent, dstParent, dstParentEncoded string) *dir2 {
 	srcParent = filepath.Join(srcParent, d.Name)
-	dstName := stripOrdering(d.Name)
+	dstName := d.Name
+	if d.Meta.StripOrdering {
+		dstName = stripOrdering(d.Name)
+	}
 	dstParent = filepath.Join(dstParent, dstName)
 	dstParentEncoded = filepath.Join(dstParentEncoded, url.PathEscape(dstName))
 	d2 := &dir2{
