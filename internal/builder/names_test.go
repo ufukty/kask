@@ -58,7 +58,7 @@ func TestHrefFromFilename(t *testing.T) {
 	}
 	for input, expected := range tcs {
 		t.Run(input.testname, func(t *testing.T) {
-			got := hrefFromFilename(input.dstPathEncoded, input.filename)
+			got := hrefFromFilename(input.dstPathEncoded, input.filename, false)
 			if got != expected {
 				t.Errorf("expected %q got %q", expected, got)
 			}

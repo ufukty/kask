@@ -282,7 +282,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		if filepath.Base(page) == "index.tmpl" {
 			n.Title = title
 		} else {
-			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page))
+			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page), d.Meta.StripOrdering)
 			c := &Node{
 				Title:    title,
 				Href:     href,
@@ -304,7 +304,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		if filepath.Base(page) == "README.md" {
 			n.Title = title
 		} else {
-			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page))
+			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page), d.Meta.StripOrdering)
 			c := &Node{
 				Title:    title,
 				Href:     href,
