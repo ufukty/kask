@@ -46,7 +46,7 @@ func targetFromFilename(dst, dstPath, filename string) string {
 
 var titleExtractors = map[string]*regexp.Regexp{
 	".md":   regexp.MustCompile(`(?m)^#\s+(.+)$`),
-	".html": regexp.MustCompile(`(?i)<title>(.*?)</title>`),
+	".tmpl": regexp.MustCompile(`(?i)<title>(.*?)</title>`),
 }
 
 func titleFromContent(content, ext string) string {

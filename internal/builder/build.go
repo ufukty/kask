@@ -279,34 +279,12 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 
 	so := d.Meta != nil && d.Meta.StripOrdering
 
-	for _, page := range d.PagesTmpl {
-		title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".html", so)
+	for _, page := range slices.Concat(d.PagesTmpl, d.PagesMarkdown) {
+		title, err := decideOnTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), so)
 		if err != nil {
 			return nil, fmt.Errorf("decide on title: %w", err)
 		}
-		if filepath.Base(page) == "index.tmpl" {
-			n.Title = title
-		} else {
-			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page), so)
-			c := &Node{
-				Title:    title,
-				Href:     href,
-				Parent:   n,
-				Children: []*Node{}, // initialized and empty TODO: consider nil
-			}
-			b.links[canonicalize(page)] = href
-			b.leaves[pageref{d, page}] = c
-			n.Children = append(n.Children, c)
-		}
-	}
-
-	for _, page := range d.PagesMarkdown {
-		title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".md", so)
-		if err != nil {
-			return nil, fmt.Errorf("decide on title: %w", err)
-		}
-
-		if filepath.Base(page) == "README.md" {
+		if base := filepath.Base(page); base == "index.tmpl" || base == "README.md" {
 			n.Title = title
 		} else {
 			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page), so)
