@@ -29,9 +29,9 @@ func titleFromFilename(base, ext string, strippedOrdering bool) string {
 }
 
 func hrefFromFilename(dstPathEncoded, filename string, strippedOrdering bool) string {
-	base := ""
+	base := filename
 	if strippedOrdering {
-		base = stripOrdering(filename)
+		base = stripOrdering(base)
 	}
 	base = strings.TrimSuffix(base, filepath.Ext(filename))
 	base = url.PathEscape(base)
