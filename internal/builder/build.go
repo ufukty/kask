@@ -240,12 +240,17 @@ func isToStrip(d *dir2) bool {
 	return d != nil && d.Meta != nil && d.Meta.StripOrdering
 }
 
+// TODO: domain prefix
+// NOTE: Split if internal (src file) and external (href) path syntaxes diverge
 func canonicalize(dst string) string {
 	if !strings.HasPrefix(dst, "/") {
 		dst = "/" + dst
 	}
 	if dst == "/." {
 		dst = "/"
+	}
+	if !strings.Contains(filepath.Base(dst), ".") && !strings.HasSuffix(dst, "/") {
+		dst = dst + "/"
 	}
 	return dst
 }
@@ -259,20 +264,16 @@ func (b *builder) toNode(d, p *dir2, parent *Node) (*Node, error) {
 	}
 
 	for _, page := range slices.Concat(d.PagesTmpl, d.PagesMarkdown) {
-		if base := filepath.Base(page); base == "index.tmpl" || base == "README.md" {
-			n.Href = "/" + d.DstPathEncoded // TODO: domain prefix
-			title, err := decideOnTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), isToStrip(p))
-			if err != nil {
-				return nil, fmt.Errorf("decide on title: %w", err)
-			}
+		title, err := decideOnTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), isToStrip(d))
+		if err != nil {
+			return nil, fmt.Errorf("decide on title: %w", err)
+		}
+		base := filepath.Base(page)
+		if base == "index.tmpl" || base == "README.md" {
+			n.Href = canonicalize(d.DstPathEncoded)
 			n.Title = title
-
 		} else {
-			title, err := decideOnTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), isToStrip(d))
-			if err != nil {
-				return nil, fmt.Errorf("decide on title: %w", err)
-			}
-			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page), isToStrip(d))
+			href := hrefFromFilename(d.DstPathEncoded, base, isToStrip(d))
 			c := &Node{
 				Title:    title,
 				Href:     href,
