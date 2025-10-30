@@ -91,13 +91,13 @@ func TestBuild(t *testing.T) {
 	t.Run("sitemap", func(t *testing.T) {
 		expected := []string{
 			"/.",                                   // "."
-			"/career",                              // "./career",
-			"/docs",                                // "./Docs",
+			"/career/",                             // "./career",
+			"/docs/",                               // "./Docs",
 			"/docs/birdseed.html",                  // "./Docs/ACME Bird Seed",
 			"/docs/download.html",                  // "./Docs/Download",
 			"/docs/magnet.html",                    // "./Docs/ACME Magnet",
 			"/docs/tutorials/getting-started.html", // "./Docs/tutorials/Getting Started"
-			"/products",                            // "./products",
+			"/products/",                           // "./products",
 		}
 
 		got := fmap(forest(b.root3), func(n *Node) string { return n.Href })
