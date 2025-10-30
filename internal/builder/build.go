@@ -104,7 +104,7 @@ type dir2 struct {
 func (b *builder) toDir2(d *directory.Dir, srcParent, dstParent, dstParentEncoded string) *dir2 {
 	srcParent = filepath.Join(srcParent, d.Name)
 	dstName := d.Name
-	if d.Meta.StripOrdering {
+	if d.Meta != nil && d.Meta.StripOrdering {
 		dstName = stripOrdering(d.Name)
 	}
 	dstParent = filepath.Join(dstParent, dstName)
@@ -277,6 +277,8 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		n.Href = "/" + d.DstPathEncoded // TODO: domain prefix
 	}
 
+	so := d.Meta != nil && d.Meta.StripOrdering
+	
 	for _, page := range d.PagesTmpl {
 		title, err := decideOnTitle(filepath.Join(b.args.Src, page), ".html")
 		if err != nil {
@@ -285,7 +287,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		if filepath.Base(page) == "index.tmpl" {
 			n.Title = title
 		} else {
-			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page), d.Meta.StripOrdering)
+			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page), so)
 			c := &Node{
 				Title:    title,
 				Href:     href,
@@ -307,7 +309,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		if filepath.Base(page) == "README.md" {
 			n.Title = title
 		} else {
-			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page), d.Meta.StripOrdering)
+			href := hrefFromFilename(d.DstPathEncoded, filepath.Base(page), so)
 			c := &Node{
 				Title:    title,
 				Href:     href,
