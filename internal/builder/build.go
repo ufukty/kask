@@ -101,10 +101,10 @@ type dir2 struct {
 	Tmpl *template.Template
 }
 
-func (b *builder) toDir2(d *directory.Dir, srcParent, dstParent, dstParentEncoded string) *dir2 {
+func (b *builder) toDir2(d, p *directory.Dir, srcParent, dstParent, dstParentEncoded string) *dir2 {
 	srcParent = filepath.Join(srcParent, d.Name)
 	dstName := d.Name
-	if d.Meta != nil && d.Meta.StripOrdering {
+	if p != nil && p.Meta != nil && p.Meta.StripOrdering {
 		dstName = stripOrdering(d.Name)
 	}
 	dstParent = filepath.Join(dstParent, dstName)
@@ -130,7 +130,7 @@ func (b *builder) toDir2(d *directory.Dir, srcParent, dstParent, dstParentEncode
 		Tmpl: nil,
 	}
 	for _, subdir := range d.Subdirs {
-		d2.Subdirs = append(d2.Subdirs, b.toDir2(subdir, srcParent, dstParent, dstParentEncoded))
+		d2.Subdirs = append(d2.Subdirs, b.toDir2(subdir, d, srcParent, dstParent, dstParentEncoded))
 	}
 	return d2
 }
@@ -448,7 +448,7 @@ func (b *builder) Build() error {
 		return fmt.Errorf("checking competing files and folders: %w", err)
 	}
 
-	root2 := b.toDir2(root, "", "", "")
+	root2 := b.toDir2(root, nil, "", "", "")
 
 	if err := b.bundleAndPropagateStylesheets(root2, []string{}); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)
