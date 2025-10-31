@@ -11,14 +11,21 @@ import (
 
 type visitor struct {
 	cf      *codefence.Renderer
-	pageDir string
+	pagedir string
+	links_  map[string]string
 }
 
-func NewVisitor(page string) *visitor {
+func NewVisitor(page string, links map[string]string) *visitor {
 	return &visitor{
 		cf:      codefence.NewRenderer(),
-		pageDir: "/" + strings.TrimPrefix(filepath.Dir(page), "/"),
+		pagedir: "/" + strings.TrimPrefix(filepath.Dir(page), "/"),
+		links_:  links,
 	}
+}
+
+func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
+	node.Destination = []byte(rewrite(string(node.Destination), v.pagedir, v.links_))
+	return ast.GoToNext, false
 }
 
 func (v visitor) Visit(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {

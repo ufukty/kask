@@ -40,6 +40,7 @@ type builder struct {
 	assets        []string                  // src paths
 	pagesMarkdown map[string]*markdown.Page // src path -> content
 	leaves        map[pageref]*Node         // to access nodes built for sitemap beforehand
+	links         map[string]string         // src path -> dst href (with stripped orderings)
 
 	root3 *Node // for testing
 }
@@ -86,9 +87,10 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 // used in assigning destination addresses, bundling css, and propagating tmpl files
 type dir2 struct {
 	Kask *directory.Kask
+	Meta *directory.Meta
 
-	SrcName, SrcPath, SrcAssets string
-	DstName, DstPath, DstAssets string // path encoded
+	SrcName, SrcPath, SrcAssets      string
+	DstName, DstPath, DstPathEncoded string
 
 	Subdirs []*dir2
 
@@ -99,21 +101,27 @@ type dir2 struct {
 	Tmpl *template.Template
 }
 
-func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
-	srcparent = filepath.Join(srcparent, d.Name)
-	dstparent = filepath.Join(dstparent, url.PathEscape(d.Name)) // escaped
+func (b *builder) toDir2(d, p *directory.Dir, srcParent, dstParent, dstParentEncoded string) *dir2 {
+	srcParent = filepath.Join(srcParent, d.Name)
+	dstName := d.Name
+	if !(p != nil && p.Meta != nil && p.Meta.PreserveOrdering) {
+		dstName = stripOrdering(d.Name)
+	}
+	dstParent = filepath.Join(dstParent, dstName)
+	dstParentEncoded = filepath.Join(dstParentEncoded, url.PathEscape(dstName))
 	d2 := &dir2{
 		Kask: d.Kask,
+		Meta: d.Meta,
 
 		Subdirs: []*dir2{},
 
 		SrcName:   d.Name,
-		SrcPath:   srcparent,
+		SrcPath:   srcParent,
 		SrcAssets: d.Assets,
 
-		DstName:   url.PathEscape(d.Name),
-		DstPath:   dstparent,
-		DstAssets: filepath.Join(dstparent, ".assets"),
+		DstName:        dstName,
+		DstPath:        dstParent,
+		DstPathEncoded: dstParentEncoded,
 
 		PagesMarkdown: d.PagesMarkdown,
 		PagesTmpl:     d.PagesTmpl,
@@ -122,7 +130,7 @@ func (b *builder) toDir2(d *directory.Dir, srcparent, dstparent string) *dir2 {
 		Tmpl: nil,
 	}
 	for _, subdir := range d.Subdirs {
-		d2.Subdirs = append(d2.Subdirs, b.toDir2(subdir, srcparent, dstparent))
+		d2.Subdirs = append(d2.Subdirs, b.toDir2(subdir, d, srcParent, dstParent, dstParentEncoded))
 	}
 	return d2
 }
@@ -217,9 +225,84 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 	return nil
 }
 
+// represents a sitemap node which can be either of:
+//   - non-visitable directories
+//   - directories with "index.tmpl" or "README.md" file
+//   - pages corresponding to .tmpl or .md files
+type Node struct {
+	Title    string // markdown h1, meta.yml title or the file name
+	Href     string // Visitable when filled
+	Parent   *Node
+	Children []*Node
+}
+
+func isToStrip(d *dir2) bool {
+	return !(d != nil && d.Meta != nil && d.Meta.PreserveOrdering)
+}
+
+// TODO: domain prefix
+// NOTE: Split if internal (src file) and external (href) path syntaxes diverge
+func canonicalize(dst string) string {
+	if !strings.HasPrefix(dst, "/") {
+		dst = "/" + dst
+	}
+	if dst == "/." {
+		dst = "/"
+	}
+	if !strings.Contains(filepath.Base(dst), ".") && !strings.HasSuffix(dst, "/") {
+		dst = dst + "/"
+	}
+	return dst
+}
+
+func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
+	n := &Node{
+		Title:    d.DstName,
+		Href:     "",
+		Parent:   parent,
+		Children: []*Node{},
+	}
+
+	for _, page := range slices.Concat(d.PagesTmpl, d.PagesMarkdown) {
+		title, err := decideOnTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), isToStrip(d))
+		if err != nil {
+			return nil, fmt.Errorf("decide on title: %w", err)
+		}
+		base := filepath.Base(page)
+		if base == "index.tmpl" || base == "README.md" {
+			n.Href = canonicalize(d.DstPathEncoded)
+			n.Title = title
+		} else {
+			href := hrefFromFilename(d.DstPathEncoded, base, isToStrip(d))
+			c := &Node{
+				Title:    title,
+				Href:     href,
+				Parent:   n,
+				Children: []*Node{},
+			}
+			b.links[canonicalize(page)] = href
+			b.leaves[pageref{d, page}] = c
+			n.Children = append(n.Children, c)
+		}
+	}
+
+	b.links[canonicalize(d.SrcPath)] = d.DstPathEncoded
+	b.leaves[pageref{d, ""}] = n
+
+	for _, subdir := range d.Subdirs {
+		s, err := b.toNode(subdir, n)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", d.SrcName, err)
+		}
+		n.Children = append(n.Children, s)
+	}
+
+	return n, nil
+}
+
 func (b *builder) renderMarkdown(d *dir2) error {
 	for _, md := range d.PagesMarkdown {
-		page, err := markdown.ToHtml(b.args.Src, md)
+		page, err := markdown.ToHtml(b.args.Src, md, b.links)
 		if err != nil {
 			return fmt.Errorf("rendering %s: %w", md, err)
 		}
@@ -233,89 +316,6 @@ func (b *builder) renderMarkdown(d *dir2) error {
 	}
 
 	return nil
-}
-
-// represents a sitemap node which can be either of:
-//   - non-visitable directories
-//   - directories with "index.tmpl" or "README.md" file
-//   - pages corresponding to .tmpl or .md files
-type Node struct {
-	Title    string // markdown h1, meta.yml title or the file name
-	Href     string // Visitable when filled
-	Parent   *Node
-	Children []*Node
-}
-
-func containsIndexHtml(d *dir2) bool {
-	return slices.ContainsFunc(d.PagesTmpl, func(path string) bool {
-		return filepath.Base(path) == "index.tmpl"
-	})
-}
-
-func containsReadmeMd(d *dir2) bool {
-	return slices.ContainsFunc(d.PagesMarkdown, func(path string) bool {
-		return filepath.Base(path) == "README.md"
-	})
-}
-
-func isVisitable(d *dir2) bool {
-	return containsIndexHtml(d) || containsReadmeMd(d)
-}
-
-// TODO: consider prefixing [Node.Href] with the domain for absolute links
-// TODO: consider setting [Node.Children] on leaves to nil
-// DONE: overwrite dir title with README.md header
-func (b *builder) toNode(d *dir2, parent *Node) *Node {
-	n := &Node{
-		Title:    d.SrcName,
-		Href:     "",
-		Parent:   parent,
-		Children: []*Node{},
-	}
-
-	if isVisitable(d) {
-		n.Href = "/" + d.DstPath // TODO: domain prefix
-	}
-
-	for _, page := range d.PagesTmpl {
-		if filepath.Base(page) != "index.tmpl" {
-			c := &Node{
-				Title:    filepath.Base(strings.ToTitle(page)),
-				Href:     "/" + filepath.Join(d.DstPath, url.PathEscape(filepath.Base(page))),
-				Parent:   n,
-				Children: []*Node{}, // initialized and empty TODO: consider nil
-			}
-			b.leaves[pageref{d, page}] = c
-			n.Children = append(n.Children, c)
-		}
-	}
-
-	for _, page := range d.PagesMarkdown {
-		title := filepath.Base(strings.ToTitle(page)) // default
-		if md, ok := b.pagesMarkdown[page]; ok && md.Toc != nil && len(md.Toc.Children) > 0 {
-			title = md.Toc.Children[0].Title
-		}
-		if filepath.Base(page) == "README.md" {
-			n.Title = title
-		} else {
-			c := &Node{
-				Title:    title,
-				Href:     "/" + filepath.Join(d.DstPath, url.PathEscape(strings.TrimSuffix(filepath.Base(page), ".md")+".html")),
-				Parent:   n,
-				Children: []*Node{}, // initialized and empty TODO: consider nil
-			}
-			b.leaves[pageref{d, page}] = c
-			n.Children = append(n.Children, c)
-		}
-	}
-
-	b.leaves[pageref{d, ""}] = n
-
-	for _, subdir := range d.Subdirs {
-		n.Children = append(n.Children, b.toNode(subdir, n))
-	}
-
-	return n
 }
 
 // template files should access necessary information through
@@ -346,15 +346,15 @@ func (b *builder) execPage(dst string, tmpl *template.Template, name string, con
 }
 
 func (b *builder) execDir(d *dir2) error {
-	err := os.MkdirAll(filepath.Join(b.args.Dst, d.SrcPath), 0755)
+	err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
 
 	for _, page := range d.PagesTmpl {
-		dst2 := filepath.Join(b.args.Dst, d.SrcPath, "index.html")
+		dst2 := filepath.Join(b.args.Dst, d.DstPath, "index.html")
 		if filepath.Base(page) != "index.tmpl" {
-			dst2 = filepath.Join(b.args.Dst, d.SrcPath, strings.TrimSuffix(filepath.Base(page), ".tmpl")+".html")
+			dst2 = targetFromFilename(b.args.Dst, d.DstPath, filepath.Base(page), isToStrip(d))
 		}
 		content := &TemplateContent{
 			Stylesheets: d.Stylesheets,
@@ -378,9 +378,9 @@ func (b *builder) execDir(d *dir2) error {
 	}
 
 	for _, page := range d.PagesMarkdown {
-		dst2 := filepath.Join(b.args.Dst, d.SrcPath, "index.html")
+		dst2 := filepath.Join(b.args.Dst, d.DstPath, "index.html")
 		if filepath.Base(page) != "README.md" {
-			dst2 = filepath.Join(b.args.Dst, d.SrcPath, strings.TrimSuffix(filepath.Base(page), ".md")+".html")
+			dst2 = targetFromFilename(b.args.Dst, d.DstPath, filepath.Base(page), isToStrip(d))
 		}
 		content := &TemplateContent{
 			Stylesheets: d.Stylesheets,
@@ -410,12 +410,12 @@ func (b *builder) execDir(d *dir2) error {
 
 func (b *builder) copyAssetsFolders(d *dir2) error {
 	if d.SrcAssets != "" {
-		err := os.MkdirAll(filepath.Join(b.args.Dst, d.SrcPath), 0755)
+		err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0755)
 		if err != nil {
 			return fmt.Errorf("creating directory: %w", err)
 		}
 
-		dst := filepath.Join(b.args.Dst, d.SrcAssets)
+		dst := filepath.Join(b.args.Dst, d.DstPath, ".assets")
 		src := filepath.Join(b.args.Src, d.SrcAssets)
 		if b.args.Verbose {
 			fmt.Println("copying", dst)
@@ -449,7 +449,7 @@ func (b *builder) Build() error {
 		return fmt.Errorf("checking competing files and folders: %w", err)
 	}
 
-	root2 := b.toDir2(root, "", "")
+	root2 := b.toDir2(root, nil, "", "", "")
 
 	if err := b.bundleAndPropagateStylesheets(root2, []string{}); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)
@@ -459,11 +459,14 @@ func (b *builder) Build() error {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 
+	b.root3, err = b.toNode(root2, nil)
+	if err != nil {
+		return fmt.Errorf("structuring node tree: %w", err)
+	}
+
 	if err := b.renderMarkdown(root2); err != nil {
 		return fmt.Errorf("rendering markdown pages: %w", err)
 	}
-
-	b.root3 = b.toNode(root2, nil)
 
 	if err := b.execDir(root2); err != nil {
 		return fmt.Errorf("executing templates: %w", err)
@@ -476,13 +479,18 @@ func (b *builder) Build() error {
 	return nil
 }
 
-func Build(args Args) error {
-	b := &builder{
+// split for testing
+func newBuilder(args Args) *builder {
+	return &builder{
 		args:          args,
 		start:         time.Now(),
 		assets:        []string{},
 		pagesMarkdown: map[string]*markdown.Page{},
 		leaves:        map[pageref]*Node{},
+		links:         map[string]string{},
 	}
-	return b.Build()
+}
+
+func Build(args Args) error {
+	return newBuilder(args).Build()
 }

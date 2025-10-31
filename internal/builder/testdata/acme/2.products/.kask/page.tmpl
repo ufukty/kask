@@ -1,0 +1,51 @@
+{{define "page"}}
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{template "title"}}
+    <meta name="description" content="">
+    <link rel="stylesheet" href="">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-size: inherit;
+        font-family: inherit;
+        color: inherit;
+        font-weight: inherit;
+      }
+
+      html {
+        font-size: 16px;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: #444444;
+        font-weight: 400;
+      }
+
+      a {
+        text-decoration: none;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+      }
+
+      body {
+        position: relative;
+      }
+    </style>
+  </head>
+
+  <body>
+    {{template "content" .}}
+  </body>
+
+</html>
+{{end}}

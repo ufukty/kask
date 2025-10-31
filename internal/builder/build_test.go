@@ -4,33 +4,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
-
-	"github.com/ufukty/kask/internal/builder/markdown"
 )
 
-func linearize(n *Node) string {
-	s := n.Title
+// returns the DFS forest
+func forest(n *Node) []*Node {
+	f := []*Node{n}
 	for _, c := range n.Children {
-		s += "\n| " + strings.ReplaceAll(linearize(c), "\n", "\n| ")
+		f = append(f, forest(c)...)
 	}
-	return s
-}
-
-func breadcrumbs(n *Node) string {
-	s := ""
-	if n.Parent != nil {
-		s += breadcrumbs(n.Parent)
-	}
-	return s + "/" + n.Title
-}
-
-func dfs(n *Node, v func(*Node)) {
-	v(n)
-	for _, c := range n.Children {
-		dfs(c, v)
-	}
+	return f
 }
 
 func check(tmp, path string) bool {
@@ -38,42 +23,49 @@ func check(tmp, path string) bool {
 	return err == nil
 }
 
+func ancestry(n *Node) []*Node {
+	ancestry := []*Node{}
+	for n := n; n != nil; n = n.Parent {
+		ancestry = append(ancestry, n)
+	}
+	slices.Reverse(ancestry)
+	return ancestry
+}
+
 func TestBuild(t *testing.T) {
 	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
 	if err != nil {
-		t.Fatal(fmt.Errorf("os.MkdirTemp: %w", err))
+		t.Errorf("os.MkdirTemp: %v", err)
 	}
 	fmt.Println("temp folder:", tmp)
 
-	b := builder{
-		args: Args{
-			Domain:  "http://localhost:8080",
-			Dev:     false,
-			Src:     "testdata/acme",
-			Dst:     tmp,
-			Verbose: true,
-		},
-		assets:        []string{},
-		pagesMarkdown: map[string]*markdown.Page{},
-		leaves:        map[pageref]*Node{},
-	}
+	b := newBuilder(Args{
+		Domain:  "http://localhost:8080",
+		Dev:     false,
+		Src:     "testdata/acme",
+		Dst:     tmp,
+		Verbose: true,
+	})
 
-	t.Run("building", func(t *testing.T) {
+	t.Run("build", func(t *testing.T) {
 		err = b.Build()
 		if err != nil {
 			t.Fatal(fmt.Errorf("act, Build: %w", err))
 		}
 	})
 
-	t.Run("stat", func(t *testing.T) {
+	t.Run("stat files", func(t *testing.T) {
 		expected := []string{
 			"index.html",
 			"products",
+			"products/1-touch-pro.html",
 			"docs",
 			"docs/.assets",
 			"docs/styles.propagate.css",
-			"docs/index.html",                     // README.md
-			"docs/tutorials/getting-started.html", // deep levels
+			"docs/index.html", // README.md
+			"docs/101 tutorials/getting-started.html", // deep levels
+			"docs/101 tutorials/install.html",
+			"docs/101 tutorials/contribute.html",
 		}
 
 		for _, f := range expected {
@@ -82,39 +74,82 @@ func TestBuild(t *testing.T) {
 			}
 		}
 	})
+}
 
-	t.Run("sitemap", func(t *testing.T) {
-		const expected = `.
-| career
-| Docs
-| | ACME Bird Seed
-| | Download
-| | ACME Magnet
-| | tutorials
-| | | Getting Started
-| products`
-		if got := linearize(b.root3); got != expected {
-			t.Fatalf("expected:\n\n%s\n\ngot:\n%s", expected, got)
-		}
+func ExampleBuild_sitemap() {
+	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
+	if err != nil {
+		panic(fmt.Errorf("os.MkdirTemp: %w", err))
+	}
+
+	b := newBuilder(Args{
+		Domain:  "http://localhost:8080",
+		Dev:     false,
+		Src:     "testdata/acme",
+		Dst:     tmp,
+		Verbose: false,
 	})
 
-	t.Run("breadcrumbs", func(t *testing.T) {
-		got := ""
-		dfs(b.root3, func(n *Node) {
-			got += "\n" + breadcrumbs(n)
-		})
-		expected := `
-/.
-/./career
-/./Docs
-/./Docs/ACME Bird Seed
-/./Docs/Download
-/./Docs/ACME Magnet
-/./Docs/tutorials
-/./Docs/tutorials/Getting Started
-/./products`
-		if got != expected {
-			t.Fatalf("expected:\n\n%s\n\ngot:\n%s", expected, got)
-		}
+	err = b.Build()
+	if err != nil {
+		panic(fmt.Errorf("act, Build: %w", err))
+	}
+
+	for _, node := range forest(b.root3) {
+		fmt.Println(node.Href)
+	}
+	// Output:
+	// /
+	// /career/
+	// /products/
+	// /products/1-touch-pro.html
+	// /docs/
+	// /docs/birdseed.html
+	// /docs/download.html
+	// /docs/magnet.html
+	//
+	// /docs/101%20tutorials/getting-started.html
+	// /docs/101%20tutorials/install.html
+	// /docs/101%20tutorials/contribute.html
+}
+
+func ExampleBuild_breadcrumbs() {
+	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
+	if err != nil {
+		panic(fmt.Errorf("os.MkdirTemp: %w", err))
+	}
+
+	b := newBuilder(Args{
+		Domain:  "http://localhost:8080",
+		Dev:     false,
+		Src:     "testdata/acme",
+		Dst:     tmp,
+		Verbose: false,
 	})
+
+	err = b.Build()
+	if err != nil {
+		panic(fmt.Errorf("act, Build: %w", err))
+	}
+
+	for _, node := range forest(b.root3) {
+		path := []string{}
+		for _, p := range ancestry(node) {
+			path = append(path, p.Title)
+		}
+		fmt.Println(strings.Join(path, "/"))
+	}
+	// Output:
+	// Acme
+	// Acme/Careers at ACME
+	// Acme/ACME Products
+	// Acme/ACME Products/1-Touch Pro
+	// Acme/Docs
+	// Acme/Docs/ACME Bird Seed
+	// Acme/Docs/Download
+	// Acme/Docs/ACME Magnet
+	// Acme/Docs/101 tutorials
+	// Acme/Docs/101 tutorials/Getting Started
+	// Acme/Docs/101 tutorials/How to install
+	// Acme/Docs/101 tutorials/How to contribute
 }
