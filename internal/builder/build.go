@@ -104,7 +104,7 @@ type dir2 struct {
 func (b *builder) toDir2(d, p *directory.Dir, srcParent, dstParent, dstParentEncoded string) *dir2 {
 	srcParent = filepath.Join(srcParent, d.Name)
 	dstName := d.Name
-	if p != nil && p.Meta != nil && p.Meta.StripOrdering {
+	if !(p != nil && p.Meta != nil && p.Meta.PreserveOrdering) {
 		dstName = stripOrdering(d.Name)
 	}
 	dstParent = filepath.Join(dstParent, dstName)
@@ -237,7 +237,7 @@ type Node struct {
 }
 
 func isToStrip(d *dir2) bool {
-	return d != nil && d.Meta != nil && d.Meta.StripOrdering
+	return !(d != nil && d.Meta != nil && d.Meta.PreserveOrdering)
 }
 
 // TODO: domain prefix
