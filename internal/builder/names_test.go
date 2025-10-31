@@ -58,7 +58,7 @@ func TestHrefFromFilename(t *testing.T) {
 	}
 	for input, expected := range tcs {
 		t.Run(input.testname, func(t *testing.T) {
-			got := hrefFromFilename(input.dstPathEncoded, input.filename, false)
+			got := hrefFromFilename(input.dstPathEncoded, input.filename, true)
 			if got != expected {
 				t.Errorf("expected %q got %q", expected, got)
 			}
@@ -77,7 +77,7 @@ func TestTargetFromFilename(t *testing.T) {
 	}
 	for input, expected := range tcs {
 		t.Run(input.testname, func(t *testing.T) {
-			got := targetFromFilename(input.dst, input.dstPath, input.filename)
+			got := targetFromFilename(input.dst, input.dstPath, input.filename, true)
 			if got != expected {
 				t.Errorf("expected %q got %q", expected, got)
 			}
@@ -90,14 +90,14 @@ func TestExtractors(t *testing.T) {
 		path, ext string
 	}
 	tcs := map[tc]string{ // paths to expected titles
-		{"career/index.tmpl", ".html"}:               "Careers at ACME",
-		{"docs/birdseed.md", ".md"}:                  "ACME Bird Seed",
-		{"docs/download.md", ".md"}:                  "Download",
-		{"docs/magnet.md", ".md"}:                    "ACME Magnet",
-		{"docs/README.md", ".md"}:                    "Docs",
-		{"docs/tutorials/getting-started.md", ".md"}: "Getting Started",
-		{"index.tmpl", ".html"}:                      "Acme",
-		{"products/index.tmpl", ".html"}:             "ACME Products",
+		{"1.career/index.tmpl", ".tmpl"}:                     "Careers at ACME",
+		{"2.products/index.tmpl", ".tmpl"}:                   "ACME Products",
+		{"3.docs/101 tutorials/1.getting-started.md", ".md"}: "Getting Started",
+		{"3.docs/birdseed.md", ".md"}:                        "ACME Bird Seed",
+		{"3.docs/download.md", ".md"}:                        "Download",
+		{"3.docs/magnet.md", ".md"}:                          "ACME Magnet",
+		{"3.docs/README.md", ".md"}:                          "Docs",
+		{"index.tmpl", ".tmpl"}:                              "Acme",
 	}
 
 	for tc, expected := range tcs {

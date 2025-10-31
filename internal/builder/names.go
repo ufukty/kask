@@ -38,10 +38,13 @@ func hrefFromFilename(dstPathEncoded, filename string, strippedOrdering bool) st
 	return "/" + filepath.Join(dstPathEncoded, base+".html")
 }
 
-func targetFromFilename(dst, dstPath, filename string) string {
-	base := stripOrdering(filename)
+func targetFromFilename(dst, folderpath, filename string, strippedOrdering bool) string {
+	base := filename
+	if strippedOrdering {
+		base = stripOrdering(base)
+	}
 	base = strings.TrimSuffix(base, filepath.Ext(filename))
-	return filepath.Join(dst, dstPath, base+".html")
+	return filepath.Join(dst, folderpath, base+".html")
 }
 
 var titleExtractors = map[string]*regexp.Regexp{

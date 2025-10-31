@@ -354,7 +354,7 @@ func (b *builder) execDir(d *dir2) error {
 	for _, page := range d.PagesTmpl {
 		dst2 := filepath.Join(b.args.Dst, d.DstPath, "index.html")
 		if filepath.Base(page) != "index.tmpl" {
-			dst2 = targetFromFilename(b.args.Dst, d.DstPath, filepath.Base(page))
+			dst2 = targetFromFilename(b.args.Dst, d.DstPath, filepath.Base(page), isToStrip(d))
 		}
 		content := &TemplateContent{
 			Stylesheets: d.Stylesheets,
@@ -380,7 +380,7 @@ func (b *builder) execDir(d *dir2) error {
 	for _, page := range d.PagesMarkdown {
 		dst2 := filepath.Join(b.args.Dst, d.DstPath, "index.html")
 		if filepath.Base(page) != "README.md" {
-			dst2 = targetFromFilename(b.args.Dst, d.DstPath, filepath.Base(page))
+			dst2 = targetFromFilename(b.args.Dst, d.DstPath, filepath.Base(page), isToStrip(d))
 		}
 		content := &TemplateContent{
 			Stylesheets: d.Stylesheets,
