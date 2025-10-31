@@ -63,6 +63,8 @@ func TestBuild(t *testing.T) {
 			"docs/styles.propagate.css",
 			"docs/index.html", // README.md
 			"docs/101 tutorials/getting-started.html", // deep levels
+			"docs/101 tutorials/install.html",
+			"docs/101 tutorials/contribute.html",
 		}
 
 		for _, f := range expected {
@@ -105,6 +107,8 @@ func ExampleBuild_sitemap() {
 	// /docs/magnet.html
 	//
 	// /docs/101%20tutorials/getting-started.html
+	// /docs/101%20tutorials/install.html
+	// /docs/101%20tutorials/contribute.html
 }
 
 func ExampleBuild_breadcrumbs() {
@@ -143,4 +147,6 @@ func ExampleBuild_breadcrumbs() {
 	// Acme/Docs/ACME Magnet
 	// Acme/Docs/101 tutorials
 	// Acme/Docs/101 tutorials/Getting Started
+	// Acme/Docs/101 tutorials/How to install
+	// Acme/Docs/101 tutorials/How to contribute
 }
