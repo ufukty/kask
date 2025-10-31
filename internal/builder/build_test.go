@@ -58,6 +58,7 @@ func TestBuild(t *testing.T) {
 		expected := []string{
 			"index.html",
 			"products",
+			"products/1-touch-pro.html",
 			"docs",
 			"docs/.assets",
 			"docs/styles.propagate.css",
@@ -101,6 +102,7 @@ func ExampleBuild_sitemap() {
 	// /
 	// /career/
 	// /products/
+	// /products/1-touch-pro.html
 	// /docs/
 	// /docs/birdseed.html
 	// /docs/download.html
@@ -141,6 +143,7 @@ func ExampleBuild_breadcrumbs() {
 	// Acme
 	// Acme/Careers at ACME
 	// Acme/ACME Products
+	// Acme/ACME Products/1-Touch Pro
 	// Acme/Docs
 	// Acme/Docs/ACME Bird Seed
 	// Acme/Docs/Download
