@@ -8,8 +8,8 @@ import (
 )
 
 type Meta struct {
-	Title         string `yaml:"title"`
-	StripOrdering bool   `yaml:"strip-ordering"`
+	Title            string `yaml:"title"`
+	PreserveOrdering bool   `yaml:"preserve-ordering"`
 }
 
 func readMeta(path string) (*Meta, error) {
