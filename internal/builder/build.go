@@ -89,8 +89,8 @@ type dir2 struct {
 	Kask *directory.Kask
 	Meta *directory.Meta
 
-	SrcPath, SrcAssets               string
-	DstName, DstPath, DstPathEncoded string
+	SrcPath, SrcAssets      string
+	DstPath, DstPathEncoded string
 
 	Subdirs []*dir2
 
@@ -130,7 +130,6 @@ func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
 		SrcPath:   child.src,
 		SrcAssets: d.Assets,
 
-		DstName:        filepath.Base(child.dst),
 		DstPath:        child.dst,
 		DstPathEncoded: child.url,
 
@@ -301,7 +300,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		if d.Meta != nil {
 			n.Title = d.Meta.Title
 		} else {
-			n.Title = d.DstName
+			n.Title = filepath.Base(d.DstPath)
 		}
 	}
 
