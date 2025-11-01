@@ -86,19 +86,18 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 
 // used in assigning destination addresses, bundling css, and propagating tmpl files
 type dir2 struct {
-	Kask      *directory.Kask
-	Meta      *directory.Meta
-	HasAssets bool
+	kask      *directory.Kask
+	meta      *directory.Meta
+	hasAssets bool
 
-	Paths paths
+	paths paths
 
-	Subdirs []*dir2
+	subdirs []*dir2
 
-	PagesMarkdown []string // src paths
-	PagesTmpl     []string // src paths
-	Stylesheets   []string // dst paths
-
-	Tmpl *template.Template
+	pagesMarkdown []string // src paths
+	pagesTmpl     []string // src paths
+	stylesheets   []string // dst paths
+	templates     *template.Template
 }
 
 type paths struct {
@@ -122,22 +121,22 @@ func (p paths) withChild(item string, isToStrip bool) paths {
 func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
 	ps := parent.withChild(d.Name, p.IsToStrip())
 	d2 := &dir2{
-		Kask:      d.Kask,
-		Meta:      d.Meta,
-		HasAssets: d.Assets != "",
+		kask:      d.Kask,
+		meta:      d.Meta,
+		hasAssets: d.Assets != "",
 
-		Subdirs: []*dir2{},
+		subdirs: []*dir2{},
 
-		Paths: ps,
+		paths: ps,
 
-		PagesMarkdown: d.PagesMarkdown,
-		PagesTmpl:     d.PagesTmpl,
-		Stylesheets:   nil,
+		pagesMarkdown: d.PagesMarkdown,
+		pagesTmpl:     d.PagesTmpl,
+		stylesheets:   nil,
 
-		Tmpl: nil,
+		templates: nil,
 	}
 	for _, subdir := range d.Subdirs {
-		d2.Subdirs = append(d2.Subdirs, b.toDir2(subdir, d, ps))
+		d2.subdirs = append(d2.subdirs, b.toDir2(subdir, d, ps))
 	}
 	return d2
 }
@@ -163,36 +162,36 @@ func (b *builder) write(dst, content string) error {
 }
 
 func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) error {
-	d.Stylesheets = slices.Clone(toPropagate)
+	d.stylesheets = slices.Clone(toPropagate)
 
-	if d.Kask != nil && d.Kask.Propagate != nil && len(d.Kask.Propagate.Css) > 0 {
-		css, err := bundle.Files(d.Kask.Propagate.Css)
+	if d.kask != nil && d.kask.Propagate != nil && len(d.kask.Propagate.Css) > 0 {
+		css, err := bundle.Files(d.kask.Propagate.Css)
 		if err != nil {
 			return fmt.Errorf("bundling propagated css file: %w", err)
 		}
-		dst := "/" + filepath.Join(d.Paths.dst, "styles.propagate.css")
+		dst := "/" + filepath.Join(d.paths.dst, "styles.propagate.css")
 		if err := b.write(filepath.Join(b.args.Dst, dst), css); err != nil {
 			return fmt.Errorf("writing propagated css file: %w", err)
 		}
-		d.Stylesheets = append(d.Stylesheets, dst)
+		d.stylesheets = append(d.stylesheets, dst)
 		toPropagate = append(toPropagate, dst)
 	}
 
-	if d.Kask != nil && len(d.Kask.Css) > 0 {
-		css, err := bundle.Files(d.Kask.Css)
+	if d.kask != nil && len(d.kask.Css) > 0 {
+		css, err := bundle.Files(d.kask.Css)
 		if err != nil {
 			return fmt.Errorf("bundling at-level css file: %w", err)
 		}
-		dst := "/" + filepath.Join(d.Paths.dst, "styles.css")
+		dst := "/" + filepath.Join(d.paths.dst, "styles.css")
 		if err := b.write(filepath.Join(b.args.Dst, dst), css); err != nil {
 			return fmt.Errorf("writing at-level css file: %w", err)
 		}
-		d.Stylesheets = append(d.Stylesheets, dst)
+		d.stylesheets = append(d.stylesheets, dst)
 	}
 
-	for _, subdir := range d.Subdirs {
+	for _, subdir := range d.subdirs {
 		if err := b.bundleAndPropagateStylesheets(subdir, slices.Clone(toPropagate)); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.Paths.src), err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
 		}
 	}
 
@@ -202,8 +201,8 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) error {
 	var err error
 
-	if d.Kask != nil && d.Kask.Propagate != nil && len(d.Kask.Propagate.Tmpl) > 0 {
-		toPropagate, err = toPropagate.ParseFiles(d.Kask.Propagate.Tmpl...)
+	if d.kask != nil && d.kask.Propagate != nil && len(d.kask.Propagate.Tmpl) > 0 {
+		toPropagate, err = toPropagate.ParseFiles(d.kask.Propagate.Tmpl...)
 		if err != nil {
 			return fmt.Errorf("parsing to-propagate template files: %w", err)
 		}
@@ -214,18 +213,18 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 		return fmt.Errorf("cloning propagated: %w", err)
 	}
 
-	if d.Kask != nil && len(d.Kask.Tmpl) > 0 {
-		atLevel, err = atLevel.ParseFiles(d.Kask.Tmpl...)
+	if d.kask != nil && len(d.kask.Tmpl) > 0 {
+		atLevel, err = atLevel.ParseFiles(d.kask.Tmpl...)
 		if err != nil {
 			return fmt.Errorf("parsing at-level template files: %w", err)
 		}
 	}
 
-	d.Tmpl = atLevel
+	d.templates = atLevel
 
-	for _, subdir := range d.Subdirs {
+	for _, subdir := range d.subdirs {
 		if err := b.propagateTemplates(subdir, toPropagate); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.Paths.src), err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
 		}
 	}
 
@@ -244,7 +243,7 @@ type Node struct {
 }
 
 func isToStrip(d *dir2) bool {
-	return !(d != nil && d.Meta != nil && d.Meta.PreserveOrdering)
+	return !(d != nil && d.meta != nil && d.meta.PreserveOrdering)
 }
 
 // TODO: domain prefix
@@ -270,17 +269,17 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		Children: []*Node{},
 	}
 
-	for _, page := range slices.Concat(d.PagesTmpl, d.PagesMarkdown) {
+	for _, page := range slices.Concat(d.pagesTmpl, d.pagesMarkdown) {
 		title, err := decideOnTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), isToStrip(d))
 		if err != nil {
 			return nil, fmt.Errorf("decide on title: %w", err)
 		}
 		base := filepath.Base(page)
 		if base == "index.tmpl" || base == "README.md" {
-			n.Href = canonicalize(d.Paths.url)
+			n.Href = canonicalize(d.paths.url)
 			n.Title = title
 		} else {
-			href := hrefFromFilename(d.Paths.url, base, isToStrip(d))
+			href := hrefFromFilename(d.paths.url, base, isToStrip(d))
 			c := &Node{
 				Title:    title,
 				Href:     href,
@@ -294,20 +293,20 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	}
 
 	if n.Title == "" {
-		if d.Meta != nil {
-			n.Title = d.Meta.Title
+		if d.meta != nil {
+			n.Title = d.meta.Title
 		} else {
-			n.Title = filepath.Base(d.Paths.dst)
+			n.Title = filepath.Base(d.paths.dst)
 		}
 	}
 
-	b.links[canonicalize(d.Paths.src)] = d.Paths.url
+	b.links[canonicalize(d.paths.src)] = d.paths.url
 	b.leaves[pageref{d, ""}] = n
 
-	for _, subdir := range d.Subdirs {
+	for _, subdir := range d.subdirs {
 		s, err := b.toNode(subdir, n)
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", filepath.Base(d.Paths.src), err)
+			return nil, fmt.Errorf("%s: %w", filepath.Base(d.paths.src), err)
 		}
 		n.Children = append(n.Children, s)
 	}
@@ -316,7 +315,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 }
 
 func (b *builder) renderMarkdown(d *dir2) error {
-	for _, md := range d.PagesMarkdown {
+	for _, md := range d.pagesMarkdown {
 		page, err := markdown.ToHtml(b.args.Src, md, b.links)
 		if err != nil {
 			return fmt.Errorf("rendering %s: %w", md, err)
@@ -324,9 +323,9 @@ func (b *builder) renderMarkdown(d *dir2) error {
 		b.pagesMarkdown[md] = page
 	}
 
-	for _, subdir := range d.Subdirs {
+	for _, subdir := range d.subdirs {
 		if err := b.renderMarkdown(subdir); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.Paths.src), err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
 		}
 	}
 
@@ -361,18 +360,18 @@ func (b *builder) execPage(dst string, tmpl *template.Template, name string, con
 }
 
 func (b *builder) execDir(d *dir2) error {
-	err := os.MkdirAll(filepath.Join(b.args.Dst, d.Paths.dst), 0o755)
+	err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.dst), 0o755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
 
-	for _, page := range d.PagesTmpl {
-		dst2 := filepath.Join(b.args.Dst, d.Paths.dst, "index.html")
+	for _, page := range d.pagesTmpl {
+		dst2 := filepath.Join(b.args.Dst, d.paths.dst, "index.html")
 		if filepath.Base(page) != "index.tmpl" {
-			dst2 = targetFromFilename(b.args.Dst, d.Paths.dst, filepath.Base(page), isToStrip(d))
+			dst2 = targetFromFilename(b.args.Dst, d.paths.dst, filepath.Base(page), isToStrip(d))
 		}
 		content := &TemplateContent{
-			Stylesheets: d.Stylesheets,
+			Stylesheets: d.stylesheets,
 			Node:        nil,
 			Root:        b.root3,
 			Markdown:    nil,
@@ -383,7 +382,7 @@ func (b *builder) execDir(d *dir2) error {
 		} else {
 			content.Node = b.leaves[pageref{d, page}]
 		}
-		tmpl, err := d.Tmpl.Clone()
+		tmpl, err := d.templates.Clone()
 		if err != nil {
 			return fmt.Errorf("cloning templates for rendering page: %w", err)
 		}
@@ -396,13 +395,13 @@ func (b *builder) execDir(d *dir2) error {
 		}
 	}
 
-	for _, page := range d.PagesMarkdown {
-		dst2 := filepath.Join(b.args.Dst, d.Paths.dst, "index.html")
+	for _, page := range d.pagesMarkdown {
+		dst2 := filepath.Join(b.args.Dst, d.paths.dst, "index.html")
 		if filepath.Base(page) != "README.md" {
-			dst2 = targetFromFilename(b.args.Dst, d.Paths.dst, filepath.Base(page), isToStrip(d))
+			dst2 = targetFromFilename(b.args.Dst, d.paths.dst, filepath.Base(page), isToStrip(d))
 		}
 		content := &TemplateContent{
-			Stylesheets: d.Stylesheets,
+			Stylesheets: d.stylesheets,
 			Node:        nil,
 			Root:        b.root3,
 			Markdown:    b.pagesMarkdown[page],
@@ -413,14 +412,14 @@ func (b *builder) execDir(d *dir2) error {
 		} else {
 			content.Node = b.leaves[pageref{d, page}]
 		}
-		if err := b.execPage(dst2, d.Tmpl, "markdown-page", content); err != nil {
+		if err := b.execPage(dst2, d.templates, "markdown-page", content); err != nil {
 			return fmt.Errorf("page %q: %w", filepath.Base(page), err)
 		}
 	}
 
-	for _, subdir := range d.Subdirs {
+	for _, subdir := range d.subdirs {
 		if err := b.execDir(subdir); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.Paths.src), err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
 		}
 	}
 
@@ -428,14 +427,14 @@ func (b *builder) execDir(d *dir2) error {
 }
 
 func (b *builder) copyAssetsFolders(d *dir2) error {
-	if d.HasAssets {
-		err := os.MkdirAll(filepath.Join(b.args.Dst, d.Paths.dst), 0755)
+	if d.hasAssets {
+		err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.dst), 0o755)
 		if err != nil {
 			return fmt.Errorf("creating directory: %w", err)
 		}
 
-		dst := filepath.Join(b.args.Dst, d.Paths.dst, ".assets")
-		src := filepath.Join(b.args.Src, d.Paths.src, ".assets")
+		dst := filepath.Join(b.args.Dst, d.paths.dst, ".assets")
+		src := filepath.Join(b.args.Src, d.paths.src, ".assets")
 		if b.args.Verbose {
 			fmt.Println("copying", dst)
 		}
@@ -446,9 +445,9 @@ func (b *builder) copyAssetsFolders(d *dir2) error {
 		}
 	}
 
-	for _, subdir := range d.Subdirs {
+	for _, subdir := range d.subdirs {
 		if err := b.copyAssetsFolders(subdir); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.Paths.src), err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
 		}
 	}
 
