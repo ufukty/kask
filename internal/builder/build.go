@@ -86,11 +86,11 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 
 // used in assigning destination addresses, bundling css, and propagating tmpl files
 type dir2 struct {
-	Kask *directory.Kask
-	Meta *directory.Meta
+	Kask      *directory.Kask
+	Meta      *directory.Meta
+	HasAssets bool
 
 	Src                     string
-	SrcAssets               string
 	DstPath, DstPathEncoded string
 
 	Subdirs []*dir2
@@ -123,13 +123,13 @@ func (p paths) withChild(item string, isToStrip bool) paths {
 func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
 	child := parent.withChild(d.Name, p.IsToStrip())
 	d2 := &dir2{
-		Kask: d.Kask,
-		Meta: d.Meta,
+		Kask:      d.Kask,
+		Meta:      d.Meta,
+		HasAssets: d.Assets != "",
 
 		Subdirs: []*dir2{},
 
-		Src:       child.src,
-		SrcAssets: d.Assets,
+		Src: child.src,
 
 		DstPath:        child.dst,
 		DstPathEncoded: child.url,
@@ -432,14 +432,14 @@ func (b *builder) execDir(d *dir2) error {
 }
 
 func (b *builder) copyAssetsFolders(d *dir2) error {
-	if d.SrcAssets != "" {
-		err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0o755)
+	if d.HasAssets {
+		err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0755)
 		if err != nil {
 			return fmt.Errorf("creating directory: %w", err)
 		}
 
 		dst := filepath.Join(b.args.Dst, d.DstPath, ".assets")
-		src := filepath.Join(b.args.Src, d.SrcAssets)
+		src := filepath.Join(b.args.Src, d.Src, ".assets")
 		if b.args.Verbose {
 			fmt.Println("copying", dst)
 		}
