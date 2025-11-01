@@ -1,4 +1,4 @@
-# Hierarchical CSS Splitting
+# CSS Splitting
 
 There are two fundamentals on justifying hierarchical CSS splitting:
 

@@ -1,4 +1,6 @@
-# Usage
+# For Writers
+
+To start writing the website content and organizing sections, just determine where you want to store all website related Markdown files in your computer. It will be referred as the "content directory". Then enter to directory and create a file. The filename should follow the form of Markdown files. They can be everything but should end with `.md` sequence. This is the file extension of Markdown files.
 
 ## Folders
 
@@ -59,7 +61,13 @@ Kask generates the sitemap (the hierarchy of web pages based) on the folder stru
 
 ### Ordering
 
-The sitemap orders folder items alphabetically. To apply custom ordering to pages and folders, just prefix the filenames with numbers. One note; the numbers will also be visible in the page address, but not in the page title.
+The sitemap orders folder items alphabetically. To apply custom ordering to pages and folders, just prefix the filenames with numbers.
+
+Kask will automatically remove the leading numbers and following punctuation from the page and section titles and links. To exclude a directory's pages from this treatment where it doesn't make sense; create a meta file in that directory named `.kask.yml` and add this line into the file content. (Don't include the line number below)
+
+```yml
+preserve-ordering: true
+```
 
 ### Hidden developer files
 
