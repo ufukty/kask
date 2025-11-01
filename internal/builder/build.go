@@ -89,7 +89,7 @@ type dir2 struct {
 	Kask *directory.Kask
 	Meta *directory.Meta
 
-	SrcName, SrcPath, SrcAssets      string
+	SrcPath, SrcAssets               string
 	DstName, DstPath, DstPathEncoded string
 
 	Subdirs []*dir2
@@ -127,7 +127,6 @@ func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
 
 		Subdirs: []*dir2{},
 
-		SrcName:   d.Name,
 		SrcPath:   child.src,
 		SrcAssets: d.Assets,
 
@@ -197,7 +196,7 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 
 	for _, subdir := range d.Subdirs {
 		if err := b.bundleAndPropagateStylesheets(subdir, slices.Clone(toPropagate)); err != nil {
-			return fmt.Errorf("%q: %w", subdir.SrcName, err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.SrcPath), err)
 		}
 	}
 
@@ -230,7 +229,7 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 
 	for _, subdir := range d.Subdirs {
 		if err := b.propagateTemplates(subdir, toPropagate); err != nil {
-			return fmt.Errorf("%q: %w", subdir.SrcName, err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.SrcPath), err)
 		}
 	}
 
@@ -312,7 +311,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	for _, subdir := range d.Subdirs {
 		s, err := b.toNode(subdir, n)
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", d.SrcName, err)
+			return nil, fmt.Errorf("%s: %w", filepath.Base(d.SrcPath), err)
 		}
 		n.Children = append(n.Children, s)
 	}
@@ -331,7 +330,7 @@ func (b *builder) renderMarkdown(d *dir2) error {
 
 	for _, subdir := range d.Subdirs {
 		if err := b.renderMarkdown(subdir); err != nil {
-			return fmt.Errorf("%q: %w", subdir.SrcName, err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.SrcPath), err)
 		}
 	}
 
@@ -425,7 +424,7 @@ func (b *builder) execDir(d *dir2) error {
 
 	for _, subdir := range d.Subdirs {
 		if err := b.execDir(subdir); err != nil {
-			return fmt.Errorf("%q: %w", subdir.SrcName, err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.SrcPath), err)
 		}
 	}
 
@@ -453,7 +452,7 @@ func (b *builder) copyAssetsFolders(d *dir2) error {
 
 	for _, subdir := range d.Subdirs {
 		if err := b.copyAssetsFolders(subdir); err != nil {
-			return fmt.Errorf("%q: %w", subdir.SrcName, err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.SrcPath), err)
 		}
 	}
 
