@@ -4,25 +4,21 @@ Kask rewrites any link found in markdown files that doesn't start with `http://`
 
 Consider links in a page in the path `/subdir/subsubdir/README.md`:
 
-| URL                        | Rewritten URL                |
+| URL in input files         | URL in output files          |
 | -------------------------- | ---------------------------- |
-| `.`                        | `/subdir/subsubdir/`         |
-| `..`                       | `/subdir/`                   |
-| `../..`                    | `/`                          |
-| `../../`                   | `/`                          |
-| `../../a.md`               | `/a.html`                    |
-| `../../README.md`          | `/`                          |
-| `../`                      | `/subdir/`                   |
-| `../a.md`                  | `/subdir/a.html`             |
-| `../README.md`             | `/subdir/`                   |
-|                            |                              |
 | `a`                        | `/subdir/subsubdir/a/`       |
 | `a.md`                     | `/subdir/subsubdir/a.html`   |
 | `a/b.md`                   | `/subdir/subsubdir/a/b.html` |
 | `a/README.md`              | `/subdir/subsubdir/a/`       |
-|                            |                              |
 | `../subsubdir/a.md`        | `/subdir/subsubdir/a.html`   |
 | `../subsubdir/a/b.md`      | `/subdir/subsubdir/a/b.html` |
 | `../subsubdir/a/README.md` | `/subdir/subsubdir/a/`       |
+| `.`                        | `/subdir/subsubdir/`         |
+| `..`                       | `/subdir/`                   |
+| `../..`                    | `/`                          |
+| `../../a.md`               | `/a.html`                    |
+| `../../README.md`          | `/`                          |
+| `../a.md`                  | `/subdir/a.html`             |
+| `../README.md`             | `/subdir/`                   |
 
-Additionally a leading `./` wouldn't change the results.
+Additionally, a leading and trailing `./` wouldn't change the results.
