@@ -132,8 +132,7 @@ func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
 		pagesMarkdown: d.PagesMarkdown,
 		pagesTmpl:     d.PagesTmpl,
 		stylesheets:   nil,
-
-		templates: nil,
+		templates:     nil,
 	}
 	for _, subdir := range d.Subdirs {
 		d2.subdirs = append(d2.subdirs, b.toDir2(subdir, d, ps))
