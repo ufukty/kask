@@ -101,14 +101,26 @@ type dir2 struct {
 	Tmpl *template.Template
 }
 
-func (b *builder) toDir2(d, p *directory.Dir, srcParent, dstParent, dstParentEncoded string) *dir2 {
-	srcParent = filepath.Join(srcParent, d.Name)
-	dstName := d.Name
-	if !(p != nil && p.Meta != nil && p.Meta.PreserveOrdering) {
-		dstName = stripOrdering(d.Name)
+type paths struct {
+	src string
+	dst string // stripped ordering
+	url string // path encoded
+}
+
+func (p paths) withChild(item string, isToStrip bool) paths {
+	dst := item
+	if isToStrip {
+		dst = stripOrdering(dst)
 	}
-	dstParent = filepath.Join(dstParent, dstName)
-	dstParentEncoded = filepath.Join(dstParentEncoded, url.PathEscape(dstName))
+	return paths{
+		src: filepath.Join(p.src, item),
+		dst: filepath.Join(p.dst, dst),
+		url: filepath.Join(p.url, url.PathEscape(dst)),
+	}
+}
+
+func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
+	child := parent.withChild(d.Name, p.IsToStrip())
 	d2 := &dir2{
 		Kask: d.Kask,
 		Meta: d.Meta,
@@ -116,12 +128,12 @@ func (b *builder) toDir2(d, p *directory.Dir, srcParent, dstParent, dstParentEnc
 		Subdirs: []*dir2{},
 
 		SrcName:   d.Name,
-		SrcPath:   srcParent,
+		SrcPath:   child.src,
 		SrcAssets: d.Assets,
 
-		DstName:        dstName,
-		DstPath:        dstParent,
-		DstPathEncoded: dstParentEncoded,
+		DstName:        filepath.Base(child.dst),
+		DstPath:        child.dst,
+		DstPathEncoded: child.url,
 
 		PagesMarkdown: d.PagesMarkdown,
 		PagesTmpl:     d.PagesTmpl,
@@ -130,7 +142,7 @@ func (b *builder) toDir2(d, p *directory.Dir, srcParent, dstParent, dstParentEnc
 		Tmpl: nil,
 	}
 	for _, subdir := range d.Subdirs {
-		d2.Subdirs = append(d2.Subdirs, b.toDir2(subdir, d, srcParent, dstParent, dstParentEncoded))
+		d2.Subdirs = append(d2.Subdirs, b.toDir2(subdir, d, child))
 	}
 	return d2
 }
@@ -461,7 +473,7 @@ func (b *builder) Build() error {
 		return fmt.Errorf("checking competing files and folders: %w", err)
 	}
 
-	root2 := b.toDir2(root, nil, "", "", "")
+	root2 := b.toDir2(root, nil, paths{})
 
 	if err := b.bundleAndPropagateStylesheets(root2, []string{}); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)
