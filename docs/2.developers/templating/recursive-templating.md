@@ -94,7 +94,3 @@ Trigger the placement of sitemap by adding a `"sitemap-item"` call with the `Tem
   </html>
 {{end}}
 ```
-
-## Summary
-
-🥳 🎉 👏 If this is the first time you hear **recursion** and understand how it works here, congrats. It is not an easy concept to understand quickly. Note that there are many issues occur when recursion is applied wrongly. To fix those issues you can start a [Q&A in our discussions](https://github.com/ufukty/kask/discussions/categories/q-a).
