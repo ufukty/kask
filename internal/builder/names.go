@@ -22,7 +22,7 @@ func stripOrdering(s string) string {
 
 var titler = cases.Title(language.Und, cases.NoLower)
 
-func titleFromFilename(base, ext string, strippedOrdering bool) string {
+func pageTitleFromFilename(base, ext string, strippedOrdering bool) string {
 	base = filepath.Base(base)
 	if strippedOrdering {
 		base = stripOrdering(base)
@@ -30,17 +30,17 @@ func titleFromFilename(base, ext string, strippedOrdering bool) string {
 	return titler.String(strings.TrimSuffix(base, ext))
 }
 
-func hrefFromFilename(dstPathEncoded, filename string, strippedOrdering bool) string {
+func pageLinkFromFilename(dir *dir2, filename string) string {
 	base := filename
-	if strippedOrdering {
+	if isToStrip(dir) {
 		base = stripOrdering(base)
 	}
 	base = strings.TrimSuffix(base, filepath.Ext(filename))
 	base = url.PathEscape(base)
-	return "/" + filepath.Join(dstPathEncoded, base+".html")
+	return "/" + filepath.Join(dir.paths.url, base+".html")
 }
 
-func targetFromFilename(dst, folderpath, filename string, strippedOrdering bool) string {
+func pageDestFromFilename(dst, folderpath, filename string, strippedOrdering bool) string {
 	base := filename
 	if strippedOrdering {
 		base = stripOrdering(base)
@@ -104,7 +104,7 @@ var theExtractor = extractor{}
 // 1. title from content, if available
 // 2. title from file name, if visitable
 // 3. title from folder name
-func decideOnTitle(src, ext string, strippedOrdering bool) (string, error) {
+func decideOnPageTitle(src, ext string, strippedOrdering bool) (string, error) {
 	title, err := theExtractor.FromFile(src)
 	if err != nil {
 		return "", fmt.Errorf("reading: %w", err)
@@ -112,5 +112,5 @@ func decideOnTitle(src, ext string, strippedOrdering bool) (string, error) {
 	if title != "" {
 		return title, nil
 	}
-	return titleFromFilename(src, ext, strippedOrdering), nil
+	return pageTitleFromFilename(src, ext, strippedOrdering), nil
 }
