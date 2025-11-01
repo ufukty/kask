@@ -257,7 +257,7 @@ func canonicalize(dst string) string {
 
 func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	n := &Node{
-		Title:    d.DstName,
+		Title:    "",
 		Href:     "",
 		Parent:   parent,
 		Children: []*Node{},
@@ -283,6 +283,14 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 			b.links[canonicalize(page)] = href
 			b.leaves[pageref{d, page}] = c
 			n.Children = append(n.Children, c)
+		}
+	}
+
+	if n.Title == "" {
+		if d.Meta != nil {
+			n.Title = d.Meta.Title
+		} else {
+			n.Title = d.DstName
 		}
 	}
 

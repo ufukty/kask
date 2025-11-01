@@ -148,8 +148,8 @@ func ExampleBuild_breadcrumbs() {
 	// Acme/Docs/ACME Bird Seed
 	// Acme/Docs/Download
 	// Acme/Docs/ACME Magnet
-	// Acme/Docs/101 tutorials
-	// Acme/Docs/101 tutorials/Getting Started
-	// Acme/Docs/101 tutorials/How to install
-	// Acme/Docs/101 tutorials/How to contribute
+	// Acme/Docs/101 Tutorials
+	// Acme/Docs/101 Tutorials/Getting Started
+	// Acme/Docs/101 Tutorials/How to install
+	// Acme/Docs/101 Tutorials/How to contribute
 }
