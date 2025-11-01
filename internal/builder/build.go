@@ -251,7 +251,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	}
 
 	for _, page := range slices.Concat(d.pagesTmpl, d.pagesMarkdown) {
-		title, err := decideOnTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), isToStrip(d))
+		title, err := decideOnPageTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), isToStrip(d))
 		if err != nil {
 			return nil, fmt.Errorf("decide on title: %w", err)
 		}
@@ -260,7 +260,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 			n.Href = canonicalize(d.paths.url)
 			n.Title = title
 		} else {
-			href := hrefFromFilename(d.paths.url, base, isToStrip(d))
+			href := pageLinkFromFilename(d, base)
 			c := &Node{
 				Title:    title,
 				Href:     href,
@@ -348,7 +348,7 @@ func (b *builder) execDir(d *dir2) error {
 	for _, page := range d.pagesTmpl {
 		dst2 := filepath.Join(b.args.Dst, d.paths.dst, "index.html")
 		if filepath.Base(page) != "index.tmpl" {
-			dst2 = targetFromFilename(b.args.Dst, d.paths.dst, filepath.Base(page), isToStrip(d))
+			dst2 = pageDestFromFilename(b.args.Dst, d.paths.dst, filepath.Base(page), isToStrip(d))
 		}
 		content := &TemplateContent{
 			Stylesheets: d.stylesheets,
@@ -378,7 +378,7 @@ func (b *builder) execDir(d *dir2) error {
 	for _, page := range d.pagesMarkdown {
 		dst2 := filepath.Join(b.args.Dst, d.paths.dst, "index.html")
 		if filepath.Base(page) != "README.md" {
-			dst2 = targetFromFilename(b.args.Dst, d.paths.dst, filepath.Base(page), isToStrip(d))
+			dst2 = pageDestFromFilename(b.args.Dst, d.paths.dst, filepath.Base(page), isToStrip(d))
 		}
 		content := &TemplateContent{
 			Stylesheets: d.stylesheets,
