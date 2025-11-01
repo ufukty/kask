@@ -23,5 +23,5 @@ type TemplateContent struct {
   - Children, which is a list of `Node`s.
 - Root information:
   - The root `Node` of the website, typically `href`s to the `/` of website. This is usefull to start printing a sitemap. Just define a recursive template.
-- List of stylesheets for template to include in `<head>`. See [Hierarchical CSS Splitting](../internals/hierarchical-css-splitting.md)
+- List of stylesheets for template to include in `<head>`. See [Hierarchical CSS Splitting](../../3.advanced/css-splitting.md)
 - Date in Go `time.Time` type. Useful to print the year to footer.
