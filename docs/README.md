@@ -15,7 +15,7 @@ Because of the Kask rules, opening the content directory in a Markdown editor wo
 - Work on the website content without the clutter of developer files, directly in their file system using folders and markdown files.
 - Use the whatever Markdown editor they are most comfortable with.
 
-## For web developers:
+## For web developers
 
 - Easily create websites with both Markdown based pages and custom HTML pages.
 - Arrange page sections and shared page components within individual files with Go templates.
