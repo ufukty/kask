@@ -115,7 +115,7 @@ func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
 		stylesheets:   nil,
 		templates:     nil,
 	}
-	b.links[canonicalize(d2.paths.src)] = d2.paths.url
+	b.links[d2.paths.src] = d2.paths.url
 	for _, subdir := range d.Subdirs {
 		d2.subdirs = append(d2.subdirs, b.toDir2(subdir, d, ps))
 	}
@@ -267,7 +267,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 				Parent:   n,
 				Children: []*Node{},
 			}
-			b.links[canonicalize(page)] = href
+			b.links[page] = href
 			b.leaves[pageref{d, page}] = c
 			n.Children = append(n.Children, c)
 		}
