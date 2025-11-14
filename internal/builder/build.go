@@ -39,7 +39,7 @@ type builder struct {
 	assets        []string                  // src paths
 	pagesMarkdown map[string]*markdown.Page // src path -> content
 	leaves        map[pageref]*Node         // to access nodes built for sitemap beforehand
-	links         map[string]string         // src path -> dst href (with stripped orderings)
+	links         map[string]string         // src path -> uri
 
 	root3 *Node // for testing
 }
