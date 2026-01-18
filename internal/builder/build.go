@@ -2,13 +2,13 @@ package builder
 
 import (
 	"fmt"
+	"html/template"
 	"io"
 	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/ufukty/kask/cmd/kask/commands/version"
@@ -139,7 +139,7 @@ func (b *builder) write(dst, content string) error {
 	if b.args.Verbose {
 		fmt.Println("writing", dst)
 	}
-	err := os.MkdirAll(filepath.Dir(dst), 0755)
+	err := os.MkdirAll(filepath.Dir(dst), 0o755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
@@ -354,7 +354,7 @@ func (b *builder) execPage(dst string, tmpl *template.Template, name string, con
 }
 
 func (b *builder) execDir(d *dir2) error {
-	err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0755)
+	err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0o755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
@@ -418,7 +418,7 @@ func (b *builder) execDir(d *dir2) error {
 
 func (b *builder) copyAssetsFolders(d *dir2) error {
 	if d.SrcAssets != "" {
-		err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0755)
+		err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0o755)
 		if err != nil {
 			return fmt.Errorf("creating directory: %w", err)
 		}
