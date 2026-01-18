@@ -153,3 +153,27 @@ func ExampleBuild_breadcrumbs() {
 	// Acme/Docs/101 Tutorials/How to install
 	// Acme/Docs/101 Tutorials/How to contribute
 }
+
+func TestBuilder_propagated(t *testing.T) {
+	tcs := []string{"web", "mixed", "markdown"}
+	for _, tc := range tcs {
+		t.Run(tc, func(t *testing.T) {
+			tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
+			if err != nil {
+				t.Errorf("os.MkdirTemp: %v", err)
+			}
+			fmt.Println("temp folder:", tmp)
+
+			a := Args{
+				Src:     filepath.Join("testdata/propagated", tc),
+				Dst:     tmp,
+				Dev:     true,
+				Verbose: true,
+			}
+			err = Build(a)
+			if err != nil {
+				t.Errorf("act, unexpected error: %v", err)
+			}
+		})
+	}
+}

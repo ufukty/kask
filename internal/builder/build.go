@@ -2,13 +2,13 @@ package builder
 
 import (
 	"fmt"
+	"html/template"
 	"io"
 	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/ufukty/kask/cmd/kask/commands/version"
@@ -139,7 +139,7 @@ func (b *builder) write(dst, content string) error {
 	if b.args.Verbose {
 		fmt.Println("writing", dst)
 	}
-	err := os.MkdirAll(filepath.Dir(dst), 0755)
+	err := os.MkdirAll(filepath.Dir(dst), 0o755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
@@ -354,7 +354,7 @@ func (b *builder) execPage(dst string, tmpl *template.Template, name string, con
 }
 
 func (b *builder) execDir(d *dir2) error {
-	err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0755)
+	err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0o755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
@@ -376,7 +376,11 @@ func (b *builder) execDir(d *dir2) error {
 		} else {
 			content.Node = b.leaves[pageref{d, page}]
 		}
-		tmpl, err := d.Tmpl.ParseFiles(filepath.Join(b.args.Src, page))
+		tmpl, err := d.Tmpl.Clone()
+		if err != nil {
+			return fmt.Errorf("cloning templates for rendering page: %w", err)
+		}
+		tmpl, err = tmpl.ParseFiles(filepath.Join(b.args.Src, page))
 		if err != nil {
 			return fmt.Errorf("parsing page template %q: %w", filepath.Base(page), err)
 		}
@@ -418,7 +422,7 @@ func (b *builder) execDir(d *dir2) error {
 
 func (b *builder) copyAssetsFolders(d *dir2) error {
 	if d.SrcAssets != "" {
-		err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0755)
+		err := os.MkdirAll(filepath.Join(b.args.Dst, d.DstPath), 0o755)
 		if err != nil {
 			return fmt.Errorf("creating directory: %w", err)
 		}
