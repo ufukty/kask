@@ -32,6 +32,13 @@ func ancestry(n *Node) []*Node {
 	return ancestry
 }
 
+func dfs(n []*Node, f func([]*Node)) {
+	f(n)
+	for _, c := range n[len(n)-1].Children {
+		dfs(append(slices.Clone(n), c), f)
+	}
+}
+
 func TestBuild(t *testing.T) {
 	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
 	if err != nil {
@@ -176,4 +183,29 @@ func TestBuilder_propagated(t *testing.T) {
 			}
 		})
 	}
+}
+
+func buildTestSite(path string) *builder {
+	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
+	if err != nil {
+		panic(fmt.Errorf("buildTestSite: os.MkdirTemp: %w", err))
+	}
+	b := newBuilder(Args{Src: path, Dst: tmp, Dev: true, Verbose: false})
+	err = b.Build()
+	if err != nil {
+		panic(fmt.Errorf("buildTestSite: b.Build: %w", err))
+	}
+	return b
+}
+
+func ExampleBuilder_strippedOrdering() {
+	b := buildTestSite("testdata/stripped-ordering")
+	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Href) })
+	// Output:
+	// /
+	// /career.html
+	// /docs.html
+	// /products.html
+	// /about/
+	// /contact/
 }
