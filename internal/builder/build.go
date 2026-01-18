@@ -376,7 +376,11 @@ func (b *builder) execDir(d *dir2) error {
 		} else {
 			content.Node = b.leaves[pageref{d, page}]
 		}
-		tmpl, err := d.Tmpl.ParseFiles(filepath.Join(b.args.Src, page))
+		tmpl, err := d.Tmpl.Clone()
+		if err != nil {
+			return fmt.Errorf("cloning templates for rendering page: %w", err)
+		}
+		tmpl, err = tmpl.ParseFiles(filepath.Join(b.args.Src, page))
 		if err != nil {
 			return fmt.Errorf("parsing page template %q: %w", filepath.Base(page), err)
 		}
