@@ -66,7 +66,6 @@ func TestBuilder_renderWebPages(t *testing.T) {
 	if err != nil {
 		t.Errorf("prep, read file: %v", err)
 	}
-	fmt.Println(string(f))
 	if !strings.Contains(string(f), "<h1>Title</h1>") {
 		t.Error("expected markdown content not found.")
 	}
