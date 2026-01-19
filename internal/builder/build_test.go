@@ -338,3 +338,13 @@ func ExampleBuilder_titles() {
 	// An Anonymous Markdown Page
 	// A beatiful markdown file with title
 }
+
+func ExampleBuilder_metaTitle() {
+	b, _ := buildTestSite("testdata/meta-title")
+	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Title) })
+	// Output:
+	// My Beautiful Site
+	// Page
+	// My Beautiful Section
+	// Page
+}
