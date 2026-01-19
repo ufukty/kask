@@ -1,1 +1,1 @@
-{{define "markdown-page"}}{{.Markdown.Content}}{{end}}
+{{define "markdown-page"}}{{trustedHtml .Markdown.Content}}{{end}}
