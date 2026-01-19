@@ -307,4 +307,23 @@ func TestBuilder_cssSplitting(t *testing.T) {
 			t.Error("page should link its section's non-propagated styles")
 		}
 	})
+
+	tcs := map[string]string{
+		"/styles.css":             ":root {}",
+		"/styles.propagate.css":   ":root.propagated {}",
+		"/a/styles.css":           ".a {}",
+		"/a/styles.propagate.css": ".a.propagated {}",
+	}
+
+	for ss, expected := range tcs {
+		t.Run(fmt.Sprintf("stylesheet contents/%s", strings.ReplaceAll(ss, "/", "\\")), func(t *testing.T) {
+			f, err := os.ReadFile(filepath.Join(tmp, ss))
+			if err != nil {
+				t.Errorf("prep, read stylesheet: %v", err)
+			}
+			if !strings.Contains(string(f), "") {
+				t.Errorf("assert, not found: %q", expected)
+			}
+		})
+	}
 }
