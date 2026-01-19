@@ -1,0 +1,4 @@
+{{define "helper"}}<a data-level="{{.Level}}" href="#{{.ID}}">{{.Title}}</a>
+{{with .Children}}{{range .}}{{template "helper" .}}{{end}}{{end}}{{end}}
+
+{{define "markdown-page"}}{{template "helper" (index .Markdown.Toc.Children 0)}}{{end}}

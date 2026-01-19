@@ -1,0 +1,3 @@
+{{define "helper"}}{{with .Parent}}{{template "helper" .}}{{end}}/{{.Title}}{{end}}
+
+{{define "page"}}{{template "helper" .Node}}{{end}}
