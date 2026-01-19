@@ -327,3 +327,14 @@ func TestBuilder_cssSplitting(t *testing.T) {
 		})
 	}
 }
+
+func ExampleBuilder_titles() {
+	b, _ := buildTestSite("testdata/titles")
+	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Title) })
+	// Output:
+	// .
+	// An Anonymous Web Page
+	// A beautiful tmpl file with title tag
+	// An Anonymous Markdown Page
+	// A beatiful markdown file with title
+}
