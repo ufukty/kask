@@ -47,7 +47,7 @@ func each(ns []*Node, f func(*Node) string) []string {
 	return ss
 }
 
-func buildTestSite(path string) *builder {
+func buildTestSite(path string) (*builder, string) {
 	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
 	if err != nil {
 		panic(fmt.Errorf("buildTestSite: os.MkdirTemp: %w", err))
@@ -57,7 +57,7 @@ func buildTestSite(path string) *builder {
 	if err != nil {
 		panic(fmt.Errorf("buildTestSite: b.Build: %w", err))
 	}
-	return b
+	return b, tmp
 }
 
 func TestBuild(t *testing.T) {
@@ -207,7 +207,7 @@ func TestBuilder_propagated(t *testing.T) {
 }
 
 func ExampleBuilder_strippedOrderingHrefs() {
-	b := buildTestSite("testdata/stripped-ordering")
+	b, _ := buildTestSite("testdata/stripped-ordering")
 	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Href) })
 	// Output:
 	// /
@@ -219,7 +219,7 @@ func ExampleBuilder_strippedOrderingHrefs() {
 }
 
 func ExampleBuilder_strippedOrderingTitles() {
-	b := buildTestSite("testdata/stripped-ordering")
+	b, _ := buildTestSite("testdata/stripped-ordering")
 	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// Website Title
@@ -231,7 +231,7 @@ func ExampleBuilder_strippedOrderingTitles() {
 }
 
 func ExampleBuilder_strippedOrderingBreadcrumbs() {
-	b := buildTestSite("testdata/stripped-ordering")
+	b, _ := buildTestSite("testdata/stripped-ordering")
 	dfs([]*Node{b.root3}, func(n []*Node) {
 		bs := each(n, func(n *Node) string { return n.Title })
 		fmt.Println(strings.Join(bs, " / "))
@@ -246,7 +246,7 @@ func ExampleBuilder_strippedOrderingBreadcrumbs() {
 }
 
 func ExampleBuilder_preservedOrderingHrefs() {
-	b := buildTestSite("testdata/preserved-ordering")
+	b, _ := buildTestSite("testdata/preserved-ordering")
 	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Href) })
 	// Output:
 	// /
@@ -258,7 +258,7 @@ func ExampleBuilder_preservedOrderingHrefs() {
 }
 
 func ExampleBuilder_preservedOrderingTitles() {
-	b := buildTestSite("testdata/preserved-ordering")
+	b, _ := buildTestSite("testdata/preserved-ordering")
 	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// Website Title
@@ -270,7 +270,7 @@ func ExampleBuilder_preservedOrderingTitles() {
 }
 
 func ExampleBuilder_preservedOrderingBreadcrumbs() {
-	b := buildTestSite("testdata/preserved-ordering")
+	b, _ := buildTestSite("testdata/preserved-ordering")
 	dfs([]*Node{b.root3}, func(n []*Node) {
 		bs := each(n, func(n *Node) string { return n.Title })
 		fmt.Println(strings.Join(bs, " / "))
@@ -282,4 +282,29 @@ func ExampleBuilder_preservedOrderingBreadcrumbs() {
 	// Website Title / Products Title
 	// Website Title / About Title
 	// Website Title / Contact Title
+}
+
+func TestBuilder_cssSplitting(t *testing.T) {
+	_, tmp := buildTestSite("testdata/css-splitting")
+	fmt.Println(tmp)
+
+	t.Run("linking the scorrect stylesheets", func(t *testing.T) {
+		f, err := os.ReadFile(filepath.Join(tmp, "a/index.html"))
+		if err != nil {
+			t.Errorf("prep, read file: %v", err)
+		}
+		content := string(f)
+		if strings.Contains(content, "/styles.css") {
+			t.Error("page of subsection should NOT link the root section's non-propagated styles")
+		}
+		if !strings.Contains(content, "/styles.propagate.css") {
+			t.Error("page of subsection should link the root section's propagated styles")
+		}
+		if !strings.Contains(content, "/a/styles.propagate.css") {
+			t.Error("page should link its section's propagated styles")
+		}
+		if !strings.Contains(content, "/a/styles.css") {
+			t.Error("page should link its section's non-propagated styles")
+		}
+	})
 }
