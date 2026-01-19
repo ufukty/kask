@@ -39,6 +39,27 @@ func dfs(n []*Node, f func([]*Node)) {
 	}
 }
 
+func each(ns []*Node, f func(*Node) string) []string {
+	ss := make([]string, 0, len(ns))
+	for _, n := range ns {
+		ss = append(ss, f(n))
+	}
+	return ss
+}
+
+func buildTestSite(path string) *builder {
+	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
+	if err != nil {
+		panic(fmt.Errorf("buildTestSite: os.MkdirTemp: %w", err))
+	}
+	b := newBuilder(Args{Src: path, Dst: tmp, Dev: true, Verbose: false})
+	err = b.Build()
+	if err != nil {
+		panic(fmt.Errorf("buildTestSite: b.Build: %w", err))
+	}
+	return b
+}
+
 func TestBuild(t *testing.T) {
 	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
 	if err != nil {
@@ -185,20 +206,7 @@ func TestBuilder_propagated(t *testing.T) {
 	}
 }
 
-func buildTestSite(path string) *builder {
-	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
-	if err != nil {
-		panic(fmt.Errorf("buildTestSite: os.MkdirTemp: %w", err))
-	}
-	b := newBuilder(Args{Src: path, Dst: tmp, Dev: true, Verbose: false})
-	err = b.Build()
-	if err != nil {
-		panic(fmt.Errorf("buildTestSite: b.Build: %w", err))
-	}
-	return b
-}
-
-func ExampleBuilder_strippedOrdering() {
+func ExampleBuilder_strippedOrderingHrefs() {
 	b := buildTestSite("testdata/stripped-ordering")
 	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Href) })
 	// Output:
@@ -208,4 +216,31 @@ func ExampleBuilder_strippedOrdering() {
 	// /products.html
 	// /about/
 	// /contact/
+}
+
+func ExampleBuilder_strippedOrderingTitles() {
+	b := buildTestSite("testdata/stripped-ordering")
+	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Title) })
+	// Output:
+	// Website Title
+	// Career Title
+	// Docs Title
+	// Products Title
+	// About Title
+	// Contact Title
+}
+
+func ExampleBuilder_strippedOrderingBreadcrumbs() {
+	b := buildTestSite("testdata/stripped-ordering")
+	dfs([]*Node{b.root3}, func(n []*Node) {
+		bs := each(n, func(n *Node) string { return n.Title })
+		fmt.Println(strings.Join(bs, " / "))
+	})
+	// Output:
+	// Website Title
+	// Website Title / Career Title
+	// Website Title / Docs Title
+	// Website Title / Products Title
+	// Website Title / About Title
+	// Website Title / Contact Title
 }
