@@ -53,6 +53,17 @@ func TestBuilder_renderWebPages(t *testing.T) {
 	}
 }
 
+func TestBuilder_renderMarkdownPages(t *testing.T) {
+	_, tmp := buildTestSite("testdata/markdown-content")
+	f, err := os.ReadFile(filepath.Join(tmp, "index.html"))
+	if err != nil {
+		t.Errorf("prep, read file: %v", err)
+	}
+	if !strings.Contains(string(f), "<h1>Title</h1>") {
+		t.Error("expected content not found.")
+	}
+}
+
 func ExampleBuilder_renderMarkdownToc() {
 	_, tmp := buildTestSite("testdata/markdown-toc")
 	f, err := os.ReadFile(filepath.Join(tmp, "index.html"))
