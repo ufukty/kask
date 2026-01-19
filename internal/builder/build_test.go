@@ -294,16 +294,16 @@ func TestBuilder_cssSplitting(t *testing.T) {
 			t.Errorf("prep, read file: %v", err)
 		}
 		content := string(f)
-		if strings.Contains(content, "/styles.css") {
+		if strings.Contains(content, `"/styles.css"`) {
 			t.Error("page of subsection should NOT link the root section's non-propagated styles")
 		}
-		if !strings.Contains(content, "/styles.propagate.css") {
+		if !strings.Contains(content, `"/styles.propagate.css"`) {
 			t.Error("page of subsection should link the root section's propagated styles")
 		}
-		if !strings.Contains(content, "/a/styles.propagate.css") {
+		if !strings.Contains(content, `"/a/styles.propagate.css"`) {
 			t.Error("page should link its section's propagated styles")
 		}
-		if !strings.Contains(content, "/a/styles.css") {
+		if !strings.Contains(content, `"/a/styles.css"`) {
 			t.Error("page should link its section's non-propagated styles")
 		}
 	})
