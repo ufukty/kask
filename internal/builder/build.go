@@ -467,7 +467,18 @@ func (b *builder) Build() error {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 
-	if err := b.propagateTemplates(root2, template.New("page")); err != nil {
+	tmpl := template.New("page")
+	tmpl.Funcs(template.FuncMap{
+		"trustedCss":      func(s string) template.CSS { return template.CSS(s) },
+		"trustedHtml":     func(s string) template.HTML { return template.HTML(s) },
+		"trustedHtmlAttr": func(s string) template.HTMLAttr { return template.HTMLAttr(s) },
+		"trustedJs":       func(s string) template.JS { return template.JS(s) },
+		"trustedJsStr":    func(s string) template.JSStr { return template.JSStr(s) },
+		"trustedSrcSet":   func(s string) template.Srcset { return template.Srcset(s) },
+		"trustedUrl":      func(s string) template.URL { return template.URL(s) },
+	})
+
+	if err := b.propagateTemplates(root2, tmpl); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 
