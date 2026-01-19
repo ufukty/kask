@@ -59,7 +59,7 @@ func TestBuilder_renderMarkdownPages(t *testing.T) {
 	if err != nil {
 		t.Errorf("prep, read file: %v", err)
 	}
-	if !strings.Contains(string(f), "<h1>Title</h1>") {
+	if !strings.Contains(string(f), `<h1 id="title">Title</h1>`) {
 		t.Error("expected content not found.")
 	}
 }
