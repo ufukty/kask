@@ -244,3 +244,42 @@ func ExampleBuilder_strippedOrderingBreadcrumbs() {
 	// Website Title / About Title
 	// Website Title / Contact Title
 }
+
+func ExampleBuilder_preservedOrderingHrefs() {
+	b := buildTestSite("testdata/preserved-ordering")
+	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Href) })
+	// Output:
+	// /
+	// /1.career.html
+	// /2.docs.html
+	// /3.products.html
+	// /1.about
+	// /2.contact
+}
+
+func ExampleBuilder_preservedOrderingTitles() {
+	b := buildTestSite("testdata/preserved-ordering")
+	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Title) })
+	// Output:
+	// Website Title
+	// Career Title
+	// Docs Title
+	// Products Title
+	// About Title
+	// Contact Title
+}
+
+func ExampleBuilder_preservedOrderingBreadcrumbs() {
+	b := buildTestSite("testdata/preserved-ordering")
+	dfs([]*Node{b.root3}, func(n []*Node) {
+		bs := each(n, func(n *Node) string { return n.Title })
+		fmt.Println(strings.Join(bs, " / "))
+	})
+	// Output:
+	// Website Title
+	// Website Title / Career Title
+	// Website Title / Docs Title
+	// Website Title / Products Title
+	// Website Title / About Title
+	// Website Title / Contact Title
+}
