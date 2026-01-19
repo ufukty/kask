@@ -53,6 +53,17 @@ func TestBuilder_renderWebPages(t *testing.T) {
 	}
 }
 
+func TestBuilder_recursiveTemplating(t *testing.T) {
+	_, tmp := buildTestSite("testdata/recursive-templating")
+	f, err := os.ReadFile(filepath.Join(tmp, "a/b/c/page.html"))
+	if err != nil {
+		t.Errorf("prep, read file: %v", err)
+	}
+	if !strings.Contains(string(f), "./a/b/c/Page") {
+		t.Error("expected markdown content not found.")
+	}
+}
+
 func TestBuilder_propagated(t *testing.T) {
 	tcs := []string{"web", "mixed", "markdown"}
 	for _, tc := range tcs {
