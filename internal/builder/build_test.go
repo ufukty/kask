@@ -348,3 +348,19 @@ func ExampleBuilder_metaTitle() {
 	// My Beautiful Section
 	// Page
 }
+
+func assertfile(t *testing.T, tmp, path string) {
+	t.Run(strings.ReplaceAll(path, "/", "\\"), func(t *testing.T) {
+		if !check(tmp, path) {
+			t.Errorf("assert, file not found: %s", path)
+		}
+	})
+}
+
+func TestBuilder_assets(t *testing.T) {
+	_, tmp := buildTestSite("testdata/assets")
+	tcs := []string{".assets/sample.txt", "section/.assets/subsample.txt"}
+	for _, tc := range tcs {
+		assertfile(t, tmp, tc)
+	}
+}
