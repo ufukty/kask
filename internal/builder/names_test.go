@@ -85,7 +85,7 @@ func TestTargetFromFilename(t *testing.T) {
 	}
 }
 
-func TestExtractors(t *testing.T) {
+func TestTitleFromContent(t *testing.T) {
 	type tc struct {
 		path, ext string
 	}
