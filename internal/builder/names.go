@@ -54,12 +54,15 @@ var regexpMarkdown = regexp.MustCompile(`(?m)^#\s+(.+)$`)
 type extractor struct{}
 
 func (e extractor) FromWeb(path string) (string, error) {
-	tmpl, err := template.New("title").ParseFiles(path)
+	tmpl, err := template.New("").ParseFiles(path)
 	if err != nil {
 		return "", fmt.Errorf("parse: %w", err)
 	}
+	if tmpl.Lookup("title") == nil {
+		return "", nil
+	}
 	b := bytes.NewBufferString("")
-	if err = tmpl.Execute(b, nil); err != nil {
+	if err = tmpl.ExecuteTemplate(b, "title", nil); err != nil {
 		return "", fmt.Errorf("execute: %w", err)
 	}
 	return b.String(), nil
@@ -72,7 +75,7 @@ func (e extractor) FromMarkdown(path string) (string, error) {
 	}
 	ms := regexpMarkdown.FindStringSubmatch(string(f))
 	if len(ms) < 2 {
-		return "", fmt.Errorf("empty")
+		return "", nil
 	}
 	return ms[1], nil
 }
