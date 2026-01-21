@@ -1,9 +1,7 @@
 package builder
 
 import (
-	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -85,30 +83,19 @@ func TestTargetFromFilename(t *testing.T) {
 	}
 }
 
-func TestExtractors(t *testing.T) {
-	type tc struct {
-		path, ext string
+func Test_extractor_FromFile(t *testing.T) {
+	tcs := map[string]string{
+		"testdata/extractors/page.tmpl": "Page title",
+		"testdata/extractors/page.md":   "Page title",
 	}
-	tcs := map[tc]string{ // paths to expected titles
-		{"1.career/index.tmpl", ".tmpl"}:                     "Careers at ACME",
-		{"2.products/index.tmpl", ".tmpl"}:                   "ACME Products",
-		{"3.docs/101 tutorials/1.getting-started.md", ".md"}: "Getting Started",
-		{"3.docs/birdseed.md", ".md"}:                        "ACME Bird Seed",
-		{"3.docs/download.md", ".md"}:                        "Download",
-		{"3.docs/magnet.md", ".md"}:                          "ACME Magnet",
-		{"3.docs/README.md", ".md"}:                          "Docs",
-		{"index.tmpl", ".tmpl"}:                              "Acme",
-	}
-
-	for tc, expected := range tcs {
-		t.Run(strings.ReplaceAll(tc.path, "/", "\\"), func(t *testing.T) {
-			c, err := os.ReadFile(filepath.Join("testdata/acme", tc.path))
+	for path, expected := range tcs {
+		t.Run(filepath.Ext(path), func(t *testing.T) {
+			got, err := theExtractor.FromFile(path)
 			if err != nil {
-				t.Fatalf("prep, read file: %v", err)
+				t.Fatalf("act, unexpected error: %v", err)
 			}
-			got := titleFromContent(string(c), tc.ext)
-			if got != expected {
-				t.Errorf("assert, expected %q got %q", expected, got)
+			if expected != got {
+				t.Fatalf("assert, expected: %q, got: %q", expected, got)
 			}
 		})
 	}
