@@ -1,7 +1,9 @@
 package builder
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -47,32 +49,63 @@ func targetFromFilename(dst, folderpath, filename string, strippedOrdering bool)
 	return filepath.Join(dst, folderpath, base+".html")
 }
 
-var titleExtractors = map[string]*regexp.Regexp{
-	".md":   regexp.MustCompile(`(?m)^#\s+(.+)$`),
-	".tmpl": regexp.MustCompile(`(?i)<title>(.*?)</title>`),
+var regexpMarkdown = regexp.MustCompile(`(?m)^#\s+(.+)$`)
+
+type extractor struct{}
+
+func (e extractor) FromWeb(path string) (string, error) {
+	tmpl, err := template.New("title").ParseFiles(path)
+	if err != nil {
+		return "", fmt.Errorf("parse: %w", err)
+	}
+	b := bytes.NewBufferString("")
+	if err = tmpl.Execute(b, nil); err != nil {
+		return "", fmt.Errorf("execute: %w", err)
+	}
+	return b.String(), nil
 }
 
-func titleFromContent(content, ext string) string {
-	extractor, ok := titleExtractors[ext]
-	if !ok {
-		return ""
+func (e extractor) FromMarkdown(path string) (string, error) {
+	f, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("reading file: %w", err)
 	}
-	submatches := extractor.FindStringSubmatch(content)
-	if len(submatches) < 2 {
-		return ""
+	ms := regexpMarkdown.FindStringSubmatch(string(f))
+	if len(ms) < 2 {
+		return "", fmt.Errorf("empty")
 	}
-	return submatches[1]
+	return ms[1], nil
 }
+
+func (e extractor) FromFile(path string) (string, error) {
+	switch ext := filepath.Ext(path); ext {
+	case ".tmpl":
+		p, err := e.FromWeb(path)
+		if err != nil {
+			return "", fmt.Errorf("markdown: %w", err)
+		}
+		return p, nil
+	case ".md":
+		p, err := e.FromMarkdown(path)
+		if err != nil {
+			return "", fmt.Errorf("web: %w", err)
+		}
+		return p, nil
+	default:
+		return "", fmt.Errorf("unknown file extension: %s", ext)
+	}
+}
+
+var theExtractor = extractor{}
 
 // 1. title from content, if available
 // 2. title from file name, if visitable
 // 3. title from folder name
 func decideOnTitle(src, ext string, strippedOrdering bool) (string, error) {
-	bs, err := os.ReadFile(src)
+	title, err := theExtractor.FromFile(src)
 	if err != nil {
-		return "", fmt.Errorf("read file: %w", err)
+		return "", fmt.Errorf("reading: %w", err)
 	}
-	title := titleFromContent(string(bs), ext)
 	if title != "" {
 		return title, nil
 	}
