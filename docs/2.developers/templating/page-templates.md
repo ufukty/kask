@@ -32,6 +32,19 @@ Markdown page templates are provided additional `.Markdown` field on top of [usu
 - `.Content`: This is the HTML equiavalent of the content of `*.md` file that is the `"markdown-page"` is currently called for. You are expected to write the content of this field to an appropriate place in your template.
 - `.Toc`: This is a tree of nodes, representing "Table of Contents". Note that, since a markdown page is okay to have more than one `H1` title, the TOC starts with a dummy root, representing a H0 with no renderable title. You only need to iterate on its children to access H1s. Printing a Toc require recursive templating.
 
+```go-html-template
+{{define "markdown-page"}}
+<html>
+  <body>
+    <main>{{trustedHtml .Markdown.Content}}</main>
+    <aside>{{trustedHtml .Markdown.Toc}}</aside>
+  </body>
+</html>
+{{end}}
+```
+
+See the [Escaping](#escaping) section for `trustedHtml`.
+
 ## HTML pages
 
 Kask loads all shared template files stored inside the `.kask` folder of containing folder and its parent folders for rendering all `.tmpl` ending files in a content directory.
