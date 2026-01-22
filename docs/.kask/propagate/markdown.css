@@ -7,7 +7,9 @@ body {
     padding-top: 50px;
   }
 
-  p:not(:has(img, pre, table, ul, ol)) {
+  p:not(:has(img, pre, table, ul, ol)),
+  ul,
+  ol {
     max-width: 640px;
   }
 
