@@ -304,19 +304,22 @@ body {
 
   > figure {
     &:has(pre.chroma) {
+      margin-block: 20px;
+
       display: flex;
       flex-direction: column-reverse;
+
+      border: 1px solid light-dark(#eee, #2e2e2e);
       border-radius: 8px;
-      overflow: hidden;
     }
 
     pre.chroma + figcaption {
-      background-color: light-dark(#eee, #eee);
+      border-bottom: 1px solid light-dark(#eee, #2e2e2e);
+      opacity: 0.5;
       padding: 10px 20px;
     }
 
     > pre.chroma {
-      border-radius: 0px;
       padding: 20px 20px 20px 40px;
     }
   }
