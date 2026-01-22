@@ -228,8 +228,7 @@ body {
     line-height: 1.24;
     font-size: 11pt;
 
-    width: max-content;
-    max-width: 100%;
+    width: min(100%, max-content);
     overflow-x: scroll;
 
     counter-reset: line;
@@ -313,16 +312,19 @@ body {
 
       border: 1px solid light-dark(#eee, #2e2e2e);
       border-radius: 8px;
-    }
 
-    pre.chroma + figcaption {
-      border-bottom: 1px solid light-dark(#eee, #2e2e2e);
-      opacity: 0.5;
-      padding: 10px 20px;
-    }
+      & > figcaption {
+        border-bottom: 1px solid light-dark(#eee, #2e2e2e);
+        opacity: 0.5;
+        padding: 10px 20px;
+      }
+      & > pre.chroma {
+        padding: 20px 20px 20px 40px;
+      }
 
-    > pre.chroma {
-      padding: 20px 20px 20px 40px;
+      @media screen and (width<800px) {
+        margin-inline: 20px;
+      }
     }
   }
 }
