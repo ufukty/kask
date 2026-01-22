@@ -49,6 +49,7 @@ Kask loads all shared template files stored inside the `.kask` folder of contain
 
 !---
 Figure: `contact.tmpl`
+Unlike Markdown based pages; template based pages of the same folder can have different layouts and styling. Just define the `"page"` template at the each page file, where customization is desired.
 
 ### Shared page template
 
