@@ -25,7 +25,7 @@ Kask will use any template with name of `"markdown-page"` to pass HTML translati
 
 Markdown page templates --just like any other `.kask/*.tmpl` file-- are overridable. The more specific template file will be applied instead of the one defined in above directories.
 
-## Structure of Markdown Page Templates
+### Templating pages
 
 Markdown page templates are provided additional `.Markdown` field on top of [usual contents](../README.md#templating-content) of `TemplateContent`. Markdown field contains two fields:
 
