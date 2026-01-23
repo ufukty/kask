@@ -2,8 +2,6 @@
 
 Under the hood, Kask uses Go templating engine. Thus, developers can refer to the official [text/template](https://pkg.go.dev/text/template) documentation for topics not covered by Kask documentation.
 
-## Page templates
-
 ## Templating content
 
 Kask provides a series of useful, dynamic information to templates at the moment they are opened for rendering to static HTML. The struct provided to template file is called `TemplateContent`, which contains many fields:
