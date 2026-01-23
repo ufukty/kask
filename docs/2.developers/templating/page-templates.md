@@ -65,27 +65,75 @@ Figure: `contact.tmpl`
 
 Unlike Markdown based pages; template based pages of the same folder can have different layouts and styling. Just define the `"page"` template at the each page file, where customization is desired.
 
-### Shared page template
+### Titles
 
-Rendering each page takes creating a copy of the shared template stack and adding the contents of template file in rendering step. Thus template pages are not strictly expected to have `{{define "page"}}` block; instead, one directory can have it as a shared template file and page templates can only define the content exclusive to each page.
+Kask render the `"title"` template for each Html based page to acquire the user given title for those, when available. To enable this behavior; define a second template named `"title"` as below inside the files of each desired page:
+
+!---
+
+```go-html-template
+{{define "title"}}Life is life, na na nana na.{{end}}
+```
+
+!---
+Figure: `songs.tmpl`
+
+If you desire, you might reuse the `"title"` template inside your `"page"` template:
+
+!---
+
+```go-html-template
+{{define "title"}}Life is life, na na nana na.{{end}}
+
+{{define "page"}}
+<html>
+<head>
+<title>{{template "title"}}</title>
+</head>
+</html>
+{{end}}
+```
+
+!---
+Figure: `songs.tmpl`
+
+For those pages that doesn't contain a `"title"` named template Kask will derive a title using the filename.
+
+## Reusing templates
+
+It makes sense to define the page layout for multiple pages of a section from one place; even when some pages of the section needs customizations. In those circumstances you can define the page template inside the `.kask` or even `.kask/propagate` folders. Which directs Kask to use those as the default `"page"` template when the subfolders, or files of the folder don't override it.
 
 !---
 
 ```go-html-template
 {{define "page"}}
 <html>
-  <head></head>
+  <head>
+    <title>{{template "title" .}}</title>
+  </head>
   <body>{{template "page-content" .}}</body>
+</html>
+{{end}}
+
+{{define "markdown-page"}}
+<html>
+  <head></head>
+  <body>
+    <main>{{trustedHtml .Markdown.Content}}</main
+    <aside>{{trustedHtml .Markdown.Toc}}</aside>
+  </body>
 </html>
 {{end}}
 ```
 
 !---
-Figure: `.kask/page.tmpl`
+Figure: `.kask/propagate/page.tmpl`
 
 !---
 
 ```go-html-template
+{{define "title"}}Lorem ipsum dolor sit amet.{{end}}
+
 {{define "page-content"}}
 {{.Date}}
 {{end}}
