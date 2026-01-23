@@ -1,31 +1,8 @@
 # Page templates
 
-## Markdown pages
+Kask look out for templates named `"page"` and `"markdown-page"` for rendering Html and Markdown based files, respectively. The directories supposed to house declarations of such templates are `.kask`, `.kask/propagate` or `../.kask/propagate` folders for the Markdown pages. Html page templates can also be declared inside the page's file, exclusively or to override section defaults.
 
-Kask will use any template with name of `"markdown-page"` to pass HTML translation of markdown files. You can create a `*.tmpl` file to define this template on any of the `.kask/propagate` folders either at the level of your `*.md` file or above, or in the `.kask` folder at the level of it.
-
-```sh
-.
-└── acme
-    ├── career
-    │   └── index.html
-    ├── docs
-    │   ├── .kask
-    │   │   ├── ...
-    │   │   ├── page.tmpl # the .tmpl file defines "markdown-page"
-    │   │   └── ...
-    │   ├── README.md   # will use acme/docs/.kask/page.tmpl
-    │   ├── birdseed.md # will use acme/docs/.kask/page.tmpl
-    │   ├── download.md # will use acme/docs/.kask/page.tmpl
-    │   └── magnet.md   # will use acme/docs/.kask/page.tmpl
-    ├── index.html
-    └── products
-        └── index.html
-```
-
-Markdown page templates --just like any other `.kask/*.tmpl` file-- are overridable. The more specific template file will be applied instead of the one defined in above directories.
-
-### Templating pages
+### Markdown page templates
 
 Markdown page templates are provided additional `.Markdown` field on top of [usual contents](../README.md#templating-content) of `TemplateContent`. Markdown field contains two fields:
 
@@ -45,7 +22,7 @@ Markdown page templates are provided additional `.Markdown` field on top of [usu
 
 See the [Escaping](#escaping) section for `trustedHtml`.
 
-## HTML pages
+## Html page templates
 
 Kask loads all shared template files stored inside the `.kask` folder of containing folder and its parent folders for rendering all `.tmpl` ending files in a content directory.
 
