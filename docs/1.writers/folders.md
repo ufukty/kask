@@ -1,8 +1,8 @@
-# For Writers
+# Folders
 
 To start writing the website content and organizing sections, just determine where you want to store all website related Markdown files in your computer. It will be referred as the "content directory". Then enter to directory and create a file. The filename should follow the form of Markdown files. They can be everything but should end with `.md` sequence. This is the file extension of Markdown files.
 
-## Folders
+## Files
 
 Kask generates the sitemap (the hierarchy of web pages based) on the folder structure of the "content directory". Thus, to arrange pages within sections of website, all the writer need to do is moving files between folders inside the content directory. Take a look at this example:
 
@@ -59,7 +59,7 @@ Kask generates the sitemap (the hierarchy of web pages based) on the folder stru
         └── Sales.md
 ```
 
-### Ordering
+## Ordering
 
 The sitemap orders folder items alphabetically. To apply custom ordering to pages and folders, just prefix the filenames with numbers.
 
@@ -69,7 +69,7 @@ Kask will automatically remove the leading numbers and following punctuation fro
 preserve-ordering: true
 ```
 
-### Hidden developer files
+## Hidden developer files
 
 Content directory may contain some developer-exclusive Kask files inside the content directory at any level of subfolders. Telling which files are writer files is easy. Markdown files are the writer files (those end with `.md`). In writer-developer collaborated projects writers are not supposed to understand the functionality of the content of developer files, writers are just expected to not modify, move or delete developer files without the developer. Also developer files might be designed for the files in specific folder; so moving all writer files to a new folder is cheating.
 
