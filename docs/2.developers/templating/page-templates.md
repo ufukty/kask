@@ -143,3 +143,38 @@ Figure: `.kask/propagate/page.tmpl`
 Figure: `contact.tmpl`
 
 Also, moving the `"page"` template into `.kask/propagate` will make it available for pages inside subfolders.
+
+## Escaping
+
+For any text looks like a code piece; the underlying templating engine, thus Kask, will transform it in order to avoid harmful content end up running on the browser of visitors.
+
+To place specific and trusted code on the page as is; you are presented with a series of options:
+
+| Function name     | Use case                                   |
+| ----------------- | ------------------------------------------ |
+| `trustedCss`      | Stylesheet, CSS rule production and values |
+| `trustedHtml`     | HTML document fragments                    |
+| `trustedHtmlAttr` | HTML attributes                            |
+| `trustedJs`       | EcmaScript5 expressions                    |
+| `trustedJsStr`    | Escaped JS                                 |
+| `trustedSrcSet`   | Image srcset value                         |
+| `trustedUrl`      | Trusted URLs                               |
+
+Use proper function to bypass code escaping. Just as in the example in Markdown section:
+
+```go-html-template
+{{define "markdown-page"}}
+<html>
+  <body>
+    <main>{{trustedHtml .Markdown.Content}}</main>
+    <aside>{{trustedHtml .Markdown.Toc}}</aside>
+  </body>
+</html>
+{{end}}
+```
+
+See the markdown contents are passed through the `trustedHtml` function. This will allow preserving the rich format of the original document like headings, paragraphs, tables and codefences.
+
+Those functions only enable the use of templating engine provided types [`CSS`](https://pkg.go.dev/html/template#CSS), [`HTML`](https://pkg.go.dev/html/template#HTML), [`HTMLAttr`](https://pkg.go.dev/html/template#HTMLAttr), [`JS`](https://pkg.go.dev/html/template#JS), [`JSStr`](https://pkg.go.dev/html/template#JSStr), [`Srcset`](https://pkg.go.dev/html/template#Srcset) and [`URL`](https://pkg.go.dev/html/template#URL) inside your templates. Visit individual links for details. Mind caps.
+
+> Use the `trusted` utilities only when you trust the document to be free of any harmful content.
