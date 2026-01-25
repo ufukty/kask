@@ -3,6 +3,8 @@ package builder
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/ufukty/kask/internal/builder/directory"
 )
 
 func TestStripOrdering(t *testing.T) {
@@ -34,7 +36,7 @@ func TestTitleFromFilename(t *testing.T) {
 	}
 	for input, expected := range tcs {
 		t.Run(input, func(t *testing.T) {
-			got := titleFromFilename(input, ".tmpl", true)
+			got := pageTitleFromFilename(input, ".tmpl", true)
 			if got != expected {
 				t.Errorf("expected %q got %q", expected, got)
 			}
@@ -44,19 +46,28 @@ func TestTitleFromFilename(t *testing.T) {
 
 func TestHrefFromFilename(t *testing.T) {
 	type tc struct {
-		testname       string
-		dstPathEncoded string
-		filename       string
+		testname         string
+		dirUrl           string
+		filename         string
+		preserveOrdering bool
 	}
 	tcs := map[tc]string{
-		{"extension repl", "a/b/c", "d.md"}:   "/a/b/c/d.html",
-		{"encoded path", "a/b%20/c", "d.md"}:  "/a/b%20/c/d.html",
-		{"filename enc", "a/b/c", "d .md"}:    "/a/b/c/d%20.html",
-		{"strip ordering", "a/b/c", "3.d.md"}: "/a/b/c/d.html",
+		{"encoded path with ordering", "a/b%20/c", "d.md", true}:  "/a/b%20/c/d.html",
+		{"encoded path", "a/b%20/c", "d.md", false}:               "/a/b%20/c/d.html",
+		{"extension repl with ordering", "a/b/c", "d.md", true}:   "/a/b/c/d.html",
+		{"extension repl", "a/b/c", "d.md", false}:                "/a/b/c/d.html",
+		{"filename enc with ordering", "a/b/c", "d .md", true}:    "/a/b/c/d%20.html",
+		{"filename enc", "a/b/c", "d .md", false}:                 "/a/b/c/d%20.html",
+		{"strip ordering with ordering", "a/b/c", "3.d.md", true}: "/a/b/c/3.d.html",
+		{"strip ordering", "a/b/c", "3.d.md", false}:              "/a/b/c/d.html",
 	}
 	for input, expected := range tcs {
 		t.Run(input.testname, func(t *testing.T) {
-			got := hrefFromFilename(input.dstPathEncoded, input.filename, true)
+			d := &dir2{
+				meta:  &directory.Meta{PreserveOrdering: input.preserveOrdering},
+				paths: paths{url: input.dirUrl},
+			}
+			got := pageLinkFromFilename(d, input.filename)
 			if got != expected {
 				t.Errorf("expected %q got %q", expected, got)
 			}
@@ -75,7 +86,7 @@ func TestTargetFromFilename(t *testing.T) {
 	}
 	for input, expected := range tcs {
 		t.Run(input.testname, func(t *testing.T) {
-			got := targetFromFilename(input.dst, input.dstPath, input.filename, true)
+			got := pageDestFromFilename(input.dst, input.dstPath, input.filename, true)
 			if got != expected {
 				t.Errorf("expected %q got %q", expected, got)
 			}

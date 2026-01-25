@@ -132,3 +132,63 @@ func TestRewrite_linksWithPathsWithStrippedOrdering(t *testing.T) {
 		})
 	}
 }
+
+func TestRewrite_inPageLinks(t *testing.T) {
+	tcs := map[string]string{
+		"..#title":                "/subdir/#title",
+		"../../#title":            "/#title",
+		"../../a.md#title":        "/a.html#title",
+		"../../README.md#title":   "/#title",
+		"../#title":               "/subdir/#title",
+		"../a.md#title":           "/subdir/a.html#title",
+		"../README.md#title":      "/subdir/#title",
+		"#title":                  "/subdir/subsubdir/#title",
+		"./../../#title":          "/#title",
+		"./../../a.md#title":      "/a.html#title",
+		"./../../README.md#title": "/#title",
+		"./../#title":             "/subdir/#title",
+		"./../a.md#title":         "/subdir/a.html#title",
+		"./../README.md#title":    "/subdir/#title",
+
+		"./a.md#title":        "/subdir/subsubdir/a.html#title",
+		"./a#title":           "/subdir/subsubdir/a/#title",
+		"./a/b.md#title":      "/subdir/subsubdir/a/b.html#title",
+		"./a/README.md#title": "/subdir/subsubdir/a/#title",
+		"a.md#title":          "/subdir/subsubdir/a.html#title",
+		"a#title":             "/subdir/subsubdir/a/#title",
+		"a/b.md#title":        "/subdir/subsubdir/a/b.html#title",
+		"a/README.md#title":   "/subdir/subsubdir/a/#title",
+
+		"../subsubdir/a.md#title":          "/subdir/subsubdir/a.html#title",
+		"../subsubdir/a/b.md#title":        "/subdir/subsubdir/a/b.html#title",
+		"../subsubdir/a/README.md#title":   "/subdir/subsubdir/a/#title",
+		"./../subsubdir/a.md#title":        "/subdir/subsubdir/a.html#title",
+		"./../subsubdir/a/b.md#title":      "/subdir/subsubdir/a/b.html#title",
+		"./../subsubdir/a/README.md#title": "/subdir/subsubdir/a/#title",
+
+		"../subsubdir/1.%20lorem/#title":                  "/subdir/subsubdir/lorem/#title",
+		"../subsubdir/1.%20lorem/1.%20ipsum.md#title":     "/subdir/subsubdir/lorem/ipsum.html#title",
+		"../subsubdir/3.%20sit/#title":                    "/subdir/subsubdir/sit/#title",
+		"../subsubdir/3.%20sit/2.%20consectetur.md#title": "/subdir/subsubdir/sit/consectetur.html#title",
+
+		"./1.%20lorem/#title":                  "/subdir/subsubdir/lorem/#title",
+		"./1.%20lorem/1.%20ipsum.md#title":     "/subdir/subsubdir/lorem/ipsum.html#title",
+		"./3.%20sit/#title":                    "/subdir/subsubdir/sit/#title",
+		"./3.%20sit/2.%20consectetur.md#title": "/subdir/subsubdir/sit/consectetur.html#title",
+
+		"1.%20lorem/#title":                  "/subdir/subsubdir/lorem/#title",
+		"1.%20lorem/1.%20ipsum.md#title":     "/subdir/subsubdir/lorem/ipsum.html#title",
+		"3.%20sit/#title":                    "/subdir/subsubdir/sit/#title",
+		"3.%20sit/2.%20consectetur.md#title": "/subdir/subsubdir/sit/consectetur.html#title",
+	}
+
+	for _, link := range slices.Sorted(maps.Keys(tcs)) {
+		t.Run(testname(link), func(t *testing.T) {
+			got := rewrite(link, "/subdir/subsubdir", rewrites)
+			expected := tcs[link]
+			if expected != got {
+				t.Errorf("expected %q got %q", expected, got)
+			}
+		})
+	}
+}
