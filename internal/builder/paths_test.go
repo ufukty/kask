@@ -36,7 +36,7 @@ func TestPaths_Subdir(t *testing.T) {
 		dst: "dst",
 		url: "/",
 	}
-	got := parent.withChild("c", true)
+	got := parent.subdir("c", true)
 	expected := paths{
 		src: "src/c",
 		dst: "dst/c",
