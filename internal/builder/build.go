@@ -228,20 +228,6 @@ func isToStrip(d *dir2) bool {
 }
 
 // TODO: domain prefix
-// NOTE: Split if internal (src file) and external (href) path syntaxes diverge
-func canonicalize(dst string) string {
-	if !strings.HasPrefix(dst, "/") {
-		dst = "/" + dst
-	}
-	if dst == "/." {
-		dst = "/"
-	}
-	if !strings.Contains(filepath.Base(dst), ".") && !strings.HasSuffix(dst, "/") {
-		dst = dst + "/"
-	}
-	return dst
-}
-
 func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 	n := &Node{
 		Title:    "",
@@ -257,7 +243,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		}
 		base := filepath.Base(page)
 		if base == "index.tmpl" || base == "README.md" {
-			n.Href = canonicalize(d.paths.url)
+			n.Href = d.paths.url
 			n.Title = title
 		} else {
 			href := pageLinkFromFilename(d, base)
