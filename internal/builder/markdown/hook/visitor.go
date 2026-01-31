@@ -12,19 +12,19 @@ import (
 type visitor struct {
 	cf      *codefence.Renderer
 	pagedir string
-	links_  map[string]string
+	rw      *Rewriter
 }
 
-func NewVisitor(page string, links map[string]string) *visitor {
+func NewVisitor(page string, rw *Rewriter) *visitor {
 	return &visitor{
 		cf:      codefence.NewRenderer(),
 		pagedir: "/" + strings.TrimPrefix(filepath.Dir(page), "/"),
-		links_:  links,
+		rw:      rw,
 	}
 }
 
 func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
-	node.Destination = []byte(rewrite(string(node.Destination), v.pagedir, v.links_))
+	node.Destination = []byte(v.rw.rewrite(string(node.Destination), v.pagedir))
 	return ast.GoToNext, false
 }
 

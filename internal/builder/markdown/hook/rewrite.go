@@ -33,8 +33,22 @@ func isDir(target string) bool {
 	return !strings.Contains(filepath.Base(target), ".")
 }
 
+type Rewriter struct {
+	links map[string]string // src path -> uri
+}
+
+func NewRewriter() *Rewriter {
+	return &Rewriter{
+		links: map[string]string{},
+	}
+}
+
+func (rw *Rewriter) Bank(src, dst string) {
+	rw.links[src] = dst
+}
+
 // TODO: check path handling with query and browser parameters
-func rewrite(target, currentdir string, rewrites map[string]string) string {
+func (rw Rewriter) rewrite(target, currentdir string) string {
 	if isExternal(target) {
 		return target
 	}
@@ -49,8 +63,8 @@ func rewrite(target, currentdir string, rewrites map[string]string) string {
 	if isRelative(target) {
 		target = "/" + target
 	}
-	if has(rewrites, target) {
-		target = rewrites[target]
+	if has(rw.links, target) {
+		target = rw.links[target]
 	}
 	if isDir(target) && !strings.HasSuffix(target, "/") {
 		target = target + "/"
