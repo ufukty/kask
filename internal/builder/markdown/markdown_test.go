@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ufukty/kask/internal/builder/markdown/hook"
+	"github.com/ufukty/kask/internal/builder/rewriter"
 )
 
 func Test_FromFile(t *testing.T) {
-	p, err := ToHtml("testdata", "input.md", hook.NewRewriter())
+	p, err := ToHtml("testdata", "input.md", rewriter.New())
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
 	}

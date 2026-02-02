@@ -1,4 +1,4 @@
-package hook
+package rewriter
 
 import (
 	"net/url"
@@ -37,7 +37,7 @@ type Rewriter struct {
 	links map[string]string // src path -> uri
 }
 
-func NewRewriter() *Rewriter {
+func New() *Rewriter {
 	return &Rewriter{
 		links: map[string]string{},
 	}
@@ -48,7 +48,7 @@ func (rw *Rewriter) Bank(src, dst string) {
 }
 
 // TODO: check path handling with query and browser parameters
-func (rw Rewriter) rewrite(target, currentdir string) string {
+func (rw Rewriter) Rewrite(target, currentdir string) string {
 	if isExternal(target) {
 		return target
 	}

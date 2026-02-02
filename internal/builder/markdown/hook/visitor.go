@@ -7,15 +7,16 @@ import (
 
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/ufukty/kask/internal/builder/markdown/hook/codefence"
+	"github.com/ufukty/kask/internal/builder/rewriter"
 )
 
 type visitor struct {
 	cf      *codefence.Renderer
 	pagedir string
-	rw      *Rewriter
+	rw      *rewriter.Rewriter
 }
 
-func NewVisitor(page string, rw *Rewriter) *visitor {
+func NewVisitor(page string, rw *rewriter.Rewriter) *visitor {
 	return &visitor{
 		cf:      codefence.NewRenderer(),
 		pagedir: "/" + strings.TrimPrefix(filepath.Dir(page), "/"),
@@ -24,7 +25,7 @@ func NewVisitor(page string, rw *Rewriter) *visitor {
 }
 
 func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
-	node.Destination = []byte(v.rw.rewrite(string(node.Destination), v.pagedir))
+	node.Destination = []byte(v.rw.Rewrite(string(node.Destination), v.pagedir))
 	return ast.GoToNext, false
 }
 

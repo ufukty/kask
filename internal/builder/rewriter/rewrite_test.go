@@ -1,4 +1,4 @@
-package hook
+package rewriter
 
 import (
 	"maps"
@@ -51,7 +51,7 @@ func TestRewrite_linksToParents(t *testing.T) {
 
 	for _, link := range slices.Sorted(maps.Keys(tcs)) {
 		t.Run(testname(link), func(t *testing.T) {
-			got := Rewriter{links: rewrites}.rewrite(link, "/subdir/subsubdir")
+			got := Rewriter{links: rewrites}.Rewrite(link, "/subdir/subsubdir")
 			expected := tcs[link]
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
@@ -74,7 +74,7 @@ func TestRewrite_linksToSubdirs(t *testing.T) {
 
 	for _, link := range slices.Sorted(maps.Keys(tcs)) {
 		t.Run(testname(link), func(t *testing.T) {
-			got := Rewriter{links: rewrites}.rewrite(link, "/subdir/subsubdir")
+			got := Rewriter{links: rewrites}.Rewrite(link, "/subdir/subsubdir")
 			expected := tcs[link]
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
@@ -95,7 +95,7 @@ func TestRewrite_linksWithReduntantSegments(t *testing.T) {
 
 	for _, link := range slices.Sorted(maps.Keys(tcs)) {
 		t.Run(testname(link), func(t *testing.T) {
-			got := Rewriter{links: rewrites}.rewrite(link, "/subdir/subsubdir")
+			got := Rewriter{links: rewrites}.Rewrite(link, "/subdir/subsubdir")
 			expected := tcs[link]
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
@@ -124,7 +124,7 @@ func TestRewrite_linksWithPathsWithStrippedOrdering(t *testing.T) {
 
 	for _, link := range slices.Sorted(maps.Keys(tcs)) {
 		t.Run(testname(link), func(t *testing.T) {
-			got := Rewriter{links: rewrites}.rewrite(link, "/subdir/subsubdir")
+			got := Rewriter{links: rewrites}.Rewrite(link, "/subdir/subsubdir")
 			expected := tcs[link]
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
@@ -184,7 +184,7 @@ func TestRewrite_inPageLinks(t *testing.T) {
 
 	for _, link := range slices.Sorted(maps.Keys(tcs)) {
 		t.Run(testname(link), func(t *testing.T) {
-			got := Rewriter{links: rewrites}.rewrite(link, "/subdir/subsubdir")
+			got := Rewriter{links: rewrites}.Rewrite(link, "/subdir/subsubdir")
 			expected := tcs[link]
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
