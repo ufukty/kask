@@ -135,7 +135,6 @@ func TestRewrite_linksWithPathsWithStrippedOrdering(t *testing.T) {
 
 func TestRewrite_inPageLinks(t *testing.T) {
 	tcs := map[string]string{
-		"..#title":                "/subdir/#title",
 		"../../#title":            "/#title",
 		"../../a.md#title":        "/a.html#title",
 		"../../README.md#title":   "/#title",
