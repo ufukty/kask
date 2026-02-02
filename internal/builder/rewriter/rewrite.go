@@ -48,26 +48,26 @@ func (rw *Rewriter) Bank(src, dst string) {
 }
 
 // TODO: check path handling with query and browser parameters
-func (rw Rewriter) Rewrite(target, currentdir string) string {
-	if isExternal(target) {
-		return target
+func (rw Rewriter) Rewrite(dst, src string) string {
+	if isExternal(dst) {
+		return dst
 	}
-	target = unescape(target)
-	if isRelative(target) {
-		target = filepath.Join(currentdir, target)
+	dst = unescape(dst)
+	if isRelative(dst) {
+		dst = filepath.Join(src, dst)
 	}
-	target = filepath.Clean(target)
-	if target == "." {
-		target = ""
+	dst = filepath.Clean(dst)
+	if dst == "." {
+		dst = ""
 	}
-	if isRelative(target) {
-		target = "/" + target
+	if isRelative(dst) {
+		dst = "/" + dst
 	}
-	if has(rw.links, target) {
-		target = rw.links[target]
+	if has(rw.links, dst) {
+		dst = rw.links[dst]
 	}
-	if isDir(target) && !strings.HasSuffix(target, "/") {
-		target = target + "/"
+	if isDir(dst) && !strings.HasSuffix(dst, "/") {
+		dst = dst + "/"
 	}
-	return target
+	return dst
 }
