@@ -139,22 +139,3 @@ func TestPaths_Dir_preserveEncodedParent(t *testing.T) {
 		t.Errorf("assert, expected the parent path to stay encoded: %q, got. %q", "/a%20", got.url)
 	}
 }
-
-// func TestTargetFromFilename(t *testing.T) {
-// 	type tc struct {
-// 		testname               string
-// 		dst, dstPath, filename string
-// 	}
-// 	tcs := map[tc]string{
-// 		{"repl extension", "/a", "b/c", "d.md"}:   "/a/b/c/d.html",
-// 		{"strip ordering", "/a", "b/c", "3 d.md"}: "/a/b/c/d.html",
-// 	}
-// 	for input, expected := range tcs {
-// 		t.Run(input.testname, func(t *testing.T) {
-// 			got := pageDestFromFilename(input.dst, input.dstPath, input.filename, true)
-// 			if got != expected {
-// 				t.Errorf("expected %q got %q", expected, got)
-// 			}
-// 		})
-// 	}
-// }
