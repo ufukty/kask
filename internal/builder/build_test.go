@@ -165,8 +165,8 @@ func ExampleBuilder_preservedOrderingHrefs() {
 	// /1.career.html
 	// /2.docs.html
 	// /3.products.html
-	// /1.about
-	// /2.contact
+	// /1.about/
+	// /2.contact/
 }
 
 func ExampleBuilder_preservedOrderingTitles() {
