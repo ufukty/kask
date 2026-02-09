@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"io"
@@ -116,7 +117,7 @@ func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
 		stylesheets:   nil,
 		templates:     nil,
 	}
-	b.rw.Bank(d2.paths.src, d2.paths.url)
+	// b.rw.Bank(d2.paths.src, d2.paths.url)
 	for _, subdir := range d.Subdirs {
 		d2.subdirs = append(d2.subdirs, b.toDir2(subdir, d, ps))
 	}
@@ -247,6 +248,8 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 		if base == "README.md" || base == "index.tmpl" {
 			n.Href = path.url
 			n.Title = title
+			b.rw.Bank(path.src, path.url)
+			b.rw.Bank(filepath.Dir(path.src), path.url)
 		} else {
 			c := &Node{
 				Title:    title,
@@ -312,16 +315,17 @@ func (b *builder) execPage(dst string, tmpl *template.Template, name string, con
 	if b.args.Verbose {
 		fmt.Printf("printing %s\n", dst)
 	}
-	f, err := os.Create(dst)
-	if err != nil {
-		return fmt.Errorf("creating: %w", err)
-	}
-	defer f.Close()
-	if _, err := fmt.Fprintln(f, fileheader); err != nil {
+	buf := bytes.NewBuffer([]byte{})
+	if _, err := fmt.Fprintln(buf, fileheader); err != nil {
 		return fmt.Errorf("writing the autogen notice: %w", err)
 	}
-	if err := tmpl.ExecuteTemplate(f, name, content); err != nil {
+	if err := tmpl.ExecuteTemplate(buf, name, content); err != nil {
 		return fmt.Errorf("executing: %w", err)
+	}
+	bs := rewriteLinksInHtmlPage(b.rw, dst, buf.Bytes())
+	err := os.WriteFile(filepath.Join(b.args.Dst, dst), bs, 0o666)
+	if err != nil {
+		return fmt.Errorf("creating: %w", err)
 	}
 	return nil
 }
@@ -357,7 +361,7 @@ func (b *builder) execDir(d *dir2) error {
 		if err != nil {
 			return fmt.Errorf("parsing page template %q: %w", filepath.Base(page), err)
 		}
-		if err := b.execPage(filepath.Join(b.args.Dst, paths.dst), tmpl, "page", content); err != nil {
+		if err := b.execPage(paths.dst, tmpl, "page", content); err != nil {
 			return fmt.Errorf("page %q: %w", filepath.Base(page), err)
 		}
 	}
@@ -371,7 +375,7 @@ func (b *builder) execDir(d *dir2) error {
 			Time:        b.start,
 		}
 		paths, _ := d.paths.file(filepath.Base(page), isToStrip(d)) // TODO: reuse previously calculated (see previous TODOs)
-		if err := b.execPage(filepath.Join(b.args.Dst, paths.dst), d.templates, "markdown-page", content); err != nil {
+		if err := b.execPage(paths.dst, d.templates, "markdown-page", content); err != nil {
 			return fmt.Errorf("page %q: %w", filepath.Base(page), err)
 		}
 	}
@@ -426,7 +430,7 @@ func (b *builder) Build() error {
 		return fmt.Errorf("checking competing files and folders: %w", err)
 	}
 
-	root2 := b.toDir2(root, nil, paths{})
+	root2 := b.toDir2(root, nil, paths{src: "."})
 
 	if err := b.bundleAndPropagateStylesheets(root2, []string{}); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)
