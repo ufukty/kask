@@ -59,14 +59,14 @@ func TestUri_file(t *testing.T) {
 
 func TestPaths_Subdir(t *testing.T) {
 	parent := paths{
-		src: "src",
-		dst: "dst",
+		src: "",
+		dst: "",
 		url: "/",
 	}
 	got := parent.subdir("c", true)
 	expected := paths{
-		src: "src/c",
-		dst: "dst/c",
+		src: "c",
+		dst: "c",
 		url: "/c/",
 	}
 	if got != expected {
@@ -76,8 +76,8 @@ func TestPaths_Subdir(t *testing.T) {
 
 func TestPaths_File(t *testing.T) {
 	parent := paths{
-		src: "/src/a",
-		dst: "/dst/a",
+		src: "/a",
+		dst: "/a",
 		url: "/a/",
 	}
 	type tc struct {
@@ -86,14 +86,14 @@ func TestPaths_File(t *testing.T) {
 		expected      paths
 	}
 	tcs := map[string]tc{
-		"index file md with stripped ordering":                 {inputBasename: "README.md", inputStripped: true, expected: paths{src: "/src/a/README.md", dst: "/dst/a/index.html", url: "/a/"}},
-		"index file md":                                        {inputBasename: "README.md", inputStripped: false, expected: paths{src: "/src/a/README.md", dst: "/dst/a/index.html", url: "/a/"}},
-		"index file tmpl with stripped ordering":               {inputBasename: "index.tmpl", inputStripped: true, expected: paths{src: "/src/a/index.tmpl", dst: "/dst/a/index.html", url: "/a/"}},
-		"index file tmpl":                                      {inputBasename: "index.tmpl", inputStripped: false, expected: paths{src: "/src/a/index.tmpl", dst: "/dst/a/index.html", url: "/a/"}},
-		"non-index file with stripped ordering":                {inputBasename: "3.page.tmpl", inputStripped: true, expected: paths{src: "/src/a/3.page.tmpl", dst: "/dst/a/page.html", url: "/a/page.html"}},
-		"non-index file with whitespace and stripped ordering": {inputBasename: "3.pge .tmpl", inputStripped: true, expected: paths{src: "/src/a/3.pge .tmpl", dst: "/dst/a/pge .html", url: "/a/pge%20.html"}},
-		"non-index file with whitespace":                       {inputBasename: "3.pge .tmpl", inputStripped: false, expected: paths{src: "/src/a/3.pge .tmpl", dst: "/dst/a/3.pge .html", url: "/a/3.pge%20.html"}},
-		"non-index file":                                       {inputBasename: "3.page.tmpl", inputStripped: false, expected: paths{src: "/src/a/3.page.tmpl", dst: "/dst/a/3.page.html", url: "/a/3.page.html"}},
+		"index file md with stripped ordering":                 {inputBasename: "README.md", inputStripped: true, expected: paths{src: "/a/README.md", dst: "/a/index.html", url: "/a/"}},
+		"index file md":                                        {inputBasename: "README.md", inputStripped: false, expected: paths{src: "/a/README.md", dst: "/a/index.html", url: "/a/"}},
+		"index file tmpl with stripped ordering":               {inputBasename: "index.tmpl", inputStripped: true, expected: paths{src: "/a/index.tmpl", dst: "/a/index.html", url: "/a/"}},
+		"index file tmpl":                                      {inputBasename: "index.tmpl", inputStripped: false, expected: paths{src: "/a/index.tmpl", dst: "/a/index.html", url: "/a/"}},
+		"non-index file with stripped ordering":                {inputBasename: "3.page.tmpl", inputStripped: true, expected: paths{src: "/a/3.page.tmpl", dst: "/a/page.html", url: "/a/page.html"}},
+		"non-index file with whitespace and stripped ordering": {inputBasename: "3.pge .tmpl", inputStripped: true, expected: paths{src: "/a/3.pge .tmpl", dst: "/a/pge .html", url: "/a/pge%20.html"}},
+		"non-index file with whitespace":                       {inputBasename: "3.pge .tmpl", inputStripped: false, expected: paths{src: "/a/3.pge .tmpl", dst: "/a/3.pge .html", url: "/a/3.pge%20.html"}},
+		"non-index file":                                       {inputBasename: "3.page.tmpl", inputStripped: false, expected: paths{src: "/a/3.page.tmpl", dst: "/a/3.page.html", url: "/a/3.page.html"}},
 	}
 	for _, tn := range slices.Sorted(maps.Keys(tcs)) {
 		tc := tcs[tn]
@@ -115,8 +115,8 @@ func TestPaths_File(t *testing.T) {
 
 func TestPaths_File_preserveEncodedParent(t *testing.T) {
 	parent := paths{
-		src: "/src/a ",
-		dst: "/dst/a ",
+		src: "/a ",
+		dst: "/a ",
 		url: "/a%20/",
 	}
 	got, err := parent.file("b.tmpl", false)
@@ -130,8 +130,8 @@ func TestPaths_File_preserveEncodedParent(t *testing.T) {
 
 func TestPaths_Dir_preserveEncodedParent(t *testing.T) {
 	parent := paths{
-		src: "/src/a ",
-		dst: "/dst/a ",
+		src: "/a ",
+		dst: "/a ",
 		url: "/a%20/",
 	}
 	got := parent.subdir("b", false)
