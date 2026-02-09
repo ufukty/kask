@@ -59,9 +59,9 @@ func fileDst(parent, child string, strip bool) string {
 }
 
 func dirUri(parent, child string, strip bool) string {
-	uri := withStripping(child, strip)
-	uri = url.PathEscape(child)
-	uri = filepath.Join(parent, uri)
+	child = withStripping(child, strip)
+	child = url.PathEscape(child)
+	uri := filepath.Join(parent, child)
 	uri = assureLeadingSlash(uri)
 	uri = assureTrailingSlash(uri)
 	return uri

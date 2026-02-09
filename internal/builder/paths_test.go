@@ -57,23 +57,6 @@ func TestUri_file(t *testing.T) {
 	}
 }
 
-func TestPaths_Subdir(t *testing.T) {
-	parent := paths{
-		src: "",
-		dst: "",
-		url: "/",
-	}
-	got := parent.subdir("c", true)
-	expected := paths{
-		src: "c",
-		dst: "c",
-		url: "/c/",
-	}
-	if got != expected {
-		t.Errorf("assert, expected %#v, got %#v", expected, got)
-	}
-}
-
 func TestPaths_File(t *testing.T) {
 	parent := paths{
 		src: "/a",
@@ -110,6 +93,44 @@ func TestPaths_File(t *testing.T) {
 		if got.url != tc.expected.url {
 			t.Run(filepath.Join(tn, "assert url"), func(t *testing.T) { t.Errorf("expected %q got %q", tc.expected.url, got.url) })
 		}
+	}
+}
+
+func TestPaths_Dir(t *testing.T) {
+	parent := paths{
+		src: "/a",
+		dst: "/a",
+		url: "/a/",
+	}
+	type tc struct {
+		inputBasename string
+		inputStripped bool
+		expected      paths
+	}
+	tcs := map[string]tc{
+		"subdir":                                      {inputBasename: "1.b", inputStripped: false, expected: paths{src: "/a/1.b", dst: "/a/1.b", url: "/a/1.b/"}},
+		"subdir with special char":                    {inputBasename: "1.b ", inputStripped: false, expected: paths{src: "/a/1.b ", dst: "/a/1.b ", url: "/a/1.b%20/"}},
+		"subdir with stripped ordering":               {inputBasename: "1.b", inputStripped: true, expected: paths{src: "/a/1.b", dst: "/a/b", url: "/a/b/"}},
+		"subdir with special char and strip ordering": {inputBasename: "1.b ", inputStripped: true, expected: paths{src: "/a/1.b ", dst: "/a/b ", url: "/a/b%20/"}},
+	}
+	for _, tn := range slices.Sorted(maps.Keys(tcs)) {
+		tc := tcs[tn]
+		got := parent.subdir(tc.inputBasename, tc.inputStripped)
+		t.Run(filepath.Join(tn, "src"), func(t *testing.T) {
+			if got.src != tc.expected.src {
+				t.Errorf("expected %q got %q", tc.expected.src, got.src)
+			}
+		})
+		t.Run(filepath.Join(tn, "dst"), func(t *testing.T) {
+			if got.dst != tc.expected.dst {
+				t.Errorf("expected %q got %q", tc.expected.dst, got.dst)
+			}
+		})
+		t.Run(filepath.Join(tn, "url"), func(t *testing.T) {
+			if got.url != tc.expected.url {
+				t.Errorf("expected %q got %q", tc.expected.url, got.url)
+			}
+		})
 	}
 }
 
