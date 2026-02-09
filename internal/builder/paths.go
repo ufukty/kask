@@ -6,14 +6,21 @@ import (
 	"strings"
 )
 
-func uri(dst, dir string) string {
-	dst = strings.TrimSuffix(dst, "/")
-	uri := url.PathEscape(dir)
-	if !strings.HasSuffix(uri, "/") {
-		uri = uri + "/"
+func withStripping(path string, toStrip bool) string {
+	if toStrip {
+		return stripOrdering(path)
 	}
-	if dst != "" {
-		uri = dst + "/" + uri
+	return path
+}
+
+func uri(parent, child string, isDir bool) string {
+	parent = strings.TrimSuffix(parent, "/")
+	uri := url.PathEscape(child)
+	if isDir && !strings.HasSuffix(uri, "/") {
+		uri += "/"
+	}
+	if parent != "" {
+		uri = parent + "/" + uri
 	}
 	if !strings.HasPrefix(uri, "/") {
 		uri = "/" + uri
@@ -30,14 +37,11 @@ type paths struct {
 	url string // path encoded
 }
 
-func (p paths) subdir(dir string, isToStrip bool) paths {
-	dirStripped := dir
-	if isToStrip {
-		dirStripped = stripOrdering(dirStripped)
-	}
+func (p paths) sub(basename string, isToStrip bool) paths {
+	strpd := withStripping(basename, isToStrip)
 	return paths{
-		src: filepath.Join(p.src, dir),
-		dst: filepath.Join(p.dst, dirStripped),
-		url: uri(p.url, dirStripped),
+		src: filepath.Join(p.src, basename),
+		dst: filepath.Join(p.dst, strpd),
+		url: uri(p.url, strpd, true),
 	}
 }
