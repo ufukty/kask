@@ -326,6 +326,14 @@ func (b *builder) execPage(dst string, tmpl *template.Template, name string, con
 	return nil
 }
 
+// TODO: also use inside [builder.toNode]
+func leafpath(src string) string {
+	if base := filepath.Base(src); base == "index.tmpl" || base == "README.md" {
+		return ""
+	}
+	return src
+}
+
 func (b *builder) execDir(d *dir2) error {
 	err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.dst), 0o755)
 	if err != nil {
@@ -333,48 +341,37 @@ func (b *builder) execDir(d *dir2) error {
 	}
 
 	for _, page := range d.pagesTmpl {
-		dst2 := filepath.Join(b.args.Dst, d.paths.dst, "index.html") // TODO: reuse previously calculated (see previous TODOs)
 		content := &TemplateContent{
 			Stylesheets: d.stylesheets,
-			Node:        nil,
+			Node:        b.leaves[pageref{d, leafpath(page)}],
 			Root:        b.root3,
 			Markdown:    nil,
 			Time:        b.start,
-		}
-		if filepath.Base(page) == "index.tmpl" {
-			content.Node = b.leaves[pageref{d, ""}]
-		} else {
-			content.Node = b.leaves[pageref{d, page}]
 		}
 		tmpl, err := d.templates.Clone()
 		if err != nil {
 			return fmt.Errorf("cloning templates for rendering page: %w", err)
 		}
-		tmpl, err = tmpl.ParseFiles(filepath.Join(b.args.Src, page))
+		paths, _ := d.paths.file(filepath.Base(page), isToStrip(d)) // TODO: reuse previously calculated (see previous TODOs)
+		tmpl, err = tmpl.ParseFiles(filepath.Join(b.args.Src, paths.src))
 		if err != nil {
 			return fmt.Errorf("parsing page template %q: %w", filepath.Base(page), err)
 		}
-		if err := b.execPage(dst2, tmpl, "page", content); err != nil {
+		if err := b.execPage(filepath.Join(b.args.Dst, paths.dst), tmpl, "page", content); err != nil {
 			return fmt.Errorf("page %q: %w", filepath.Base(page), err)
 		}
 	}
 
 	for _, page := range d.pagesMarkdown {
-		paths, _ := d.paths.file(filepath.Base(page), isToStrip(d)) // TODO: reuse previously calculated (see previous TODOs)
-		dst2 := paths.dst
 		content := &TemplateContent{
 			Stylesheets: d.stylesheets,
-			Node:        nil,
+			Node:        b.leaves[pageref{d, leafpath(page)}],
 			Root:        b.root3,
 			Markdown:    b.pagesMarkdown[page],
 			Time:        b.start,
 		}
-		if filepath.Base(page) == "README.md" {
-			content.Node = b.leaves[pageref{d, ""}]
-		} else {
-			content.Node = b.leaves[pageref{d, page}]
-		}
-		if err := b.execPage(dst2, d.templates, "markdown-page", content); err != nil {
+		paths, _ := d.paths.file(filepath.Base(page), isToStrip(d)) // TODO: reuse previously calculated (see previous TODOs)
+		if err := b.execPage(filepath.Join(b.args.Dst, paths.dst), d.templates, "markdown-page", content); err != nil {
 			return fmt.Errorf("page %q: %w", filepath.Base(page), err)
 		}
 	}
