@@ -292,6 +292,6 @@ func ExampleBuilder_linkReplacements() {
 	fmt.Println("Markdown page:", anchor.FindString(readFile(filepath.Join(dst, "a/md.html"))))
 	fmt.Println("Template page:", anchor.FindString(readFile(filepath.Join(dst, "a/tmpl.html"))))
 	// Output:
-	// Markdown page: <a href="/a/b/README.md#Title">link with redundant traverse</a>
-	// Template page: <a href="/a/b/README.md#Title">link with redundant traverse</a>
+	// Markdown page: <a href="/a/b/#Title">link with redundant traverse</a>
+	// Template page: <a href="/a/b/#Title">link with redundant traverse</a>
 }
