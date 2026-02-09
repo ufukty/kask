@@ -1,29 +1,29 @@
 package rewriter
 
 import (
+	"cmp"
+	"iter"
 	"maps"
 	"slices"
 	"strings"
 	"testing"
 )
 
-var rewrites = map[string]string{
-	"/":                 "/",
-	"/a.md":             "/a.html",
-	"/README.md":        "/",
-	"/subdir/":          "/subdir/",
-	"/subdir/a.md":      "/subdir/a.html",
-	"/subdir/README.md": "/subdir/",
+// /a and /a/b/c is not visitable
+var rw = Rewriter{
+	links: map[string]string{
+		".":                 "/",
+		"README.md":         "/",
+		"page.md":           "/page.html",
+		"a/b/index.tmpl":    "/a/b/",
+		"a/b/page.tmpl":     "/a/b/page.html",
+		"a/b/c/page.md":     "/a/b/c/page.html",
+		"a/b/c/d/README.md": "/a/b/c/d/",
 
-	"/subdir/subsubdir/":                         "/subdir/subsubdir/",
-	"/subdir/subsubdir/a.md":                     "/subdir/subsubdir/a.html",
-	"/subdir/subsubdir/README.md":                "/subdir/subsubdir/",
-	"/subdir/subsubdir/a/b.md":                   "/subdir/subsubdir/a/b.html",
-	"/subdir/subsubdir/a/README.md":              "/subdir/subsubdir/a/",
-	"/subdir/subsubdir/3. sit/":                  "/subdir/subsubdir/sit/",
-	"/subdir/subsubdir/3. sit/2. consectetur.md": "/subdir/subsubdir/sit/consectetur.html",
-	"/subdir/subsubdir/1. lorem/":                "/subdir/subsubdir/lorem/",
-	"/subdir/subsubdir/1. lorem/1. ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
+		// visitable directories (src => url)
+		"a/b":     "/a/b/",
+		"a/b/c/d": "/a/b/c/d/",
+	},
 }
 
 func testname(tn string) string {
@@ -32,31 +32,26 @@ func testname(tn string) string {
 	return tn
 }
 
+func sorted[K cmp.Ordered, V any](m map[K]V) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		for _, k := range slices.Sorted(maps.Keys(m)) {
+			if !yield(k, m[k]) {
+				return
+			}
+		}
+	}
+}
+
 func TestRewrite_linksToParents(t *testing.T) {
 	tcs := map[string]string{
-		"..":                "/subdir/",
-		"../..":             "/",
-		"../../":            "/",
-		"../../a.md":        "/a.html",
-		"../../README.md":   "/",
-		"../":               "/subdir/",
-		"../a.md":           "/subdir/a.html",
-		"../README.md":      "/subdir/",
-		".":                 "/subdir/subsubdir/",
-		"./..":              "/subdir/",
-		"./../..":           "/",
-		"./../../":          "/",
-		"./../../a.md":      "/a.html",
-		"./../../README.md": "/",
-		"./../":             "/subdir/",
-		"./../a.md":         "/subdir/a.html",
-		"./../README.md":    "/subdir/",
+		"../../":          "/",
+		"../../page.md":   "/page.html",
+		"./../../":        "/",
+		"./../../page.md": "/page.html",
 	}
-
-	for _, link := range slices.Sorted(maps.Keys(tcs)) {
-		t.Run(testname(link), func(t *testing.T) {
-			got := Rewriter{links: rewrites}.Rewrite(link, "/subdir/subsubdir/b.tmpl")
-			expected := tcs[link]
+	for input, expected := range sorted(tcs) {
+		t.Run(testname(input), func(t *testing.T) {
+			got := rw.Rewrite(input, "a/b/page.tmpl")
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
 			}
@@ -66,20 +61,14 @@ func TestRewrite_linksToParents(t *testing.T) {
 
 func TestRewrite_linksToSubdirs(t *testing.T) {
 	tcs := map[string]string{
-		"./a.md":        "/subdir/subsubdir/a.html",
-		"./a":           "/subdir/subsubdir/a/",
-		"./a/b.md":      "/subdir/subsubdir/a/b.html",
-		"./a/README.md": "/subdir/subsubdir/a/",
-		"a.md":          "/subdir/subsubdir/a.html",
-		"a":             "/subdir/subsubdir/a/",
-		"a/b.md":        "/subdir/subsubdir/a/b.html",
-		"a/README.md":   "/subdir/subsubdir/a/",
+		"a/b":               "/a/b/",
+		"a/b/c/d":           "/a/b/c/d/",
+		"a/b/c/d/README.md": "/a/b/c/d/",
+		"a/b/page.tmpl":     "/a/b/page.html",
 	}
-
-	for _, link := range slices.Sorted(maps.Keys(tcs)) {
-		t.Run(testname(link), func(t *testing.T) {
-			got := Rewriter{links: rewrites}.Rewrite(link, "/subdir/subsubdir/b.tmpl")
-			expected := tcs[link]
+	for input, expected := range sorted(tcs) {
+		t.Run(testname(input), func(t *testing.T) {
+			got := rw.Rewrite(input, "page.tmpl")
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
 			}
@@ -89,18 +78,14 @@ func TestRewrite_linksToSubdirs(t *testing.T) {
 
 func TestRewrite_linksWithReduntantSegments(t *testing.T) {
 	tcs := map[string]string{
-		"../subsubdir/a.md":          "/subdir/subsubdir/a.html",
-		"../subsubdir/a/b.md":        "/subdir/subsubdir/a/b.html",
-		"../subsubdir/a/README.md":   "/subdir/subsubdir/a/",
-		"./../subsubdir/a.md":        "/subdir/subsubdir/a.html",
-		"./../subsubdir/a/b.md":      "/subdir/subsubdir/a/b.html",
-		"./../subsubdir/a/README.md": "/subdir/subsubdir/a/",
+		"a/../a/b":               "/a/b/",
+		"a/../a/b/c/d":           "/a/b/c/d/",
+		"a/../a/b/c/d/README.md": "/a/b/c/d/",
+		"a/../a/b/page.tmpl":     "/a/b/page.html",
 	}
-
-	for _, link := range slices.Sorted(maps.Keys(tcs)) {
-		t.Run(testname(link), func(t *testing.T) {
-			got := Rewriter{links: rewrites}.Rewrite(link, "/subdir/subsubdir/b.tmpl")
-			expected := tcs[link]
+	for input, expected := range sorted(tcs) {
+		t.Run(testname(input), func(t *testing.T) {
+			got := rw.Rewrite(input, "page.tmpl")
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
 			}
@@ -108,87 +93,18 @@ func TestRewrite_linksWithReduntantSegments(t *testing.T) {
 	}
 }
 
-func TestRewrite_linksWithPathsWithStrippedOrdering(t *testing.T) {
+func TestRewrite_externalInPageLinks(t *testing.T) {
 	tcs := map[string]string{
-		"../subsubdir/1.%20lorem/":                  "/subdir/subsubdir/lorem/",
-		"../subsubdir/1.%20lorem/1.%20ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
-		"../subsubdir/3.%20sit":                     "/subdir/subsubdir/sit/",
-		"../subsubdir/3.%20sit/2.%20consectetur.md": "/subdir/subsubdir/sit/consectetur.html",
-
-		"./1.%20lorem/":                  "/subdir/subsubdir/lorem/",
-		"./1.%20lorem/1.%20ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
-		"./3.%20sit":                     "/subdir/subsubdir/sit/",
-		"./3.%20sit/2.%20consectetur.md": "/subdir/subsubdir/sit/consectetur.html",
-
-		"1.%20lorem/":                  "/subdir/subsubdir/lorem/",
-		"1.%20lorem/1.%20ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
-		"3.%20sit":                     "/subdir/subsubdir/sit/",
-		"3.%20sit/2.%20consectetur.md": "/subdir/subsubdir/sit/consectetur.html",
+		"/#title":             "/#title",
+		"#title":              "/page.html#title",
+		"a/b/#title":          "/a/b/#title",
+		"a/b/c/d/#title":      "/a/b/c/d/#title",
+		"a/b/c/page.md#title": "/a/b/c/page.html#title",
+		"a/b/page.tmpl#title": "/a/b/page.html#title",
 	}
-
-	for _, link := range slices.Sorted(maps.Keys(tcs)) {
-		t.Run(testname(link), func(t *testing.T) {
-			got := Rewriter{links: rewrites}.Rewrite(link, "/subdir/subsubdir/b.tmpl")
-			expected := tcs[link]
-			if expected != got {
-				t.Errorf("expected %q got %q", expected, got)
-			}
-		})
-	}
-}
-
-func TestRewrite_inPageLinks(t *testing.T) {
-	tcs := map[string]string{
-		"../../#title":            "/#title",
-		"../../a.md#title":        "/a.html#title",
-		"../../README.md#title":   "/#title",
-		"../#title":               "/subdir/#title",
-		"../a.md#title":           "/subdir/a.html#title",
-		"../README.md#title":      "/subdir/#title",
-		"#title":                  "/subdir/subsubdir/#title",
-		"./../../#title":          "/#title",
-		"./../../a.md#title":      "/a.html#title",
-		"./../../README.md#title": "/#title",
-		"./../#title":             "/subdir/#title",
-		"./../a.md#title":         "/subdir/a.html#title",
-		"./../README.md#title":    "/subdir/#title",
-
-		"./a.md#title":        "/subdir/subsubdir/a.html#title",
-		"./a/#title":          "/subdir/subsubdir/a/#title",
-		"./a/b.md#title":      "/subdir/subsubdir/a/b.html#title",
-		"./a/README.md#title": "/subdir/subsubdir/a/#title",
-		"a.md#title":          "/subdir/subsubdir/a.html#title",
-		"a/#title":            "/subdir/subsubdir/a/#title",
-		"a/b.md#title":        "/subdir/subsubdir/a/b.html#title",
-		"a/README.md#title":   "/subdir/subsubdir/a/#title",
-
-		"../subsubdir/a.md#title":          "/subdir/subsubdir/a.html#title",
-		"../subsubdir/a/b.md#title":        "/subdir/subsubdir/a/b.html#title",
-		"../subsubdir/a/README.md#title":   "/subdir/subsubdir/a/#title",
-		"./../subsubdir/a.md#title":        "/subdir/subsubdir/a.html#title",
-		"./../subsubdir/a/b.md#title":      "/subdir/subsubdir/a/b.html#title",
-		"./../subsubdir/a/README.md#title": "/subdir/subsubdir/a/#title",
-
-		"../subsubdir/1.%20lorem/#title":                  "/subdir/subsubdir/lorem/#title",
-		"../subsubdir/1.%20lorem/1.%20ipsum.md#title":     "/subdir/subsubdir/lorem/ipsum.html#title",
-		"../subsubdir/3.%20sit/#title":                    "/subdir/subsubdir/sit/#title",
-		"../subsubdir/3.%20sit/2.%20consectetur.md#title": "/subdir/subsubdir/sit/consectetur.html#title",
-
-		"./1.%20lorem/#title":                  "/subdir/subsubdir/lorem/#title",
-		"./1.%20lorem/1.%20ipsum.md#title":     "/subdir/subsubdir/lorem/ipsum.html#title",
-		"./3.%20sit/#title":                    "/subdir/subsubdir/sit/#title",
-		"./3.%20sit/2.%20consectetur.md#title": "/subdir/subsubdir/sit/consectetur.html#title",
-
-		"1.%20lorem/#title":                  "/subdir/subsubdir/lorem/#title",
-		"1.%20lorem/1.%20ipsum.md#title":     "/subdir/subsubdir/lorem/ipsum.html#title",
-		"3.%20sit/#title":                    "/subdir/subsubdir/sit/#title",
-		"3.%20sit/2.%20consectetur.md#title": "/subdir/subsubdir/sit/consectetur.html#title",
-	}
-
-	for _, link := range slices.Sorted(maps.Keys(tcs)) {
-		t.Run(testname(link), func(t *testing.T) {
-			got := Rewriter{links: rewrites}.Rewrite(link, "/subdir/subsubdir/b.tmpl")
-			expected := tcs[link]
+	for input, expected := range sorted(tcs) {
+		t.Run(testname(input), func(t *testing.T) {
+			got := rw.Rewrite(input, "page.md")
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
 			}

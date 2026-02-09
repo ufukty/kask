@@ -12,10 +12,6 @@ func isExternal(url string) bool {
 		strings.HasPrefix(url, "https://")
 }
 
-func isRelative(url string) bool {
-	return !filepath.IsAbs(url)
-}
-
 func has(m map[string]string, k string) bool {
 	_, ok := m[k]
 	return ok
@@ -27,10 +23,6 @@ func unescape(target string) string {
 		return target
 	}
 	return t2
-}
-
-func isDir(target string) bool {
-	return !strings.Contains(filepath.Base(target), ".")
 }
 
 type Rewriter struct {
@@ -47,27 +39,32 @@ func (rw *Rewriter) Bank(src, dst string) {
 	rw.links[src] = dst
 }
 
-// TODO: check path handling with query and browser parameters
+func splitQuery(path string) (string, string) {
+	query := max(strings.Index(path, "#"), strings.Index(path, "?"))
+	if query != -1 {
+		return path[:query], path[query:]
+	}
+	return path, ""
+}
+
+func assureAbsolute(cwd, path string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+	return filepath.Join(cwd, path)
+}
+
 func (rw Rewriter) Rewrite(dst, src string) string {
 	if isExternal(dst) {
 		return dst
 	}
 	dst = unescape(dst)
-	if isRelative(dst) {
-		dst = filepath.Join(src, dst)
-	}
+	dst = strings.TrimSuffix(dst, "/")
+	dst = assureAbsolute(filepath.Dir(src), dst)
 	dst = filepath.Clean(dst)
-	if dst == "." {
-		dst = ""
-	}
-	if isRelative(dst) {
-		dst = "/" + dst
-	}
+	dst, query := splitQuery(dst)
 	if has(rw.links, dst) {
 		dst = rw.links[dst]
 	}
-	if isDir(dst) && !strings.HasSuffix(dst, "/") {
-		dst = dst + "/"
-	}
-	return dst
+	return dst + query
 }
