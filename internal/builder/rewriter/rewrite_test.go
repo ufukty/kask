@@ -8,17 +8,21 @@ import (
 )
 
 var rewrites = map[string]string{
-	"/a.md":                                      "/a.html",
-	"/README.md":                                 "/",
-	"/subdir/a.md":                               "/subdir/a.html",
-	"/subdir/README.md":                          "/subdir/",
+	"/":                 "/",
+	"/a.md":             "/a.html",
+	"/README.md":        "/",
+	"/subdir/":          "/subdir/",
+	"/subdir/a.md":      "/subdir/a.html",
+	"/subdir/README.md": "/subdir/",
+
+	"/subdir/subsubdir/":                         "/subdir/subsubdir/",
 	"/subdir/subsubdir/a.md":                     "/subdir/subsubdir/a.html",
 	"/subdir/subsubdir/README.md":                "/subdir/subsubdir/",
 	"/subdir/subsubdir/a/b.md":                   "/subdir/subsubdir/a/b.html",
 	"/subdir/subsubdir/a/README.md":              "/subdir/subsubdir/a/",
-	"/subdir/subsubdir/3. sit":                   "/subdir/subsubdir/sit/",
+	"/subdir/subsubdir/3. sit/":                  "/subdir/subsubdir/sit/",
 	"/subdir/subsubdir/3. sit/2. consectetur.md": "/subdir/subsubdir/sit/consectetur.html",
-	"/subdir/subsubdir/1. lorem":                 "/subdir/subsubdir/lorem/",
+	"/subdir/subsubdir/1. lorem/":                "/subdir/subsubdir/lorem/",
 	"/subdir/subsubdir/1. lorem/1. ipsum.md":     "/subdir/subsubdir/lorem/ipsum.html",
 }
 
@@ -150,11 +154,11 @@ func TestRewrite_inPageLinks(t *testing.T) {
 		"./../README.md#title":    "/subdir/#title",
 
 		"./a.md#title":        "/subdir/subsubdir/a.html#title",
-		"./a#title":           "/subdir/subsubdir/a/#title",
+		"./a/#title":          "/subdir/subsubdir/a/#title",
 		"./a/b.md#title":      "/subdir/subsubdir/a/b.html#title",
 		"./a/README.md#title": "/subdir/subsubdir/a/#title",
 		"a.md#title":          "/subdir/subsubdir/a.html#title",
-		"a#title":             "/subdir/subsubdir/a/#title",
+		"a/#title":            "/subdir/subsubdir/a/#title",
 		"a/b.md#title":        "/subdir/subsubdir/a/b.html#title",
 		"a/README.md#title":   "/subdir/subsubdir/a/#title",
 
