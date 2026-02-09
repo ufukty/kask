@@ -254,7 +254,7 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 				Parent:   n,
 				Children: []*Node{},
 			}
-			b.rw.Bank(page, path.url)
+			b.rw.Bank(path.src, path.url)
 			b.leaves[pageref{d, page}] = c
 			n.Children = append(n.Children, c)
 		}
