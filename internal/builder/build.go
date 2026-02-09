@@ -101,7 +101,7 @@ type dir2 struct {
 }
 
 func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
-	ps := parent.sub(d.Name, true, p.IsToStrip())
+	ps := parent.subdir(d.Name, p.IsToStrip())
 	d2 := &dir2{
 		kask:      d.Kask,
 		meta:      d.Meta,
@@ -243,18 +243,18 @@ func (b *builder) toNode(d *dir2, parent *Node) (*Node, error) {
 			return nil, fmt.Errorf("decide on title: %w", err)
 		}
 		base := filepath.Base(page)
-		if base == "index.tmpl" || base == "README.md" {
-			n.Href = d.paths.url
+		path, _ := d.paths.file(base, isToStrip(d)) // TODO: reuse calculated paths for later use in [builder.Build]
+		if base == "README.md" || base == "index.tmpl" {
+			n.Href = path.url
 			n.Title = title
 		} else {
-			href := pageLinkFromFilename(d, base)
 			c := &Node{
 				Title:    title,
-				Href:     href,
+				Href:     path.url,
 				Parent:   n,
 				Children: []*Node{},
 			}
-			b.rw.Bank(page, href)
+			b.rw.Bank(page, path.url)
 			b.leaves[pageref{d, page}] = c
 			n.Children = append(n.Children, c)
 		}
@@ -333,10 +333,7 @@ func (b *builder) execDir(d *dir2) error {
 	}
 
 	for _, page := range d.pagesTmpl {
-		dst2 := filepath.Join(b.args.Dst, d.paths.dst, "index.html")
-		if filepath.Base(page) != "index.tmpl" {
-			dst2 = pageDestFromFilename(b.args.Dst, d.paths.dst, filepath.Base(page), isToStrip(d))
-		}
+		dst2 := filepath.Join(b.args.Dst, d.paths.dst, "index.html") // TODO: reuse previously calculated (see previous TODOs)
 		content := &TemplateContent{
 			Stylesheets: d.stylesheets,
 			Node:        nil,
@@ -363,10 +360,8 @@ func (b *builder) execDir(d *dir2) error {
 	}
 
 	for _, page := range d.pagesMarkdown {
-		dst2 := filepath.Join(b.args.Dst, d.paths.dst, "index.html")
-		if filepath.Base(page) != "README.md" {
-			dst2 = pageDestFromFilename(b.args.Dst, d.paths.dst, filepath.Base(page), isToStrip(d))
-		}
+		paths, _ := d.paths.file(filepath.Base(page), isToStrip(d)) // TODO: reuse previously calculated (see previous TODOs)
+		dst2 := paths.dst
 		content := &TemplateContent{
 			Stylesheets: d.stylesheets,
 			Node:        nil,

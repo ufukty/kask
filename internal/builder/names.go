@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -28,25 +27,6 @@ func pageTitleFromFilename(base, ext string, strippedOrdering bool) string {
 		base = stripOrdering(base)
 	}
 	return titler.String(strings.TrimSuffix(base, ext))
-}
-
-func pageLinkFromFilename(dir *dir2, filename string) string {
-	base := filename
-	if isToStrip(dir) {
-		base = stripOrdering(base)
-	}
-	base = strings.TrimSuffix(base, filepath.Ext(filename))
-	base = url.PathEscape(base)
-	return "/" + filepath.Join(dir.paths.url, base+".html")
-}
-
-func pageDestFromFilename(dst, folderpath, filename string, strippedOrdering bool) string {
-	base := filename
-	if strippedOrdering {
-		base = stripOrdering(base)
-	}
-	base = strings.TrimSuffix(base, filepath.Ext(filename))
-	return filepath.Join(dst, folderpath, base+".html")
 }
 
 var regexpMarkdown = regexp.MustCompile(`(?m)^#\s+(.+)$`)
