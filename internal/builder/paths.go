@@ -37,11 +37,18 @@ type paths struct {
 	url string // path encoded
 }
 
-func (p paths) sub(basename string, isToStrip bool) paths {
-	strpd := withStripping(basename, isToStrip)
+type nodetype int
+
+const (
+	dir = nodetype(iota)
+	file
+)
+
+func (p paths) sub(basename string, nodetype nodetype, strip bool) paths {
+	stripped := withStripping(basename, strip)
 	return paths{
 		src: filepath.Join(p.src, basename),
-		dst: filepath.Join(p.dst, strpd),
-		url: uri(p.url, strpd, true),
+		dst: filepath.Join(p.dst, stripped),
+		url: uri(p.url, stripped, true),
 	}
 }
