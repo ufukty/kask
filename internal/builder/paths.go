@@ -13,10 +13,10 @@ func withStripping(path string, toStrip bool) string {
 	return path
 }
 
-func uri(parent, child string, isDir bool) string {
+func uri(parent, child string, isdir bool) string {
 	parent = strings.TrimSuffix(parent, "/")
 	uri := url.PathEscape(child)
-	if isDir && !strings.HasSuffix(uri, "/") {
+	if isdir && !strings.HasSuffix(uri, "/") {
 		uri += "/"
 	}
 	if parent != "" {
@@ -37,18 +37,11 @@ type paths struct {
 	url string // path encoded
 }
 
-type nodetype int
-
-const (
-	dir = nodetype(iota)
-	file
-)
-
-func (p paths) sub(basename string, nodetype nodetype, strip bool) paths {
+func (p paths) sub(basename string, isdir, strip bool) paths {
 	stripped := withStripping(basename, strip)
 	return paths{
 		src: filepath.Join(p.src, basename),
 		dst: filepath.Join(p.dst, stripped),
-		url: uri(p.url, stripped, true),
+		url: uri(p.url, stripped, isdir),
 	}
 }

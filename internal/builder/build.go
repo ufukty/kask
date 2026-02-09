@@ -101,7 +101,7 @@ type dir2 struct {
 }
 
 func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
-	ps := parent.sub(d.Name, dir, p.IsToStrip())
+	ps := parent.sub(d.Name, true, p.IsToStrip())
 	d2 := &dir2{
 		kask:      d.Kask,
 		meta:      d.Meta,
