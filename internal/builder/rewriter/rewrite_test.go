@@ -111,7 +111,7 @@ func TestRewrite_absoluteLinks(t *testing.T) {
 	}
 }
 
-func TestRewrite_internalInPageLinks(t *testing.T) {
+func TestRewrite_internalAnchorLinks(t *testing.T) {
 	tcs := map[string]string{
 		"#":      "#",
 		"#title": "#title",
@@ -126,7 +126,7 @@ func TestRewrite_internalInPageLinks(t *testing.T) {
 	}
 }
 
-func TestRewrite_externalInPageLinks(t *testing.T) {
+func TestRewrite_externalAnchorLinks(t *testing.T) {
 	tcs := map[string]string{
 		"/#title":                 "/#title",
 		"/README.md#title":        "/#title",
