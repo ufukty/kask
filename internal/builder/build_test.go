@@ -287,11 +287,22 @@ func readFile(path string) string {
 
 var anchor = regexp.MustCompile(`<a[^>]*>[^<]*</a>`)
 
-func ExampleBuilder_linkReplacements() {
+func ExampleBuilder_tmplLinkReplacements() {
 	_, dst := buildTestSite("testdata/link-replacements")
-	fmt.Println("Markdown page:", anchor.FindString(readFile(filepath.Join(dst, "a/md.html"))))
-	fmt.Println("Template page:", anchor.FindString(readFile(filepath.Join(dst, "a/tmpl.html"))))
+	fmt.Println(strings.Join(anchor.FindAllString(readFile(filepath.Join(dst, "a/tmpl.html")), -1), "\n"))
 	// Output:
-	// Markdown page: <a href="/a/b/#Title">link with redundant traverse</a>
-	// Template page: <a href="/a/b/#Title">link with redundant traverse</a>
+	// <a href="/a/b/#Title">subdir direct</a>
+	// <a href="/a/b/#Title">subdir absolute</a>
+	// <a href="/a/b/#Title">subdir redundancies</a>
+	// <a href="/a/md.html#Title">sibling</a>
+}
+
+func ExampleBuilder_mdLinkReplacements() {
+	_, dst := buildTestSite("testdata/link-replacements")
+	fmt.Println(strings.Join(anchor.FindAllString(readFile(filepath.Join(dst, "a/md.html")), -1), "\n"))
+	// Output:
+	// <a href="/a/b/#Title">subdir direct</a>
+	// <a href="/a/b/#Title">subdir absolute</a>
+	// <a href="/a/b/#Title">subdir redundancies</a>
+	// <a href="/a/tmpl.html#Title">sibling</a>
 }
