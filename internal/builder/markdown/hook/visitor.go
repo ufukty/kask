@@ -2,29 +2,28 @@ package hook
 
 import (
 	"io"
-	"path/filepath"
-	"strings"
 
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/ufukty/kask/internal/builder/markdown/hook/codefence"
+	"github.com/ufukty/kask/internal/builder/rewriter"
 )
 
 type visitor struct {
 	cf      *codefence.Renderer
 	pagedir string
-	links_  map[string]string
+	rw      *rewriter.Rewriter
 }
 
-func NewVisitor(page string, links map[string]string) *visitor {
+func NewVisitor(page string, rw *rewriter.Rewriter) *visitor {
 	return &visitor{
 		cf:      codefence.NewRenderer(),
-		pagedir: "/" + strings.TrimPrefix(filepath.Dir(page), "/"),
-		links_:  links,
+		pagedir: page,
+		rw:      rw,
 	}
 }
 
 func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
-	node.Destination = []byte(rewrite(string(node.Destination), v.pagedir, v.links_))
+	node.Destination = []byte(v.rw.Rewrite(string(node.Destination), v.pagedir))
 	return ast.GoToNext, false
 }
 

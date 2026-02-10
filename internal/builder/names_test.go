@@ -34,48 +34,7 @@ func TestTitleFromFilename(t *testing.T) {
 	}
 	for input, expected := range tcs {
 		t.Run(input, func(t *testing.T) {
-			got := titleFromFilename(input, ".tmpl", true)
-			if got != expected {
-				t.Errorf("expected %q got %q", expected, got)
-			}
-		})
-	}
-}
-
-func TestHrefFromFilename(t *testing.T) {
-	type tc struct {
-		testname       string
-		dstPathEncoded string
-		filename       string
-	}
-	tcs := map[tc]string{
-		{"extension repl", "a/b/c", "d.md"}:   "/a/b/c/d.html",
-		{"encoded path", "a/b%20/c", "d.md"}:  "/a/b%20/c/d.html",
-		{"filename enc", "a/b/c", "d .md"}:    "/a/b/c/d%20.html",
-		{"strip ordering", "a/b/c", "3.d.md"}: "/a/b/c/d.html",
-	}
-	for input, expected := range tcs {
-		t.Run(input.testname, func(t *testing.T) {
-			got := hrefFromFilename(input.dstPathEncoded, input.filename, true)
-			if got != expected {
-				t.Errorf("expected %q got %q", expected, got)
-			}
-		})
-	}
-}
-
-func TestTargetFromFilename(t *testing.T) {
-	type tc struct {
-		testname               string
-		dst, dstPath, filename string
-	}
-	tcs := map[tc]string{
-		{"repl extension", "/a", "b/c", "d.md"}:   "/a/b/c/d.html",
-		{"strip ordering", "/a", "b/c", "3 d.md"}: "/a/b/c/d.html",
-	}
-	for input, expected := range tcs {
-		t.Run(input.testname, func(t *testing.T) {
-			got := targetFromFilename(input.dst, input.dstPath, input.filename, true)
+			got := pageTitleFromFilename(input, ".tmpl", true)
 			if got != expected {
 				t.Errorf("expected %q got %q", expected, got)
 			}

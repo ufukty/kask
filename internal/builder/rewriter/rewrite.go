@@ -1,0 +1,74 @@
+package rewriter
+
+import (
+	"net/url"
+	"path/filepath"
+	"strings"
+)
+
+func isExternal(url string) bool {
+	return false ||
+		strings.HasPrefix(url, "http://") ||
+		strings.HasPrefix(url, "https://")
+}
+
+func has(m map[string]string, k string) bool {
+	_, ok := m[k]
+	return ok
+}
+
+func unescape(target string) string {
+	t2, err := url.PathUnescape(target)
+	if err != nil {
+		return target
+	}
+	return t2
+}
+
+type Rewriter struct {
+	links map[string]string // src path -> uri
+}
+
+func New() *Rewriter {
+	return &Rewriter{
+		links: map[string]string{},
+	}
+}
+
+func (rw *Rewriter) Bank(src, dst string) {
+	rw.links[src] = dst
+}
+
+func splitQuery(path string) (string, string) {
+	query := max(strings.Index(path, "#"), strings.Index(path, "?"))
+	if query != -1 {
+		return path[:query], path[query:]
+	}
+	return path, ""
+}
+
+func assureAbsolute(dst, src string) string {
+	if filepath.IsAbs(dst) {
+		return dst
+	}
+	return filepath.Join(filepath.Dir(src), dst)
+}
+
+func (rw Rewriter) Rewrite(dst, src string) string {
+	if isExternal(dst) || strings.HasPrefix(dst, "#") || strings.HasPrefix(dst, "?") {
+		return dst
+	}
+	dst = unescape(dst)
+	dst = assureAbsolute(dst, src)
+	dst = filepath.Clean(dst)
+	dst, query := splitQuery(dst)
+	dst = strings.TrimPrefix(dst, "/")
+	dst = strings.TrimSuffix(dst, "/")
+	if dst == "" {
+		dst = "."
+	}
+	if has(rw.links, dst) {
+		dst = rw.links[dst]
+	}
+	return dst + query
+}

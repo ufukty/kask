@@ -10,6 +10,7 @@ import (
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/ufukty/kask/internal/builder/markdown/hook"
+	"github.com/ufukty/kask/internal/builder/rewriter"
 )
 
 type Page struct {
@@ -17,7 +18,7 @@ type Page struct {
 	Toc     *TocNode
 }
 
-func ToHtml(root, page string, links map[string]string) (*Page, error) {
+func ToHtml(root, page string, rw *rewriter.Rewriter) (*Page, error) {
 	p := parser.NewWithExtensions(
 		parser.CommonExtensions |
 			parser.Attributes |
@@ -34,7 +35,7 @@ func ToHtml(root, page string, links map[string]string) (*Page, error) {
 
 	r := html.NewRenderer(html.RendererOptions{
 		Flags:          html.CommonFlags | html.HrefTargetBlank,
-		RenderNodeHook: hook.NewVisitor(page, links).Visit,
+		RenderNodeHook: hook.NewVisitor(page, rw).Visit,
 	})
 	h := markdown.Render(n, r)
 	toc := getTableOfContent(n, r)

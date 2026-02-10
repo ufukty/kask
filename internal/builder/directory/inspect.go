@@ -88,3 +88,7 @@ func Inspect(path string) (*Dir, error) {
 	}
 	return root, nil
 }
+
+func (d *Dir) IsToStrip() bool {
+	return !(d != nil && d.Meta != nil && d.Meta.PreserveOrdering)
+}

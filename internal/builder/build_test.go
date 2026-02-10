@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -164,8 +165,8 @@ func ExampleBuilder_preservedOrderingHrefs() {
 	// /1.career.html
 	// /2.docs.html
 	// /3.products.html
-	// /1.about
-	// /2.contact
+	// /1.about/
+	// /2.contact/
 }
 
 func ExampleBuilder_preservedOrderingTitles() {
@@ -274,4 +275,23 @@ func TestBuilder_assets(t *testing.T) {
 	for _, tc := range tcs {
 		assertfile(t, tmp, tc)
 	}
+}
+
+func readFile(path string) string {
+	c, err := os.ReadFile(path)
+	if err != nil {
+		panic(fmt.Errorf("os.ReadFile: %w", err))
+	}
+	return string(c)
+}
+
+var anchor = regexp.MustCompile(`<a[^>]*>[^<]*</a>`)
+
+func ExampleBuilder_linkReplacements() {
+	_, dst := buildTestSite("testdata/link-replacements")
+	fmt.Println("Markdown page:", anchor.FindString(readFile(filepath.Join(dst, "a/md.html"))))
+	fmt.Println("Template page:", anchor.FindString(readFile(filepath.Join(dst, "a/tmpl.html"))))
+	// Output:
+	// Markdown page: <a href="/a/b/#Title">link with redundant traverse</a>
+	// Template page: <a href="/a/b/#Title">link with redundant traverse</a>
 }
