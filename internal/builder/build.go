@@ -324,7 +324,11 @@ func (b *builder) execPage(dst string, tmpl *template.Template, name string, con
 	}
 	bs := buf.Bytes()
 	if isTmpl {
-		bs = rewriteLinksInHtmlPage(b.rw, dst, bs)
+		var err error
+		bs, err = rewriteLinksInHtmlPage(b.rw, dst, bs)
+		if err != nil {
+			return fmt.Errorf("rewriting the links found at the page: %w", err)
+		}
 	}
 	err := os.WriteFile(filepath.Join(b.args.Dst, dst), bs, 0o666)
 	if err != nil {

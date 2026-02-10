@@ -51,7 +51,10 @@ func TestRewrite_linksToParents(t *testing.T) {
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
-			got := rw.Rewrite(input, "a/b/page.tmpl")
+			got, err := rw.Rewrite(input, "a/b/page.tmpl")
+			if err != nil {
+				t.Errorf("act, unexpected error: %v", err)
+			}
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
 			}
@@ -68,7 +71,10 @@ func TestRewrite_linksToSubdirs(t *testing.T) {
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
-			got := rw.Rewrite(input, "page.tmpl")
+			got, err := rw.Rewrite(input, "page.tmpl")
+			if err != nil {
+				t.Errorf("act, unexpected error: %v", err)
+			}
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
 			}
@@ -85,7 +91,10 @@ func TestRewrite_linksWithReduntantSegments(t *testing.T) {
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
-			got := rw.Rewrite(input, "page.tmpl")
+			got, err := rw.Rewrite(input, "page.tmpl")
+			if err != nil {
+				t.Errorf("act, unexpected error: %v", err)
+			}
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
 			}
@@ -103,7 +112,10 @@ func TestRewrite_absoluteLinks(t *testing.T) {
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
-			got := rw.Rewrite(input, "page.tmpl")
+			got, err := rw.Rewrite(input, "page.tmpl")
+			if err != nil {
+				t.Errorf("act, unexpected error: %v", err)
+			}
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
 			}
@@ -118,7 +130,10 @@ func TestRewrite_internalAnchorLinks(t *testing.T) {
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
-			got := rw.Rewrite(input, "page.md")
+			got, err := rw.Rewrite(input, "page.md")
+			if err != nil {
+				t.Errorf("act, unexpected error: %v", err)
+			}
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
 			}
@@ -140,9 +155,50 @@ func TestRewrite_externalAnchorLinks(t *testing.T) {
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
-			got := rw.Rewrite(input, "page.md")
+			got, err := rw.Rewrite(input, "page.md")
+			if err != nil {
+				t.Errorf("act, unexpected error: %v", err)
+			}
 			if expected != got {
 				t.Errorf("expected %q got %q", expected, got)
+			}
+		})
+	}
+}
+
+func TestRewrite_linksToUnvisitableDirs(t *testing.T) {
+	tcs := []string{
+		"..",      // /a/
+		"../",     // /a/
+		"../b/c",  // /a/b/c/
+		"../b/c/", // /a/b/c/
+		"./../",   // /a/
+		"./c",     // /a/b/c/
+		"./c/",    // /a/b/c/
+		"c",       // /a/b/c/
+		"c/",      // /a/b/c/
+	}
+	for _, input := range tcs {
+		t.Run(testname(input), func(t *testing.T) {
+			_, err := rw.Rewrite(input, "a/b/page.tmpl")
+			if err == nil {
+				t.Errorf("act, unexpected success")
+			}
+		})
+	}
+}
+
+func TestRewrite_linksToUnexistingNodes(t *testing.T) {
+	tcs := []string{
+		"../../..",     // /../
+		"../x",         // /x/
+		"../../x.tmpl", // /x.html
+	}
+	for _, input := range tcs {
+		t.Run(testname(input), func(t *testing.T) {
+			_, err := rw.Rewrite(input, "a/b/page.tmpl")
+			if err == nil {
+				t.Errorf("act, unexpected success")
 			}
 		})
 	}
