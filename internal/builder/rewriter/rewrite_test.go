@@ -113,7 +113,8 @@ func TestRewrite_absoluteLinks(t *testing.T) {
 
 func TestRewrite_internalInPageLinks(t *testing.T) {
 	tcs := map[string]string{
-		"#title": "/page.html#title",
+		"#":      "#",
+		"#title": "#title",
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {

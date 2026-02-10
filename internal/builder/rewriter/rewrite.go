@@ -51,14 +51,11 @@ func assureAbsolute(dst, src string) string {
 	if filepath.IsAbs(dst) {
 		return dst
 	}
-	if strings.HasPrefix(dst, "#") || strings.HasPrefix(dst, "?") {
-		return filepath.Join(src, dst)
-	}
 	return filepath.Join(filepath.Dir(src), dst)
 }
 
 func (rw Rewriter) Rewrite(dst, src string) string {
-	if isExternal(dst) {
+	if isExternal(dst) || strings.HasPrefix(dst, "#") || strings.HasPrefix(dst, "?") {
 		return dst
 	}
 	dst = unescape(dst)
