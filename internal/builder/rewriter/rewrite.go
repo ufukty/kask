@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+var ErrInvalidTarget = fmt.Errorf("invalid link: internal target doesn't exist.")
+
 func isExternal(url string) bool {
 	return false ||
 		strings.HasPrefix(url, "http://") ||
@@ -69,7 +71,7 @@ func (rw Rewriter) Rewrite(dst, src string) (string, error) {
 		dst = "."
 	}
 	if !has(rw.links, dst) {
-		return "", fmt.Errorf("invalid link: internal target doesn't exist.")
+		return "", ErrInvalidTarget
 	}
 	dst = rw.links[dst]
 	return dst + query, nil
