@@ -9,25 +9,35 @@ import (
 )
 
 type visitor struct {
-	cf      *codefence.Renderer
-	pagedir string
-	rw      *rewriter.Rewriter
+	page       string
+	rw         *rewriter.Rewriter
+	cf         *codefence.Renderer
+	InvTargets []string
 }
 
 func NewVisitor(page string, rw *rewriter.Rewriter) *visitor {
 	return &visitor{
-		cf:      codefence.NewRenderer(),
-		pagedir: page,
-		rw:      rw,
+		page:       page,
+		rw:         rw,
+		cf:         codefence.NewRenderer(), // TODO: reuse
+		InvTargets: []string{},
 	}
 }
 
-func (v visitor) links(node *ast.Link) (ast.WalkStatus, bool) {
-	node.Destination = []byte(v.rw.Rewrite(string(node.Destination), v.pagedir))
+func (v *visitor) links(node *ast.Link, entering bool) (ast.WalkStatus, bool) {
+	if !entering {
+		return ast.GoToNext, false
+	}
+	h2, err := v.rw.Rewrite(string(node.Destination), v.page)
+	if err == rewriter.ErrInvalidTarget {
+		v.InvTargets = append(v.InvTargets, string(node.Destination))
+		return ast.GoToNext, false
+	}
+	node.Destination = []byte(h2)
 	return ast.GoToNext, false
 }
 
-func (v visitor) Visit(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
+func (v *visitor) Visit(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
 	switch node := node.(type) {
 	case *ast.CodeBlock:
 		return v.cf.RenderNodeHook(w, node, entering)
@@ -35,7 +45,7 @@ func (v visitor) Visit(w io.Writer, node ast.Node, entering bool) (ast.WalkStatu
 		// TODO: change destination
 
 	case *ast.Link:
-		return v.links(node)
+		return v.links(node, entering)
 	}
 	return ast.GoToNext, false
 }
