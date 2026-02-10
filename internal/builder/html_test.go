@@ -17,7 +17,8 @@ func Example_builder_rewriteLinksInHtmlPage() {
 	// visitable dirs:
 	rw.Bank("a/", "/a/")
 	rw.Bank("a/b", "/a/b/")
-	fmt.Println(string(rewriteLinksInHtmlPage(rw, "a/page.tmpl", []byte(input))))
+	new, _ := rewriteLinksInHtmlPage(rw, "a/page.tmpl", []byte(input))
+	fmt.Println(string(new))
 	// Output:
 	// <a href="/a/b/#Title">link with redundant traverse</a>
 	// <a href="/a/b/page.html#Title">link with redundant traverse</a>
