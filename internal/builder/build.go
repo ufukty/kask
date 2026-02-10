@@ -311,7 +311,7 @@ type TemplateContent struct {
 	Time        time.Time
 }
 
-func (b *builder) execPage(dst string, tmpl *template.Template, name string, content *TemplateContent) error {
+func (b *builder) execPage(dst string, tmpl *template.Template, name string, content *TemplateContent, isTmpl bool) error {
 	if b.args.Verbose {
 		fmt.Printf("printing %s\n", dst)
 	}
@@ -322,7 +322,10 @@ func (b *builder) execPage(dst string, tmpl *template.Template, name string, con
 	if err := tmpl.ExecuteTemplate(buf, name, content); err != nil {
 		return fmt.Errorf("executing: %w", err)
 	}
-	bs := rewriteLinksInHtmlPage(b.rw, dst, buf.Bytes())
+	bs := buf.Bytes()
+	if isTmpl {
+		bs = rewriteLinksInHtmlPage(b.rw, dst, bs)
+	}
 	err := os.WriteFile(filepath.Join(b.args.Dst, dst), bs, 0o666)
 	if err != nil {
 		return fmt.Errorf("creating: %w", err)
@@ -361,7 +364,7 @@ func (b *builder) execDir(d *dir2) error {
 		if err != nil {
 			return fmt.Errorf("parsing page template %q: %w", filepath.Base(page), err)
 		}
-		if err := b.execPage(paths.dst, tmpl, "page", content); err != nil {
+		if err := b.execPage(paths.dst, tmpl, "page", content, true); err != nil {
 			return fmt.Errorf("page %q: %w", filepath.Base(page), err)
 		}
 	}
@@ -375,7 +378,7 @@ func (b *builder) execDir(d *dir2) error {
 			Time:        b.start,
 		}
 		paths, _ := d.paths.file(filepath.Base(page), isToStrip(d)) // TODO: reuse previously calculated (see previous TODOs)
-		if err := b.execPage(paths.dst, d.templates, "markdown-page", content); err != nil {
+		if err := b.execPage(paths.dst, d.templates, "markdown-page", content, false); err != nil {
 			return fmt.Errorf("page %q: %w", filepath.Base(page), err)
 		}
 	}
