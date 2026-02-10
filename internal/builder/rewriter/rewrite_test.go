@@ -12,7 +12,6 @@ import (
 // /a and /a/b/c is not visitable
 var rw = Rewriter{
 	links: map[string]string{
-		".":                 "/",
 		"README.md":         "/",
 		"page.md":           "/page.html",
 		"a/b/index.tmpl":    "/a/b/",
@@ -21,6 +20,7 @@ var rw = Rewriter{
 		"a/b/c/d/README.md": "/a/b/c/d/",
 
 		// visitable directories (src => url)
+		".":       "/",
 		"a/b":     "/a/b/",
 		"a/b/c/d": "/a/b/c/d/",
 	},
@@ -93,14 +93,49 @@ func TestRewrite_linksWithReduntantSegments(t *testing.T) {
 	}
 }
 
+func TestRewrite_absoluteLinks(t *testing.T) {
+	tcs := map[string]string{
+		"/":               "/",
+		"/README.md":      "/",
+		"/page.md":        "/page.html",
+		"/a/b":            "/a/b/",
+		"/a/b/index.tmpl": "/a/b/",
+	}
+	for input, expected := range sorted(tcs) {
+		t.Run(testname(input), func(t *testing.T) {
+			got := rw.Rewrite(input, "page.tmpl")
+			if expected != got {
+				t.Errorf("expected %q got %q", expected, got)
+			}
+		})
+	}
+}
+
+func TestRewrite_internalInPageLinks(t *testing.T) {
+	tcs := map[string]string{
+		"#title": "/page.html#title",
+	}
+	for input, expected := range sorted(tcs) {
+		t.Run(testname(input), func(t *testing.T) {
+			got := rw.Rewrite(input, "page.md")
+			if expected != got {
+				t.Errorf("expected %q got %q", expected, got)
+			}
+		})
+	}
+}
+
 func TestRewrite_externalInPageLinks(t *testing.T) {
 	tcs := map[string]string{
-		"/#title":             "/#title",
-		"#title":              "/page.html#title",
-		"a/b/#title":          "/a/b/#title",
-		"a/b/c/d/#title":      "/a/b/c/d/#title",
-		"a/b/c/page.md#title": "/a/b/c/page.html#title",
-		"a/b/page.tmpl#title": "/a/b/page.html#title",
+		"/#title":                 "/#title",
+		"/README.md#title":        "/#title",
+		"a/b/#title":              "/a/b/#title",
+		"a/b/c/d/#title":          "/a/b/c/d/#title",
+		"a/b/c/d/README.md#title": "/a/b/c/d/#title",
+		"a/b/c/page.md#title":     "/a/b/c/page.html#title",
+		"a/b/index.tmpl#title":    "/a/b/#title",
+		"a/b/page.tmpl#title":     "/a/b/page.html#title",
+		"README.md#title":         "/#title",
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
