@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/ast"
@@ -16,6 +17,13 @@ import (
 type Page struct {
 	Content string
 	Toc     *TocNode
+}
+
+func serializeInvalidTargets(ts []string) string {
+	for i := range len(ts) {
+		ts[i] = fmt.Sprintf("%q", ts[i])
+	}
+	return strings.Join(ts, ", ")
 }
 
 func ToHtml(root, page string, rw *rewriter.Rewriter) (*Page, error) {
@@ -33,11 +41,15 @@ func ToHtml(root, page string, rw *rewriter.Rewriter) (*Page, error) {
 	}
 	n := p.Parse(c).(*ast.Document)
 
+	v := hook.NewVisitor(page, rw)
 	r := html.NewRenderer(html.RendererOptions{
 		Flags:          html.CommonFlags | html.HrefTargetBlank,
-		RenderNodeHook: hook.NewVisitor(page, rw).Visit,
+		RenderNodeHook: v.Visit,
 	})
 	h := markdown.Render(n, r)
+	if len(v.InvTargets) > 0 {
+		return nil, fmt.Errorf("found links to invalid target(s): %s", serializeInvalidTargets(v.InvTargets))
+	}
 	toc := getTableOfContent(n, r)
 	return &Page{string(h), toc}, nil
 }

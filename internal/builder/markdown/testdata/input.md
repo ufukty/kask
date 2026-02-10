@@ -6,7 +6,7 @@ Excepteur pariatur voluptate nisi deserunt incididunt laboris nulla enim deserun
 
 Incididunt adipisicing ipsum labore nostrud anim incididunt consequat incididunt sunt nostrud sunt exercitation in. Ut in minim nisi quis nulla mollit sunt duis exercitation culpa ex do non. Mollit adipisicing irure exercitation occaecat Lorem aliqua adipisicing nostrud enim.
 
-![an image](.serve/img.jpg)
+![an image](.assets/img.jpg)
 
 Anim dolore aliqua amet nostrud deserunt. Nostrud ipsum nostrud non consectetur dolor qui consectetur reprehenderit magna sint culpa nisi. Magna nulla in officia laborum mollit irure et mollit sint veniam.
 
@@ -32,7 +32,7 @@ Est dolor minim in laboris minim. Tempor veniam tempor tempor id dolore deserunt
 
 - slay
 
-- [and a link](..)
+- [and a link](sibling.md)
 
 ```js
 class loremipsum {
@@ -269,7 +269,7 @@ writeFileSync(
   prettier.format(JSON.stringify(cSpell), {
     ...prettierConfig,
     filepath,
-  })
+  }),
 );
 ```
 
