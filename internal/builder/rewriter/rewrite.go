@@ -1,6 +1,7 @@
 package rewriter
 
 import (
+	"fmt"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -54,9 +55,9 @@ func assureAbsolute(dst, src string) string {
 	return filepath.Join(filepath.Dir(src), dst)
 }
 
-func (rw Rewriter) Rewrite(dst, src string) string {
+func (rw Rewriter) Rewrite(dst, src string) (string, error) {
 	if isExternal(dst) || strings.HasPrefix(dst, "#") || strings.HasPrefix(dst, "?") {
-		return dst
+		return dst, nil
 	}
 	dst = unescape(dst)
 	dst = assureAbsolute(dst, src)
@@ -67,8 +68,9 @@ func (rw Rewriter) Rewrite(dst, src string) string {
 	if dst == "" {
 		dst = "."
 	}
-	if has(rw.links, dst) {
-		dst = rw.links[dst]
+	if !has(rw.links, dst) {
+		return "", fmt.Errorf("invalid link: internal target doesn't exist.")
 	}
-	return dst + query
+	dst = rw.links[dst]
+	return dst + query, nil
 }
