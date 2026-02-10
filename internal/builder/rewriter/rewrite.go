@@ -47,11 +47,14 @@ func splitQuery(path string) (string, string) {
 	return path, ""
 }
 
-func assureAbsolute(cwd, path string) string {
-	if filepath.IsAbs(path) {
-		return path
+func assureAbsolute(dst, src string) string {
+	if filepath.IsAbs(dst) {
+		return dst
 	}
-	return filepath.Join(cwd, path)
+	if strings.HasPrefix(dst, "#") || strings.HasPrefix(dst, "?") {
+		return filepath.Join(src, dst)
+	}
+	return filepath.Join(filepath.Dir(src), dst)
 }
 
 func (rw Rewriter) Rewrite(dst, src string) string {
@@ -59,10 +62,14 @@ func (rw Rewriter) Rewrite(dst, src string) string {
 		return dst
 	}
 	dst = unescape(dst)
-	dst = strings.TrimSuffix(dst, "/")
-	dst = assureAbsolute(filepath.Dir(src), dst)
+	dst = assureAbsolute(dst, src)
 	dst = filepath.Clean(dst)
 	dst, query := splitQuery(dst)
+	dst = strings.TrimPrefix(dst, "/")
+	dst = strings.TrimSuffix(dst, "/")
+	if dst == "" {
+		dst = "."
+	}
 	if has(rw.links, dst) {
 		dst = rw.links[dst]
 	}
