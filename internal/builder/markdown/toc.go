@@ -6,7 +6,7 @@ import (
 
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/html"
-	"github.com/ufukty/kask/pkg/kask"
+	"go.ufukty.com/kask/pkg/kask"
 )
 
 func getTableOfContent(doc *ast.Document, r *html.Renderer) *kask.MarkdownTocNode {

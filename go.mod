@@ -1,4 +1,4 @@
-module github.com/ufukty/kask
+module go.ufukty.com/kask
 
 go 1.24.2
 

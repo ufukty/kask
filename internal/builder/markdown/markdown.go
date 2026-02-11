@@ -10,9 +10,9 @@ import (
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
-	"github.com/ufukty/kask/internal/builder/markdown/hook"
-	"github.com/ufukty/kask/internal/builder/rewriter"
-	"github.com/ufukty/kask/pkg/kask"
+	"go.ufukty.com/kask/internal/builder/markdown/hook"
+	"go.ufukty.com/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/pkg/kask"
 )
 
 func serializeInvalidTargets(ts []string) string {

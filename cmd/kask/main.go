@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/ufukty/kask/cmd/kask/commands/build"
-	"github.com/ufukty/kask/cmd/kask/commands/version"
+	"go.ufukty.com/kask/cmd/kask/commands/build"
+	"go.ufukty.com/kask/cmd/kask/commands/version"
 )
 
 func Main() error {

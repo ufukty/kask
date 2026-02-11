@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ufukty/kask/pkg/kask"
+	"go.ufukty.com/kask/pkg/kask"
 )
 
 func check(tmp, path string) bool {

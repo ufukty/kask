@@ -23,8 +23,8 @@ Because of the Kask rules, opening the content directory in a Markdown editor wo
 
 ## GitHub
 
-Repository is on the [GitHub](https://github.com/ufukty/kask).
+Repository is on the [GitHub](https://go.ufukty.com/kask).
 
 ## License
 
-See [LICENSE](https://github.com/ufukty/kask/blob/main/LICENSE).
+See [LICENSE](https://go.ufukty.com/kask/blob/main/LICENSE).

@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/ufukty/kask/internal/builder"
+	"go.ufukty.com/kask/internal/builder"
 )
 
 type args struct {
