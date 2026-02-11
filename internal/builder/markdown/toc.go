@@ -6,19 +6,12 @@ import (
 
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/html"
+	"github.com/ufukty/kask/pkg/kask"
 )
 
-// TocNode represents a node in the table of contents tree
-type TocNode struct {
-	Title    string
-	ID       string
-	Level    int
-	Children []*TocNode
-}
-
-func getTableOfContent(doc *ast.Document, r *html.Renderer) *TocNode {
-	root := &TocNode{Title: "root", Level: 0}
-	stack := []*TocNode{root}
+func getTableOfContent(doc *ast.Document, r *html.Renderer) *kask.MarkdownTocNode {
+	root := &kask.MarkdownTocNode{Title: "root", Level: 0}
+	stack := []*kask.MarkdownTocNode{root}
 	headingCount := 0
 
 	ast.WalkFunc(doc, func(node ast.Node, entering bool) ast.WalkStatus {
@@ -30,7 +23,7 @@ func getTableOfContent(doc *ast.Document, r *html.Renderer) *TocNode {
 			headingCount++
 
 			title := renderHeadingText(h, r)
-			newNode := &TocNode{
+			newNode := &kask.MarkdownTocNode{
 				Title: title,
 				ID:    h.HeadingID,
 				Level: h.Level,

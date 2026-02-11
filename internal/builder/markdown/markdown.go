@@ -12,12 +12,8 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/ufukty/kask/internal/builder/markdown/hook"
 	"github.com/ufukty/kask/internal/builder/rewriter"
+	"github.com/ufukty/kask/pkg/kask"
 )
-
-type Page struct {
-	Content string
-	Toc     *TocNode
-}
 
 func serializeInvalidTargets(ts []string) string {
 	for i := range len(ts) {
@@ -26,7 +22,7 @@ func serializeInvalidTargets(ts []string) string {
 	return strings.Join(ts, ", ")
 }
 
-func ToHtml(root, page string, rw *rewriter.Rewriter) (*Page, error) {
+func ToHtml(root, page string, rw *rewriter.Rewriter) (*kask.Markdown, error) {
 	p := parser.NewWithExtensions(
 		parser.CommonExtensions |
 			parser.Attributes |
@@ -51,5 +47,5 @@ func ToHtml(root, page string, rw *rewriter.Rewriter) (*Page, error) {
 		return nil, fmt.Errorf("found links to invalid target(s): %s", serializeInvalidTargets(v.InvTargets))
 	}
 	toc := getTableOfContent(n, r)
-	return &Page{string(h), toc}, nil
+	return &kask.Markdown{string(h), toc}, nil
 }

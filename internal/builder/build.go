@@ -40,7 +40,7 @@ type builder struct {
 	start time.Time
 
 	assets        []string                  // src paths
-	pagesMarkdown map[string]*markdown.Page // src path -> content
+	pagesMarkdown map[string]*kask.Markdown // src path -> content
 	leaves        map[pageref]*kask.Node    // to access nodes built for sitemap beforehand
 	rw            *rewriter.Rewriter
 
@@ -465,7 +465,7 @@ func newBuilder(args Args) *builder {
 		args:          args,
 		start:         time.Now(),
 		assets:        []string{},
-		pagesMarkdown: map[string]*markdown.Page{},
+		pagesMarkdown: map[string]*kask.Markdown{},
 		leaves:        map[pageref]*kask.Node{},
 		rw:            rewriter.New(),
 	}
