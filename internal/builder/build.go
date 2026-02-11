@@ -6,13 +6,10 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
 	"go.ufukty.com/kask/cmd/kask/commands/version"
-	"go.ufukty.com/kask/internal/builder/bundle"
-	"go.ufukty.com/kask/internal/builder/copy"
 	"go.ufukty.com/kask/internal/builder/directory"
 	"go.ufukty.com/kask/internal/builder/markdown"
 	"go.ufukty.com/kask/internal/builder/rewriter"
@@ -120,43 +117,6 @@ func (b *builder) write(dst, content string) error {
 	return nil
 }
 
-func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) error {
-	d.stylesheets = slices.Clone(toPropagate)
-
-	if d.original.Kask != nil && d.original.Kask.Propagate != nil && len(d.original.Kask.Propagate.Css) > 0 {
-		css, err := bundle.Files(d.original.Kask.Propagate.Css)
-		if err != nil {
-			return fmt.Errorf("bundling propagated css file: %w", err)
-		}
-		dst := "/" + filepath.Join(d.paths.dst, "styles.propagate.css")
-		if err := b.write(filepath.Join(b.args.Dst, dst), css); err != nil {
-			return fmt.Errorf("writing propagated css file: %w", err)
-		}
-		d.stylesheets = append(d.stylesheets, dst)
-		toPropagate = append(toPropagate, dst)
-	}
-
-	if d.original.Kask != nil && len(d.original.Kask.Css) > 0 {
-		css, err := bundle.Files(d.original.Kask.Css)
-		if err != nil {
-			return fmt.Errorf("bundling at-level css file: %w", err)
-		}
-		dst := "/" + filepath.Join(d.paths.dst, "styles.css")
-		if err := b.write(filepath.Join(b.args.Dst, dst), css); err != nil {
-			return fmt.Errorf("writing at-level css file: %w", err)
-		}
-		d.stylesheets = append(d.stylesheets, dst)
-	}
-
-	for _, subdir := range d.subdirs {
-		if err := b.bundleAndPropagateStylesheets(subdir, slices.Clone(toPropagate)); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
-		}
-	}
-
-	return nil
-}
-
 func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) error {
 	var err error
 
@@ -258,34 +218,6 @@ func (b *builder) renderMarkdown(d *dir2) error {
 
 	for _, subdir := range d.subdirs {
 		if err := b.renderMarkdown(subdir); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
-		}
-	}
-
-	return nil
-}
-
-func (b *builder) copyAssetsFolders(d *dir2) error {
-	if d.original.Assets {
-		err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.dst), 0o755)
-		if err != nil {
-			return fmt.Errorf("creating directory: %w", err)
-		}
-
-		dst := filepath.Join(b.args.Dst, d.paths.dst, ".assets")
-		src := filepath.Join(b.args.Src, d.paths.src, ".assets")
-		if b.args.Verbose {
-			fmt.Println("copying", dst)
-		}
-
-		err = copy.Dir(dst, src)
-		if err != nil {
-			return fmt.Errorf("copy dir: %w", err)
-		}
-	}
-
-	for _, subdir := range d.subdirs {
-		if err := b.copyAssetsFolders(subdir); err != nil {
 			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
 		}
 	}
