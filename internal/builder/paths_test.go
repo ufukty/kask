@@ -9,6 +9,28 @@ import (
 	"testing"
 )
 
+func TestStripOrdering(t *testing.T) {
+	tcs := map[string]string{
+		"1.contacts":     "contacts",
+		"10.contacts":    "contacts",
+		"10. contacts":   "contacts",
+		"001.contacts":   "contacts",
+		"001 - contacts": "contacts",
+		"001 contacts":   "contacts",
+		"001.  contacts": "contacts",
+		"001.. contacts": "contacts",
+	}
+
+	for input, expected := range tcs {
+		t.Run(input, func(t *testing.T) {
+			got := stripOrdering(input)
+			if got != expected {
+				t.Errorf("expected %q got %q", expected, got)
+			}
+		})
+	}
+}
+
 func TestUri_dir(t *testing.T) {
 	type input struct{ parent, child string }
 	type output = string
@@ -80,10 +102,7 @@ func TestPaths_File(t *testing.T) {
 	}
 	for _, tn := range slices.Sorted(maps.Keys(tcs)) {
 		tc := tcs[tn]
-		got, err := parent.file(tc.inputBasename, tc.inputStripped)
-		if err != nil {
-			t.Run(filepath.Join(tn, "act"), func(t *testing.T) { t.Fatalf("unexpected error: %v", err) })
-		}
+		got := parent.file(tc.inputBasename, tc.inputStripped)
 		if got.src != tc.expected.src {
 			t.Run(filepath.Join(tn, "assert src"), func(t *testing.T) { t.Errorf("expected %q got %q", tc.expected.src, got.src) })
 		}
@@ -116,21 +135,15 @@ func TestPaths_Dir(t *testing.T) {
 	for _, tn := range slices.Sorted(maps.Keys(tcs)) {
 		tc := tcs[tn]
 		got := parent.subdir(tc.inputBasename, tc.inputStripped)
-		t.Run(filepath.Join(tn, "src"), func(t *testing.T) {
-			if got.src != tc.expected.src {
-				t.Errorf("expected %q got %q", tc.expected.src, got.src)
-			}
-		})
-		t.Run(filepath.Join(tn, "dst"), func(t *testing.T) {
-			if got.dst != tc.expected.dst {
-				t.Errorf("expected %q got %q", tc.expected.dst, got.dst)
-			}
-		})
-		t.Run(filepath.Join(tn, "url"), func(t *testing.T) {
-			if got.url != tc.expected.url {
-				t.Errorf("expected %q got %q", tc.expected.url, got.url)
-			}
-		})
+		if got.src != tc.expected.src {
+			t.Run(filepath.Join(tn, "src"), func(t *testing.T) { t.Errorf("expected %q got %q", tc.expected.src, got.src) })
+		}
+		if got.dst != tc.expected.dst {
+			t.Run(filepath.Join(tn, "dst"), func(t *testing.T) { t.Errorf("expected %q got %q", tc.expected.dst, got.dst) })
+		}
+		if got.url != tc.expected.url {
+			t.Run(filepath.Join(tn, "url"), func(t *testing.T) { t.Errorf("expected %q got %q", tc.expected.url, got.url) })
+		}
 	}
 }
 
@@ -140,10 +153,7 @@ func TestPaths_File_preserveEncodedParent(t *testing.T) {
 		dst: "/a ",
 		url: "/a%20/",
 	}
-	got, err := parent.file("b.tmpl", false)
-	if err != nil {
-		t.Errorf("act, unexpected error: %v", err)
-	}
+	got := parent.file("b.tmpl", false)
 	if filepath.Dir(got.url) != "/a%20" {
 		t.Errorf("assert, expected the parent path to stay encoded: %q, got. %q", "/a%20", got.url)
 	}

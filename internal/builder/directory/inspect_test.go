@@ -16,9 +16,8 @@ func spaces(depth int) string {
 func (d *Dir) String() string {
 	return fmt.Sprint(
 		"Name:", d.Name, " ",
-		"(Tmpl:", strings.Join(d.PagesTmpl, ","), ") ",
-		"(Markdown:", strings.Join(d.PagesMarkdown, ","), ") ",
-		"(Assets:", d.Assets != "", ") ",
+		"(Pages:", strings.Join(d.Pages, ","), ") ",
+		"(Assets:", d.Assets, ") ",
 		"(Kask:", d.Kask != nil, ")",
 	)
 }
@@ -37,9 +36,8 @@ func ExampleInspect() {
 	}
 	printTree(root, 0)
 	// Output:
-	// Name:. (Tmpl:index.tmpl) (Markdown:) (Assets:false) (Kask:false)
-	//     Name:career (Tmpl:career/index.tmpl) (Markdown:) (Assets:false) (Kask:false)
-	//     Name:docs (Tmpl:) (Markdown:docs/birdseed.md,docs/magnet.md) (Assets:false) (Kask:true)
-	//     Name:products (Tmpl:products/index.tmpl) (Markdown:) (Assets:false) (Kask:false)
-
+	// Name:. (Pages:index.tmpl) (Assets:false) (Kask:false)
+	//     Name:career (Pages:index.tmpl) (Assets:false) (Kask:false)
+	//     Name:docs (Pages:birdseed.md,magnet.md) (Assets:false) (Kask:true)
+	//     Name:products (Pages:index.tmpl) (Assets:false) (Kask:false)
 }

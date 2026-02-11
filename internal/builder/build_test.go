@@ -247,10 +247,10 @@ func ExampleBuilder_titles() {
 	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// .
-	// An Anonymous Web Page
-	// A beautiful tmpl file with title tag
 	// An Anonymous Markdown Page
+	// An Anonymous Web Page
 	// A beatiful markdown file with title
+	// A beautiful tmpl file with title tag
 }
 
 func ExampleBuilder_metaTitle() {
