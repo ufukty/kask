@@ -29,12 +29,12 @@ func TestStripOrdering(t *testing.T) {
 
 func TestTitleFromFilename(t *testing.T) {
 	tcs := map[string]string{
-		"index.tmpl":             "Index",
-		"3 getting started.tmpl": "Getting Started",
+		"index.html":           "Index",
+		"getting started.html": "Getting Started",
 	}
 	for input, expected := range tcs {
 		t.Run(input, func(t *testing.T) {
-			got := pageTitleFromFilename(input, ".tmpl", true)
+			got := pageTitleFromFilename(input)
 			if got != expected {
 				t.Errorf("expected %q got %q", expected, got)
 			}

@@ -19,18 +19,6 @@ func stripOrdering(s string) string {
 	return orderingStripper.FindStringSubmatch(s)[2]
 }
 
-var titler = cases.Title(language.Und, cases.NoLower)
-
-func pageTitleFromFilename(base, ext string, strippedOrdering bool) string {
-	base = filepath.Base(base)
-	if strippedOrdering {
-		base = stripOrdering(base)
-	}
-	return titler.String(strings.TrimSuffix(base, ext))
-}
-
-var regexpMarkdown = regexp.MustCompile(`(?m)^#\s+(.+)$`)
-
 type extractor struct{}
 
 func (e extractor) FromWeb(path string) (string, error) {
@@ -47,6 +35,8 @@ func (e extractor) FromWeb(path string) (string, error) {
 	}
 	return b.String(), nil
 }
+
+var regexpMarkdown = regexp.MustCompile(`(?m)^#\s+(.+)$`)
 
 func (e extractor) FromMarkdown(path string) (string, error) {
 	f, err := os.ReadFile(path)
@@ -81,16 +71,22 @@ func (e extractor) FromFile(path string) (string, error) {
 
 var theExtractor = extractor{}
 
+var titler = cases.Title(language.Und, cases.NoLower)
+
+func pageTitleFromFilename(base string) string {
+	base = strings.TrimSuffix(base, filepath.Ext(base))
+	return titler.String(base)
+}
+
 // 1. title from content, if available
 // 2. title from file name, if visitable
-// 3. title from folder name
-func decideOnPageTitle(src, ext string, strippedOrdering bool) (string, error) {
-	title, err := theExtractor.FromFile(src)
+func pageTitle(src string, p paths) (string, error) {
+	title, err := theExtractor.FromFile(filepath.Join(src, p.src))
 	if err != nil {
-		return "", fmt.Errorf("reading: %w", err)
+		return "", fmt.Errorf("extracting from file: %w", err)
 	}
 	if title != "" {
 		return title, nil
 	}
-	return pageTitleFromFilename(src, ext, strippedOrdering), nil
+	return pageTitleFromFilename(filepath.Base(p.dst)), nil
 }

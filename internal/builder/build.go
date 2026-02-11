@@ -202,7 +202,7 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 
 	for _, page := range d.original.Pages {
 		p, _ := d.paths.file(page, d.original.IsToStrip()) // TODO: reuse calculated paths for later use in [builder.Build]
-		title, err := decideOnPageTitle(filepath.Join(b.args.Src, p.src), filepath.Ext(page), d.original.IsToStrip())
+		title, err := pageTitle(b.args.Src, p)
 		if err != nil {
 			return nil, fmt.Errorf("decide on title: %w", err)
 		}
