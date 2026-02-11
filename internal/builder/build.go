@@ -35,16 +35,13 @@ type pageref struct {
 }
 
 type builder struct {
-	args Args
-
-	start time.Time
-
-	assets        []string                  // src paths
-	pagesMarkdown map[string]*kask.Markdown // src path -> content
-	leaves        map[pageref]*kask.Node    // to access nodes built for sitemap beforehand
-	rw            *rewriter.Rewriter
-
-	root3 *kask.Node // for testing
+	args     Args
+	rw       *rewriter.Rewriter
+	assets   []string                  // src paths
+	markdown map[string]*kask.Markdown // src path -> content
+	leaves   map[pageref]*kask.Node    // to access nodes built for sitemap beforehand
+	root3    *kask.Node                // for testing
+	start    time.Time
 }
 
 func has[K comparable, V any](m map[K]V, k K) bool {
@@ -82,12 +79,9 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 
 // used in assigning destination addresses, bundling css, and propagating tmpl files
 type dir2 struct {
-	kask        *directory.Kask
-	meta        *directory.Meta
-	assets      bool
+	original    *directory.Dir
 	paths       paths
 	subdirs     []*dir2
-	pages       []string // src paths
 	stylesheets []string // dst paths
 	templates   *template.Template
 }
@@ -95,12 +89,9 @@ type dir2 struct {
 func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
 	paths := parent.subdir(d.Name, p.IsToStrip())
 	d2 := &dir2{
-		kask:        d.Kask,
-		meta:        d.Meta,
-		assets:      d.Assets,
+		original:    d,
 		subdirs:     []*dir2{},
 		paths:       paths,
-		pages:       d.Pages,
 		stylesheets: nil,
 		templates:   nil,
 	}
@@ -133,8 +124,8 @@ func (b *builder) write(dst, content string) error {
 func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) error {
 	d.stylesheets = slices.Clone(toPropagate)
 
-	if d.kask != nil && d.kask.Propagate != nil && len(d.kask.Propagate.Css) > 0 {
-		css, err := bundle.Files(d.kask.Propagate.Css)
+	if d.original.Kask != nil && d.original.Kask.Propagate != nil && len(d.original.Kask.Propagate.Css) > 0 {
+		css, err := bundle.Files(d.original.Kask.Propagate.Css)
 		if err != nil {
 			return fmt.Errorf("bundling propagated css file: %w", err)
 		}
@@ -146,8 +137,8 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 		toPropagate = append(toPropagate, dst)
 	}
 
-	if d.kask != nil && len(d.kask.Css) > 0 {
-		css, err := bundle.Files(d.kask.Css)
+	if d.original.Kask != nil && len(d.original.Kask.Css) > 0 {
+		css, err := bundle.Files(d.original.Kask.Css)
 		if err != nil {
 			return fmt.Errorf("bundling at-level css file: %w", err)
 		}
@@ -170,8 +161,8 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) error {
 	var err error
 
-	if d.kask != nil && d.kask.Propagate != nil && len(d.kask.Propagate.Tmpl) > 0 {
-		toPropagate, err = toPropagate.ParseFiles(d.kask.Propagate.Tmpl...)
+	if d.original.Kask != nil && d.original.Kask.Propagate != nil && len(d.original.Kask.Propagate.Tmpl) > 0 {
+		toPropagate, err = toPropagate.ParseFiles(d.original.Kask.Propagate.Tmpl...)
 		if err != nil {
 			return fmt.Errorf("parsing to-propagate template files: %w", err)
 		}
@@ -182,8 +173,8 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 		return fmt.Errorf("cloning propagated: %w", err)
 	}
 
-	if d.kask != nil && len(d.kask.Tmpl) > 0 {
-		atLevel, err = atLevel.ParseFiles(d.kask.Tmpl...)
+	if d.original.Kask != nil && len(d.original.Kask.Tmpl) > 0 {
+		atLevel, err = atLevel.ParseFiles(d.original.Kask.Tmpl...)
 		if err != nil {
 			return fmt.Errorf("parsing at-level template files: %w", err)
 		}
@@ -200,10 +191,6 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 	return nil
 }
 
-func isToStrip(d *dir2) bool {
-	return !(d != nil && d.meta != nil && d.meta.PreserveOrdering)
-}
-
 // TODO: domain prefix
 func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 	n := &kask.Node{
@@ -213,13 +200,13 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 		Children: []*kask.Node{},
 	}
 
-	for _, page := range d.pages {
-		title, err := decideOnPageTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), isToStrip(d))
+	for _, page := range d.original.Pages {
+		title, err := decideOnPageTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), d.original.IsToStrip())
 		if err != nil {
 			return nil, fmt.Errorf("decide on title: %w", err)
 		}
 		base := filepath.Base(page)
-		path, _ := d.paths.file(base, isToStrip(d)) // TODO: reuse calculated paths for later use in [builder.Build]
+		path, _ := d.paths.file(base, d.original.IsToStrip()) // TODO: reuse calculated paths for later use in [builder.Build]
 		if base == "README.md" || base == "index.tmpl" {
 			n.Href = path.url
 			n.Title = title
@@ -239,8 +226,8 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 	}
 
 	if n.Title == "" {
-		if d.meta != nil {
-			n.Title = d.meta.Title
+		if d.original.Meta != nil {
+			n.Title = d.original.Meta.Title
 		} else {
 			n.Title = filepath.Base(d.paths.dst)
 		}
@@ -260,12 +247,12 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 }
 
 func (b *builder) renderMarkdown(d *dir2) error {
-	for _, md := range d.pages {
+	for _, md := range d.original.Pages {
 		page, err := markdown.ToHtml(b.args.Src, md, b.rw)
 		if err != nil {
 			return fmt.Errorf("rendering %s: %w", md, err)
 		}
-		b.pagesMarkdown[md] = page
+		b.markdown[md] = page
 	}
 
 	for _, subdir := range d.subdirs {
@@ -337,10 +324,10 @@ func (b *builder) execPage(d *dir2, page string) error {
 		Stylesheets: d.stylesheets,
 		Node:        b.leaves[pageref{d, leafpath(page)}],
 		Root:        b.root3,
-		Markdown:    b.pagesMarkdown[page], // otherwise `nil`
+		Markdown:    b.markdown[page], // otherwise `nil`
 		Time:        b.start,
 	}
-	p, _ := d.paths.file(filepath.Base(page), isToStrip(d)) // TODO: reuse previously calculated (see previous TODOs)
+	p, _ := d.paths.file(filepath.Base(page), d.original.IsToStrip()) // TODO: reuse previously calculated (see previous TODOs)
 	t, err := b.prepareTemplates(d, p)
 	if err != nil {
 		return fmt.Errorf("prepare: %w", err)
@@ -357,7 +344,7 @@ func (b *builder) execDir(d *dir2) error {
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
-	for _, page := range d.pages {
+	for _, page := range d.original.Pages {
 		if err := b.execPage(d, page); err != nil {
 			return fmt.Errorf("executing %q: %w", filepath.Base(page), err)
 		}
@@ -371,7 +358,7 @@ func (b *builder) execDir(d *dir2) error {
 }
 
 func (b *builder) copyAssetsFolders(d *dir2) error {
-	if d.assets {
+	if d.original.Assets {
 		err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.dst), 0o755)
 		if err != nil {
 			return fmt.Errorf("creating directory: %w", err)
@@ -455,12 +442,12 @@ func (b *builder) Build() error {
 // split for testing
 func newBuilder(args Args) *builder {
 	return &builder{
-		args:          args,
-		start:         time.Now(),
-		assets:        []string{},
-		pagesMarkdown: map[string]*kask.Markdown{},
-		leaves:        map[pageref]*kask.Node{},
-		rw:            rewriter.New(),
+		args:     args,
+		rw:       rewriter.New(),
+		assets:   []string{},
+		markdown: map[string]*kask.Markdown{},
+		leaves:   map[pageref]*kask.Node{},
+		start:    time.Now(),
 	}
 }
 
