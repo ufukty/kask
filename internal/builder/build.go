@@ -57,13 +57,7 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 	for _, subdir := range dir.Subdirs {
 		children[subdir.Name] = 1
 	}
-	for _, page := range dir.PagesTmpl {
-		if has(children, page) {
-			children[page] = -1
-		}
-		children[page]++
-	}
-	for _, page := range dir.PagesMarkdown {
+	for _, page := range dir.Pages {
 		if has(children, page) {
 			children[page] = -1
 		}
@@ -88,39 +82,30 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 
 // used in assigning destination addresses, bundling css, and propagating tmpl files
 type dir2 struct {
-	kask      *directory.Kask
-	meta      *directory.Meta
-	hasAssets bool
-
-	paths paths
-
-	subdirs []*dir2
-
-	pagesMarkdown []string // src paths
-	pagesTmpl     []string // src paths
-	stylesheets   []string // dst paths
-	templates     *template.Template
+	kask        *directory.Kask
+	meta        *directory.Meta
+	assets      bool
+	paths       paths
+	subdirs     []*dir2
+	pages       []string // src paths
+	stylesheets []string // dst paths
+	templates   *template.Template
 }
 
 func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
-	ps := parent.subdir(d.Name, p.IsToStrip())
+	paths := parent.subdir(d.Name, p.IsToStrip())
 	d2 := &dir2{
-		kask:      d.Kask,
-		meta:      d.Meta,
-		hasAssets: d.Assets != "",
-
-		subdirs: []*dir2{},
-
-		paths: ps,
-
-		pagesMarkdown: d.PagesMarkdown,
-		pagesTmpl:     d.PagesTmpl,
-		stylesheets:   nil,
-		templates:     nil,
+		kask:        d.Kask,
+		meta:        d.Meta,
+		assets:      d.Assets,
+		subdirs:     []*dir2{},
+		paths:       paths,
+		pages:       d.Pages,
+		stylesheets: nil,
+		templates:   nil,
 	}
-	// b.rw.Bank(d2.paths.src, d2.paths.url)
 	for _, subdir := range d.Subdirs {
-		d2.subdirs = append(d2.subdirs, b.toDir2(subdir, d, ps))
+		d2.subdirs = append(d2.subdirs, b.toDir2(subdir, d, paths))
 	}
 	return d2
 }
@@ -228,7 +213,7 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 		Children: []*kask.Node{},
 	}
 
-	for _, page := range slices.Concat(d.pagesTmpl, d.pagesMarkdown) {
+	for _, page := range d.pages {
 		title, err := decideOnPageTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), isToStrip(d))
 		if err != nil {
 			return nil, fmt.Errorf("decide on title: %w", err)
@@ -275,7 +260,7 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 }
 
 func (b *builder) renderMarkdown(d *dir2) error {
-	for _, md := range d.pagesMarkdown {
+	for _, md := range d.pages {
 		page, err := markdown.ToHtml(b.args.Src, md, b.rw)
 		if err != nil {
 			return fmt.Errorf("rendering %s: %w", md, err)
@@ -292,26 +277,47 @@ func (b *builder) renderMarkdown(d *dir2) error {
 	return nil
 }
 
-func (b *builder) execPage(dst string, tmpl *template.Template, name string, content *kask.TemplateContent, isTmpl bool) error {
+func pageTemplateName(path string) string {
+	if filepath.Ext(path) == ".md" {
+		return "markdown-page"
+	}
+	return "page"
+}
+
+func (b *builder) prepareTemplates(d *dir2, p paths) (*template.Template, error) {
+	t, err := d.templates.Clone()
+	if err != nil {
+		return nil, fmt.Errorf("clone: %w", err)
+	}
+	if filepath.Ext(p.src) == ".tmpl" {
+		t, err = t.ParseFiles(filepath.Join(b.args.Src, p.src))
+		if err != nil {
+			return nil, fmt.Errorf("parsing itself: %w", err)
+		}
+	}
+	return t, nil
+}
+
+func (b *builder) executeTemplates(p paths, t *template.Template, c *kask.TemplateContent) error {
 	if b.args.Verbose {
-		fmt.Printf("printing %s\n", dst)
+		fmt.Printf("printing %s\n", p.dst)
 	}
 	buf := bytes.NewBuffer([]byte{})
 	if _, err := fmt.Fprintln(buf, fileheader); err != nil {
 		return fmt.Errorf("writing the autogen notice: %w", err)
 	}
-	if err := tmpl.ExecuteTemplate(buf, name, content); err != nil {
+	if err := t.ExecuteTemplate(buf, pageTemplateName(p.src), c); err != nil {
 		return fmt.Errorf("executing: %w", err)
 	}
 	bs := buf.Bytes()
-	if isTmpl {
+	if filepath.Ext(p.src) == ".tmpl" {
 		var err error
-		bs, err = rewriteLinksInHtmlPage(b.rw, dst, bs)
+		bs, err = rewriteLinksInHtmlPage(b.rw, p.dst, bs)
 		if err != nil {
 			return fmt.Errorf("rewriting the links found at the page: %w", err)
 		}
 	}
-	err := os.WriteFile(filepath.Join(b.args.Dst, dst), bs, 0o666)
+	err := os.WriteFile(filepath.Join(b.args.Dst, p.dst), bs, 0o666)
 	if err != nil {
 		return fmt.Errorf("creating: %w", err)
 	}
@@ -326,59 +332,46 @@ func leafpath(src string) string {
 	return src
 }
 
+func (b *builder) execPage(d *dir2, page string) error {
+	c := &kask.TemplateContent{
+		Stylesheets: d.stylesheets,
+		Node:        b.leaves[pageref{d, leafpath(page)}],
+		Root:        b.root3,
+		Markdown:    b.pagesMarkdown[page], // otherwise `nil`
+		Time:        b.start,
+	}
+	p, _ := d.paths.file(filepath.Base(page), isToStrip(d)) // TODO: reuse previously calculated (see previous TODOs)
+	t, err := b.prepareTemplates(d, p)
+	if err != nil {
+		return fmt.Errorf("prepare: %w", err)
+	}
+	err = b.executeTemplates(p, t, c)
+	if err != nil {
+		return fmt.Errorf("template %q: %w", filepath.Base(p.src), err)
+	}
+	return nil
+}
+
 func (b *builder) execDir(d *dir2) error {
 	err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.dst), 0o755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
-
-	for _, page := range d.pagesTmpl {
-		content := &kask.TemplateContent{
-			Stylesheets: d.stylesheets,
-			Node:        b.leaves[pageref{d, leafpath(page)}],
-			Root:        b.root3,
-			Markdown:    nil,
-			Time:        b.start,
-		}
-		tmpl, err := d.templates.Clone()
-		if err != nil {
-			return fmt.Errorf("cloning templates for rendering page: %w", err)
-		}
-		paths, _ := d.paths.file(filepath.Base(page), isToStrip(d)) // TODO: reuse previously calculated (see previous TODOs)
-		tmpl, err = tmpl.ParseFiles(filepath.Join(b.args.Src, paths.src))
-		if err != nil {
-			return fmt.Errorf("parsing page template %q: %w", filepath.Base(page), err)
-		}
-		if err := b.execPage(paths.dst, tmpl, "page", content, true); err != nil {
-			return fmt.Errorf("page %q: %w", filepath.Base(page), err)
+	for _, page := range d.pages {
+		if err := b.execPage(d, page); err != nil {
+			return fmt.Errorf("executing %q: %w", filepath.Base(page), err)
 		}
 	}
-
-	for _, page := range d.pagesMarkdown {
-		content := &kask.TemplateContent{
-			Stylesheets: d.stylesheets,
-			Node:        b.leaves[pageref{d, leafpath(page)}],
-			Root:        b.root3,
-			Markdown:    b.pagesMarkdown[page],
-			Time:        b.start,
-		}
-		paths, _ := d.paths.file(filepath.Base(page), isToStrip(d)) // TODO: reuse previously calculated (see previous TODOs)
-		if err := b.execPage(paths.dst, d.templates, "markdown-page", content, false); err != nil {
-			return fmt.Errorf("page %q: %w", filepath.Base(page), err)
-		}
-	}
-
 	for _, subdir := range d.subdirs {
 		if err := b.execDir(subdir); err != nil {
 			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
 		}
 	}
-
 	return nil
 }
 
 func (b *builder) copyAssetsFolders(d *dir2) error {
-	if d.hasAssets {
+	if d.assets {
 		err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.dst), 0o755)
 		if err != nil {
 			return fmt.Errorf("creating directory: %w", err)
