@@ -8,17 +8,16 @@ import (
 )
 
 type Dir struct {
-	Name          string
-	Assets        string
-	Subdirs       []*Dir
-	PagesMarkdown []string
-	PagesTmpl     []string
-	Kask          *Kask
-	Meta          *Meta
+	Name    string
+	Assets  bool
+	Subdirs []*Dir
+	Pages   []string // .md + .tmpl
+	Kask    *Kask
+	Meta    *Meta
 }
 
 func (d *Dir) subtree() int {
-	c := len(d.PagesTmpl) + len(d.PagesMarkdown)
+	c := len(d.Pages)
 	for _, s := range d.Subdirs {
 		c += s.subtree()
 	}
@@ -30,44 +29,32 @@ func inspect(root, path string) (*Dir, error) {
 		Name:    filepath.Base(path),
 		Subdirs: []*Dir{},
 	}
-
 	entries, err := os.ReadDir(filepath.Join(root, path))
 	if err != nil {
 		return nil, fmt.Errorf("listing directory entries: %w", err)
 	}
-
 	subdirs := []string{}
-
 	for _, entry := range entries {
-		var name, isDir = entry.Name(), entry.IsDir()
-
+		name, isDir := entry.Name(), entry.IsDir()
 		switch {
-		case !isDir && strings.HasSuffix(name, ".tmpl"):
-			d.PagesTmpl = append(d.PagesTmpl, filepath.Join(path, name))
-
-		case !isDir && strings.HasSuffix(name, ".md"):
-			d.PagesMarkdown = append(d.PagesMarkdown, filepath.Join(path, name))
-
+		case !isDir && (strings.HasSuffix(name, ".tmpl") || strings.HasSuffix(name, ".md")):
+			d.Pages = append(d.Pages, filepath.Join(path, name))
 		case !isDir && name == ".kask.yml":
 			d.Meta, err = readMeta(filepath.Join(root, path, name))
 			if err != nil {
-				return nil, fmt.Errorf("reading meta file at %q: %w", filepath.Join(path, name), err)
+				return nil, fmt.Errorf("reading meta file %q: %w", filepath.Join(path, name), err)
 			}
-
 		case isDir && name == ".kask":
 			d.Kask, err = inspectKaskFolder(filepath.Join(root, path))
 			if err != nil {
-				return nil, fmt.Errorf("kask folder: %w", err)
+				return nil, fmt.Errorf("inspecting kask folder: %w", err)
 			}
-
 		case isDir && name == ".assets":
-			d.Assets = filepath.Join(path, ".assets")
-
+			d.Assets = true
 		case isDir:
 			subdirs = append(subdirs, filepath.Join(path, name))
 		}
 	}
-
 	for _, subdir := range subdirs {
 		sub, err := inspect(root, subdir)
 		if err != nil {
@@ -77,7 +64,6 @@ func inspect(root, path string) (*Dir, error) {
 			d.Subdirs = append(d.Subdirs, sub)
 		}
 	}
-
 	return d, nil
 }
 
@@ -90,5 +76,5 @@ func Inspect(path string) (*Dir, error) {
 }
 
 func (d *Dir) IsToStrip() bool {
-	return !(d != nil && d.Meta != nil && d.Meta.PreserveOrdering)
+	return d == nil || d.Meta == nil || !d.Meta.PreserveOrdering
 }
