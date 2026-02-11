@@ -3,8 +3,6 @@ package builder
 import (
 	"fmt"
 	"html/template"
-	"io"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -95,26 +93,6 @@ func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
 		d2.subdirs = append(d2.subdirs, b.toDir2(subdir, d, paths))
 	}
 	return d2
-}
-
-func (b *builder) write(dst, content string) error {
-	if b.args.Verbose {
-		fmt.Println("writing", dst)
-	}
-	err := os.MkdirAll(filepath.Dir(dst), 0o755)
-	if err != nil {
-		return fmt.Errorf("creating directory: %w", err)
-	}
-	f, err := os.Create(dst)
-	if err != nil {
-		return fmt.Errorf("creating: %w", err)
-	}
-	defer f.Close()
-	_, err = io.Copy(f, strings.NewReader(content))
-	if err != nil {
-		return fmt.Errorf("copying: %w", err)
-	}
-	return nil
 }
 
 // TODO: domain prefix

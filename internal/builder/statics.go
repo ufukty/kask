@@ -2,13 +2,35 @@ package builder
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"go.ufukty.com/kask/internal/builder/bundle"
 	"go.ufukty.com/kask/internal/builder/copy"
 )
+
+func (b *builder) write(dst, content string) error {
+	if b.args.Verbose {
+		fmt.Println("writing", dst)
+	}
+	err := os.MkdirAll(filepath.Dir(dst), 0o755)
+	if err != nil {
+		return fmt.Errorf("creating directory: %w", err)
+	}
+	f, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("creating: %w", err)
+	}
+	defer f.Close()
+	_, err = io.Copy(f, strings.NewReader(content))
+	if err != nil {
+		return fmt.Errorf("copying: %w", err)
+	}
+	return nil
+}
 
 func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) error {
 	d.stylesheets = slices.Clone(toPropagate)
