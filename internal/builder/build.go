@@ -160,13 +160,11 @@ func (b *builder) renderMarkdown(d *dir2) error {
 			b.markdown[p.src] = html
 		}
 	}
-
 	for _, subdir := range d.subdirs {
 		if err := b.renderMarkdown(subdir); err != nil {
 			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
 		}
 	}
-
 	return nil
 }
 
@@ -178,38 +176,29 @@ func (b *builder) Build() error {
 	if err != nil {
 		return fmt.Errorf("inspecting source directory: %w", err)
 	}
-
 	if err := b.checkCompetingEntries(root); err != nil {
 		return fmt.Errorf("checking competing files and folders: %w", err)
 	}
-
 	root2 := b.toDir2(root, nil, paths{src: "."})
-
 	if err := b.bundleAndPropagateStylesheets(root2, []string{}); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
-
 	if err := b.propagateTemplates(root2, newTemplateSet()); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
-
 	b.root3, err = b.toNode(root2, nil)
 	if err != nil {
 		return fmt.Errorf("structuring node tree: %w", err)
 	}
-
 	if err := b.renderMarkdown(root2); err != nil {
 		return fmt.Errorf("rendering markdown pages: %w", err)
 	}
-
 	if err := b.execDir(root2); err != nil {
 		return fmt.Errorf("executing templates: %w", err)
 	}
-
 	if err := b.copyAssetsFolders(root2); err != nil {
 		return fmt.Errorf("copying assets folders: %w", err)
 	}
-
 	return nil
 }
 
