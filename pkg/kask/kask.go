@@ -6,22 +6,23 @@ import (
 	"github.com/ufukty/kask/internal/builder/markdown"
 )
 
-// represents a sitemap node which can be either of:
-//   - non-visitable directories
-//   - directories with "index.tmpl" or "README.md" file
-//   - pages corresponding to .tmpl or .md files
+// Node represents a sitemap node which can be either of:
+//   - Unvisitable folder
+//   - Visitable folder (has `index.tmpl` or `README.md` file)
+//   - Page of a `.tmpl` or `.md` file
 type Node struct {
-	Title    string // markdown h1, meta.yml title or the file name
+	Title    string // Sourced either from the file, meta file or file/folder name
 	Href     string // Visitable when filled
 	Parent   *Node
 	Children []*Node
 }
 
-// template files should access necessary information through
-// the fields of this struct
+// TemplateContent provides the dynamic information a template
+// may need to render a page.
 type TemplateContent struct {
-	Stylesheets []string
-	Node, Root  *Node
-	Markdown    *markdown.Page
-	Time        time.Time
+	Stylesheets []string       // Needs to be linked in the page.
+	Node        *Node          // Represents the page currently rendered.
+	Root        *Node          // Represents site root. Used for rendering sitemap.
+	Markdown    *markdown.Page // Rendered HTML for Markdown page and the Table-of-Contents
+	Time        time.Time      // The time first rendering started
 }
