@@ -13,12 +13,6 @@ import (
 	"golang.org/x/text/language"
 )
 
-var orderingStripper = regexp.MustCompile(`^(\d+[\-., ]*)?(.*)$`)
-
-func stripOrdering(s string) string {
-	return orderingStripper.FindStringSubmatch(s)[2]
-}
-
 type extractor struct{}
 
 func (e extractor) FromWeb(path string) (string, error) {

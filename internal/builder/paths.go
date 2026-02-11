@@ -3,8 +3,15 @@ package builder
 import (
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
+
+var orderingStripper = regexp.MustCompile(`^(\d+[\-., ]*)?(.*)$`)
+
+func stripOrdering(s string) string {
+	return orderingStripper.FindStringSubmatch(s)[2]
+}
 
 func withStripping(path string, toStrip bool) string {
 	if toStrip {
