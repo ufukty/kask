@@ -3,6 +3,7 @@ package build
 import (
 	"flag"
 	"fmt"
+	"runtime"
 
 	"go.ufukty.com/kask/internal/builder"
 )
@@ -34,11 +35,20 @@ func readargs() (*args, error) {
 	return a, nil
 }
 
+func ending(a *args) {
+	if a.Verbose {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+		fmt.Printf("Alloc: %d KB, TotalAlloc: %d KB, Sys: %d KB, NumGC: %d\n", m.Alloc/1024, m.TotalAlloc/1024, m.Sys/1024, m.NumGC)
+	}
+}
+
 func Run() error {
 	a, err := readargs()
 	if err != nil {
 		return fmt.Errorf("reading args: %w", err)
 	}
+	defer ending(a)
 	err = builder.Build(builder.Args{
 		Dev:     a.Dev,
 		Domain:  a.Domain,
