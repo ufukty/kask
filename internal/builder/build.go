@@ -117,39 +117,6 @@ func (b *builder) write(dst, content string) error {
 	return nil
 }
 
-func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) error {
-	var err error
-
-	if d.original.Kask != nil && d.original.Kask.Propagate != nil && len(d.original.Kask.Propagate.Tmpl) > 0 {
-		toPropagate, err = toPropagate.ParseFiles(d.original.Kask.Propagate.Tmpl...)
-		if err != nil {
-			return fmt.Errorf("parsing to-propagate template files: %w", err)
-		}
-	}
-
-	atLevel, err := toPropagate.Clone()
-	if err != nil {
-		return fmt.Errorf("cloning propagated: %w", err)
-	}
-
-	if d.original.Kask != nil && len(d.original.Kask.Tmpl) > 0 {
-		atLevel, err = atLevel.ParseFiles(d.original.Kask.Tmpl...)
-		if err != nil {
-			return fmt.Errorf("parsing at-level template files: %w", err)
-		}
-	}
-
-	d.templates = atLevel
-
-	for _, subdir := range d.subdirs {
-		if err := b.propagateTemplates(subdir, toPropagate); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
-		}
-	}
-
-	return nil
-}
-
 // TODO: domain prefix
 func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 	n := &kask.Node{
