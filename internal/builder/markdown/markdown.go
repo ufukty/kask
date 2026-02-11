@@ -47,5 +47,5 @@ func ToHtml(root, page string, rw *rewriter.Rewriter) (*kask.Markdown, error) {
 		return nil, fmt.Errorf("found links to invalid target(s): %s", serializeInvalidTargets(v.InvTargets))
 	}
 	toc := getTableOfContent(n, r)
-	return &kask.Markdown{string(h), toc}, nil
+	return &kask.Markdown{Content: string(h), Toc: toc}, nil
 }
