@@ -10,6 +10,20 @@ import (
 	"go.ufukty.com/kask/pkg/kask"
 )
 
+func newTemplateSet() *template.Template {
+	tmpl := template.New("page")
+	tmpl.Funcs(template.FuncMap{
+		"trustedCss":      func(s string) template.CSS { return template.CSS(s) },
+		"trustedHtml":     func(s string) template.HTML { return template.HTML(s) },
+		"trustedHtmlAttr": func(s string) template.HTMLAttr { return template.HTMLAttr(s) },
+		"trustedJs":       func(s string) template.JS { return template.JS(s) },
+		"trustedJsStr":    func(s string) template.JSStr { return template.JSStr(s) },
+		"trustedSrcSet":   func(s string) template.Srcset { return template.Srcset(s) },
+		"trustedUrl":      func(s string) template.URL { return template.URL(s) },
+	})
+	return tmpl
+}
+
 func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) error {
 	var err error
 	if d.original.Kask != nil && d.original.Kask.Propagate != nil && len(d.original.Kask.Propagate.Tmpl) > 0 {
