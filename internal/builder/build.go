@@ -201,7 +201,7 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 	}
 
 	for _, page := range d.original.Pages {
-		p, _ := d.paths.file(page, d.original.IsToStrip()) // TODO: reuse calculated paths for later use in [builder.Build]
+		p := d.paths.file(page, d.original.IsToStrip()) // TODO: reuse calculated paths for later use in [builder.Build]
 		title, err := pageTitle(b.args.Src, p)
 		if err != nil {
 			return nil, fmt.Errorf("decide on title: %w", err)
@@ -248,7 +248,7 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 func (b *builder) renderMarkdown(d *dir2) error {
 	for _, page := range d.original.Pages {
 		if filepath.Ext(page) == ".md" {
-			p, _ := d.paths.file(page, d.original.IsToStrip())
+			p := d.paths.file(page, d.original.IsToStrip())
 			html, err := markdown.ToHtml(b.args.Src, p.src, b.rw)
 			if err != nil {
 				return fmt.Errorf("rendering %s: %w", page, err)
@@ -346,7 +346,7 @@ func (b *builder) execDir(d *dir2) error {
 		return fmt.Errorf("creating directory: %w", err)
 	}
 	for _, page := range d.original.Pages {
-		p, _ := d.paths.file(page, d.original.IsToStrip())
+		p := d.paths.file(page, d.original.IsToStrip())
 		if err := b.execPage(d, p); err != nil {
 			return fmt.Errorf("%q: %w", page, err)
 		}

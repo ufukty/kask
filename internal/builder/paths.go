@@ -1,13 +1,10 @@
 package builder
 
 import (
-	"fmt"
 	"net/url"
 	"path/filepath"
 	"strings"
 )
-
-var ErrUnexpectedFileExtension = fmt.Errorf("unexpected file extension, expected either .md or .tmpl file.")
 
 func withStripping(path string, toStrip bool) string {
 	if toStrip {
@@ -96,18 +93,10 @@ func (p paths) subdir(basename string, strip bool) paths {
 	}
 }
 
-func isExtAllowed(basename string) bool {
-	ext := filepath.Ext(basename)
-	return ext == ".md" || ext == ".tmpl"
-}
-
-func (p paths) file(basename string, strip bool) (paths, error) {
-	if !isExtAllowed(basename) {
-		return paths{}, ErrUnexpectedFileExtension
-	}
+func (p paths) file(basename string, strip bool) paths {
 	return paths{
 		src: filepath.Join(p.src, basename),
 		dst: fileDst(p.dst, basename, strip),
 		url: fileUri(p.url, basename, strip),
-	}, nil
+	}
 }
