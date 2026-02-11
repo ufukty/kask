@@ -4,8 +4,8 @@ import (
 	"io"
 
 	"github.com/gomarkdown/markdown/ast"
-	"github.com/ufukty/kask/internal/builder/markdown/hook/codefence"
-	"github.com/ufukty/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/internal/builder/markdown/hook/codefence"
+	"go.ufukty.com/kask/internal/builder/rewriter"
 )
 
 type visitor struct {

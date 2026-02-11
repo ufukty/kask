@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ufukty/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/internal/builder/rewriter"
 )
 
 func Test_FromFile(t *testing.T) {

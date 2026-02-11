@@ -3,7 +3,7 @@ package builder
 import (
 	"fmt"
 
-	"github.com/ufukty/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/internal/builder/rewriter"
 )
 
 func Example_builder_rewriteLinksInHtmlPage() {

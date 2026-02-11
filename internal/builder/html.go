@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/ufukty/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/internal/builder/rewriter"
 )
 
 var anchorHref = regexp.MustCompile(`<a[^>]*href="([^"]*)"[^>]*>[^<]*</a>`)
