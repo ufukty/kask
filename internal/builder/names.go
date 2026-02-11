@@ -78,8 +78,6 @@ func pageTitleFromFilename(base string) string {
 	return titler.String(base)
 }
 
-// 1. title from content, if available
-// 2. title from file name, if visitable
 func pageTitle(src string, p paths) (string, error) {
 	title, err := theExtractor.FromFile(filepath.Join(src, p.src))
 	if err != nil {
