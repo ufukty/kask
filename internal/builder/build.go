@@ -201,26 +201,25 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 	}
 
 	for _, page := range d.original.Pages {
-		title, err := decideOnPageTitle(filepath.Join(b.args.Src, page), filepath.Ext(page), d.original.IsToStrip())
+		p, _ := d.paths.file(page, d.original.IsToStrip()) // TODO: reuse calculated paths for later use in [builder.Build]
+		title, err := decideOnPageTitle(filepath.Join(b.args.Src, p.src), filepath.Ext(page), d.original.IsToStrip())
 		if err != nil {
 			return nil, fmt.Errorf("decide on title: %w", err)
 		}
-		base := filepath.Base(page)
-		path, _ := d.paths.file(base, d.original.IsToStrip()) // TODO: reuse calculated paths for later use in [builder.Build]
-		if base == "README.md" || base == "index.tmpl" {
-			n.Href = path.url
+		if page == "README.md" || page == "index.tmpl" {
+			n.Href = p.url
 			n.Title = title
-			b.rw.Bank(path.src, path.url)
-			b.rw.Bank(filepath.Dir(path.src), path.url)
+			b.rw.Bank(p.src, p.url)
+			b.rw.Bank(filepath.Dir(p.src), p.url)
 		} else {
 			c := &kask.Node{
 				Title:    title,
-				Href:     path.url,
+				Href:     p.url,
 				Parent:   n,
 				Children: []*kask.Node{},
 			}
-			b.rw.Bank(path.src, path.url)
-			b.leaves[pageref{d, page}] = c
+			b.rw.Bank(p.src, p.url)
+			b.leaves[pageref{d, p.src}] = c
 			n.Children = append(n.Children, c)
 		}
 	}
@@ -247,12 +246,15 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 }
 
 func (b *builder) renderMarkdown(d *dir2) error {
-	for _, md := range d.original.Pages {
-		page, err := markdown.ToHtml(b.args.Src, md, b.rw)
-		if err != nil {
-			return fmt.Errorf("rendering %s: %w", md, err)
+	for _, page := range d.original.Pages {
+		if filepath.Ext(page) == ".md" {
+			p, _ := d.paths.file(page, d.original.IsToStrip())
+			html, err := markdown.ToHtml(b.args.Src, p.src, b.rw)
+			if err != nil {
+				return fmt.Errorf("rendering %s: %w", page, err)
+			}
+			b.markdown[p.src] = html
 		}
-		b.markdown[md] = page
 	}
 
 	for _, subdir := range d.subdirs {
@@ -319,22 +321,21 @@ func leafpath(src string) string {
 	return src
 }
 
-func (b *builder) execPage(d *dir2, page string) error {
+func (b *builder) execPage(d *dir2, p paths) error {
 	c := &kask.TemplateContent{
 		Stylesheets: d.stylesheets,
-		Node:        b.leaves[pageref{d, leafpath(page)}],
+		Node:        b.leaves[pageref{d, leafpath(p.src)}],
 		Root:        b.root3,
-		Markdown:    b.markdown[page], // otherwise `nil`
+		Markdown:    b.markdown[p.src], // otherwise `nil`
 		Time:        b.start,
 	}
-	p, _ := d.paths.file(filepath.Base(page), d.original.IsToStrip()) // TODO: reuse previously calculated (see previous TODOs)
 	t, err := b.prepareTemplates(d, p)
 	if err != nil {
 		return fmt.Errorf("prepare: %w", err)
 	}
 	err = b.executeTemplates(p, t, c)
 	if err != nil {
-		return fmt.Errorf("template %q: %w", filepath.Base(p.src), err)
+		return fmt.Errorf("template: %w", err)
 	}
 	return nil
 }
@@ -345,8 +346,9 @@ func (b *builder) execDir(d *dir2) error {
 		return fmt.Errorf("creating directory: %w", err)
 	}
 	for _, page := range d.original.Pages {
-		if err := b.execPage(d, page); err != nil {
-			return fmt.Errorf("executing %q: %w", filepath.Base(page), err)
+		p, _ := d.paths.file(page, d.original.IsToStrip())
+		if err := b.execPage(d, p); err != nil {
+			return fmt.Errorf("%q: %w", page, err)
 		}
 	}
 	for _, subdir := range d.subdirs {

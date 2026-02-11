@@ -38,7 +38,7 @@ func inspect(root, path string) (*Dir, error) {
 		name, isDir := entry.Name(), entry.IsDir()
 		switch {
 		case !isDir && (strings.HasSuffix(name, ".tmpl") || strings.HasSuffix(name, ".md")):
-			d.Pages = append(d.Pages, filepath.Join(path, name))
+			d.Pages = append(d.Pages, name)
 		case !isDir && name == ".kask.yml":
 			d.Meta, err = readMeta(filepath.Join(root, path, name))
 			if err != nil {
