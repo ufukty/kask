@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/ufukty/kask/pkg/kask"
 )
 
 func check(tmp, path string) bool {
@@ -15,14 +17,14 @@ func check(tmp, path string) bool {
 	return err == nil
 }
 
-func dfs(n []*Node, f func([]*Node)) {
+func dfs(n []*kask.Node, f func([]*kask.Node)) {
 	f(n)
 	for _, c := range n[len(n)-1].Children {
 		dfs(append(slices.Clone(n), c), f)
 	}
 }
 
-func each(ns []*Node, f func(*Node) string) []string {
+func each(ns []*kask.Node, f func(*kask.Node) string) []string {
 	ss := make([]string, 0, len(ns))
 	for _, n := range ns {
 		ss = append(ss, f(n))
@@ -120,7 +122,7 @@ func TestBuilder_propagated(t *testing.T) {
 
 func ExampleBuilder_strippedOrderingHrefs() {
 	b, _ := buildTestSite("testdata/stripped-ordering")
-	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Href) })
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Href) })
 	// Output:
 	// /
 	// /career.html
@@ -132,7 +134,7 @@ func ExampleBuilder_strippedOrderingHrefs() {
 
 func ExampleBuilder_strippedOrderingTitles() {
 	b, _ := buildTestSite("testdata/stripped-ordering")
-	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Title) })
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// Website Title
 	// Career Title
@@ -144,8 +146,8 @@ func ExampleBuilder_strippedOrderingTitles() {
 
 func ExampleBuilder_strippedOrderingBreadcrumbs() {
 	b, _ := buildTestSite("testdata/stripped-ordering")
-	dfs([]*Node{b.root3}, func(n []*Node) {
-		bs := each(n, func(n *Node) string { return n.Title })
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) {
+		bs := each(n, func(n *kask.Node) string { return n.Title })
 		fmt.Println(strings.Join(bs, " / "))
 	})
 	// Output:
@@ -159,7 +161,7 @@ func ExampleBuilder_strippedOrderingBreadcrumbs() {
 
 func ExampleBuilder_preservedOrderingHrefs() {
 	b, _ := buildTestSite("testdata/preserved-ordering")
-	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Href) })
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Href) })
 	// Output:
 	// /
 	// /1.career.html
@@ -171,7 +173,7 @@ func ExampleBuilder_preservedOrderingHrefs() {
 
 func ExampleBuilder_preservedOrderingTitles() {
 	b, _ := buildTestSite("testdata/preserved-ordering")
-	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Title) })
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// Website Title
 	// Career Title
@@ -183,8 +185,8 @@ func ExampleBuilder_preservedOrderingTitles() {
 
 func ExampleBuilder_preservedOrderingBreadcrumbs() {
 	b, _ := buildTestSite("testdata/preserved-ordering")
-	dfs([]*Node{b.root3}, func(n []*Node) {
-		bs := each(n, func(n *Node) string { return n.Title })
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) {
+		bs := each(n, func(n *kask.Node) string { return n.Title })
 		fmt.Println(strings.Join(bs, " / "))
 	})
 	// Output:
@@ -242,7 +244,7 @@ func TestBuilder_cssSplitting(t *testing.T) {
 
 func ExampleBuilder_titles() {
 	b, _ := buildTestSite("testdata/titles")
-	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Title) })
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// .
 	// An Anonymous Web Page
@@ -253,7 +255,7 @@ func ExampleBuilder_titles() {
 
 func ExampleBuilder_metaTitle() {
 	b, _ := buildTestSite("testdata/meta-title")
-	dfs([]*Node{b.root3}, func(n []*Node) { fmt.Println(n[len(n)-1].Title) })
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// My Beautiful Site
 	// Page
