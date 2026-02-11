@@ -23,17 +23,12 @@ type Args struct {
 	Verbose  bool
 }
 
-type pageref struct {
-	dir  *dir2
-	page string
-}
-
 type builder struct {
 	args     Args
 	rw       *rewriter.Rewriter
-	assets   []string                  // src paths
-	markdown map[string]*kask.Markdown // src path -> content
-	leaves   map[pageref]*kask.Node    // to access nodes built for sitemap beforehand
+	assets   []string                  // src
+	markdown map[string]*kask.Markdown // src -> content
+	leaves   map[string]*kask.Node     // dst -> node
 	root3    *kask.Node                // for testing
 	start    time.Time
 }
@@ -123,7 +118,7 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 				Children: []*kask.Node{},
 			}
 			b.rw.Bank(p.src, p.url)
-			b.leaves[pageref{d, p.src}] = c
+			b.leaves[p.url] = c
 			n.Children = append(n.Children, c)
 		}
 	}
@@ -136,7 +131,7 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 		}
 	}
 
-	b.leaves[pageref{d, ""}] = n
+	b.leaves[d.paths.url] = n
 
 	for _, subdir := range d.subdirs {
 		s, err := b.toNode(subdir, n)
@@ -209,7 +204,7 @@ func newBuilder(args Args) *builder {
 		rw:       rewriter.New(),
 		assets:   []string{},
 		markdown: map[string]*kask.Markdown{},
-		leaves:   map[pageref]*kask.Node{},
+		leaves:   map[string]*kask.Node{},
 		start:    time.Now(),
 	}
 }

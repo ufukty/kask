@@ -98,18 +98,10 @@ func (b *builder) executeTemplates(p paths, t *template.Template, c *kask.Templa
 	return nil
 }
 
-// TODO: also use inside [builder.toNode]
-func leafpath(src string) string {
-	if base := filepath.Base(src); base == "index.tmpl" || base == "README.md" {
-		return ""
-	}
-	return src
-}
-
 func (b *builder) execPage(d *dir2, p paths) error {
 	c := &kask.TemplateContent{
 		Stylesheets: d.stylesheets,
-		Node:        b.leaves[pageref{d, leafpath(p.src)}],
+		Node:        b.leaves[p.url],
 		Root:        b.root3,
 		Markdown:    b.markdown[p.src], // otherwise `nil`
 		Time:        b.start,
