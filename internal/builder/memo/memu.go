@@ -46,3 +46,9 @@ func (a *Accountant) PeakAlloc() (*measurement, error) {
 	}
 	return m, nil
 }
+
+func NewAccountant() *Accountant {
+	return &Accountant{
+		measurements: []*measurement{},
+	}
+}
