@@ -25,6 +25,9 @@ func newTemplateSet() *template.Template {
 }
 
 func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) error {
+	b.acc.Check("builder.propagateTemplates start")
+	defer b.acc.Check("builder.propagateTemplates end")
+
 	var err error
 	if d.original.Kask != nil && d.original.Kask.Propagate != nil && len(d.original.Kask.Propagate.Tmpl) > 0 {
 		toPropagate, err = toPropagate.ParseFiles(d.original.Kask.Propagate.Tmpl...)
@@ -118,6 +121,9 @@ func (b *builder) execPage(d *dir2, p paths) error {
 }
 
 func (b *builder) execDir(d *dir2) error {
+	b.acc.Check("builder.execPage start")
+	defer b.acc.Check("builder.execPage end")
+
 	err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.dst), 0o755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)

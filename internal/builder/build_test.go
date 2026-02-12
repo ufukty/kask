@@ -308,3 +308,8 @@ func ExampleBuilder_mdLinkReplacements() {
 	// <a href="/a/b/#Title">subdir redundancies</a>
 	// <a href="/a/tmpl.html#Title">sibling</a>
 }
+
+func TestBuilder_docsSite(t *testing.T) {
+	b, _ := buildTestSite("../../docs")
+	b.acc.Print()
+}

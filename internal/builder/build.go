@@ -10,6 +10,7 @@ import (
 	"go.ufukty.com/kask/cmd/kask/commands/version"
 	"go.ufukty.com/kask/internal/builder/directory"
 	"go.ufukty.com/kask/internal/builder/markdown"
+	"go.ufukty.com/kask/internal/builder/memo"
 	"go.ufukty.com/kask/internal/builder/rewriter"
 	"go.ufukty.com/kask/pkg/kask"
 )
@@ -25,6 +26,7 @@ type Args struct {
 
 type builder struct {
 	args     Args
+	acc      *memo.Accountant
 	rw       *rewriter.Rewriter
 	assets   []string                  // src
 	markdown map[string]*kask.Markdown // src -> content
@@ -39,6 +41,9 @@ func has[K comparable, V any](m map[K]V, k K) bool {
 }
 
 func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
+	b.acc.Check("builder.checkCompetingEntries start")
+	defer b.acc.Check("builder.checkCompetingEntries end")
+
 	children := map[string]int{}
 	for _, subdir := range dir.Subdirs {
 		children[subdir.Name] = 1
@@ -76,6 +81,9 @@ type dir2 struct {
 }
 
 func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
+	b.acc.Check("builder.toDir2 start")
+	defer b.acc.Check("builder.toDir2 end")
+
 	paths := parent.subdir(d.Name, p.IsToStrip())
 	d2 := &dir2{
 		original:    d,
@@ -92,6 +100,9 @@ func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
 
 // TODO: domain prefix
 func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
+	b.acc.Check("builder.toNode start")
+	defer b.acc.Check("builder.toNode end")
+
 	n := &kask.Node{
 		Title:    "",
 		Href:     "",
@@ -145,6 +156,9 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 }
 
 func (b *builder) renderMarkdown(d *dir2) error {
+	b.acc.Check("builder.renderMarkdown start")
+	defer b.acc.Check("builder.renderMarkdown end")
+
 	for _, page := range d.original.Pages {
 		if filepath.Ext(page) == ".md" {
 			p := d.paths.file(page, d.original.IsToStrip())
@@ -167,6 +181,9 @@ func (b *builder) renderMarkdown(d *dir2) error {
 // involving previous's complete results like templates can access to the
 // sitemap which contains headers extracted from markdown files
 func (b *builder) Build() error {
+	b.acc.Check("builder.Build start")
+	defer b.acc.Check("builder.Build end")
+
 	root, err := directory.Inspect(b.args.Src)
 	if err != nil {
 		return fmt.Errorf("inspecting source directory: %w", err)
@@ -201,6 +218,7 @@ func (b *builder) Build() error {
 func newBuilder(args Args) *builder {
 	return &builder{
 		args:     args,
+		acc:      memo.NewAccountant(),
 		rw:       rewriter.New(),
 		assets:   []string{},
 		markdown: map[string]*kask.Markdown{},
