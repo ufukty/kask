@@ -47,6 +47,12 @@ func (a *Accountant) PeakAlloc() (*measurement, error) {
 	return m, nil
 }
 
+func (a *Accountant) Print() {
+	for _, m := range a.measurements {
+		fmt.Printf("Alloc: %d KB, Sys: %d KB (%s)\n", m.alloc/1024, m.sys/1024, m.checkpoint)
+	}
+}
+
 func NewAccountant() *Accountant {
 	return &Accountant{
 		measurements: []*measurement{},
