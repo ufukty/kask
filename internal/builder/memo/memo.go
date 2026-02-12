@@ -12,9 +12,9 @@ type measurement struct {
 }
 
 func stats() *runtime.MemStats {
-	var m *runtime.MemStats
-	runtime.ReadMemStats(m)
-	return m
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	return &m
 }
 
 func measure(checkpoint string) *measurement {
