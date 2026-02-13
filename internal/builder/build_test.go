@@ -6,9 +6,12 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
+	"go.ufukty.com/kask/internal/builder/copy"
+	"go.ufukty.com/kask/internal/scales"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -309,7 +312,54 @@ func ExampleBuilder_mdLinkReplacements() {
 	// <a href="/a/tmpl.html#Title">sibling</a>
 }
 
-func TestBuilder_docsSite(t *testing.T) {
-	b, _ := buildTestSite("../../docs")
-	b.acc.Print()
+func docSiteOfSize(dst, mid, src string, size int) error {
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return fmt.Errorf("os.ReadDir: %w", err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
+			for i := range size {
+				dst2 := filepath.Join(dst, entry.Name()+strconv.Itoa(i))
+				src2 := filepath.Join(src, entry.Name())
+				err := copy.Dir(dst2, src2)
+				if err != nil {
+					return fmt.Errorf("duplication %d: copy.Dir(%q, %q): %w", i, dst2, src2, err)
+				}
+			}
+		} else if entry.IsDir() {
+			dst2 := filepath.Join(dst, entry.Name())
+			src2 := filepath.Join(src, entry.Name())
+			err := copy.Dir(dst2, src2)
+			if err != nil {
+				return fmt.Errorf("copy.Dir(%q, %q): %w", dst2, src2, err)
+			}
+		} else {
+			dst2 := filepath.Join(dst, entry.Name())
+			src2 := filepath.Join(src, entry.Name())
+			err := copy.File(dst2, src2)
+			if err != nil {
+				return fmt.Errorf("copy.File(%q, %q): %w", dst2, src2, err)
+			}
+		}
+	}
+	err = Build(Args{Src: mid, Dst: dst, Domain: "/"})
+	if err != nil {
+		return fmt.Errorf("Build: %w", err)
+	}
+	return nil
+}
+
+// TestBuilder_docsSite performs a series of builds with the docs site which
+// its pages are de-duplicated 2*i times each run to check if the memory
+// consumption scales sublinear.
+func TestBuilder_docsSiteAllocationScaling(t *testing.T) {
+	f, err := scales.Allocations(32, func(size int) error {
+		return docSiteOfSize(t.TempDir(), t.TempDir(), "../../docs", size)
+	})
+	if err != nil {
+		t.Errorf("act, unexpected error: %v", err)
+	} else if f == scales.Superlinear {
+		t.Fatal("assert memory allocation can't scale superlinear")
+	}
 }
