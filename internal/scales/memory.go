@@ -1,0 +1,85 @@
+package scales
+
+import (
+	"fmt"
+	"math"
+	"runtime"
+)
+
+type Factor string
+
+const (
+	Superlinear Factor = "superlinear"
+	Linear      Factor = "linear"
+	Sublinear   Factor = "sublinear"
+)
+
+// This just assumes that the average data point elevation over the line
+// which connects the first and last point would be positive for values
+// increase sublinearly. Expected to fail at small sets.
+//
+//	^
+//	|                           x
+//	|                 x
+//	|           x
+//	|       x
+//	|    x
+//	|  x
+//	| x
+//	+----------------------------->
+func factorize(ys, xs []float64) (Factor, error) {
+	if len(ys) != len(xs) {
+		return "", fmt.Errorf("expected same number of x and y values")
+	}
+	dy, dx := ys[len(ys)-1]-ys[0], xs[len(xs)-1]-xs[0]
+	if dx == 0 {
+		return "", fmt.Errorf("constant scaling (impossible, check your code)")
+	}
+	m := dy / dx
+	t := 0.0
+	for i := 1; i+1 < len(ys); i++ {
+		dy, dx := ys[i]-ys[0], xs[i]-xs[0]
+		edy := dx * m // expected dy
+		t += dy - edy
+	}
+	if t == 0 {
+		return Linear, nil
+	} else if t > 0 {
+		return Sublinear, nil
+	} else {
+		return Superlinear, nil
+	}
+}
+
+func alloc() uint64 {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	return m.Alloc
+}
+
+func Allocations(max int, f func(size int) error) (Factor, error) {
+	if e := math.Log2(float64(max)); (e - float64(int(e))) > 0.0 {
+		return "", fmt.Errorf("max size should be a power of 2")
+	}
+	inputSizes := []float64{}
+	allocs := []float64{}
+	for i := 1; i <= max; i *= 2 {
+		runtime.GC()
+		before := alloc()
+		if err := f(i); err != nil {
+			return "", fmt.Errorf("f(%d): %w", i, err)
+		}
+		delta := alloc() - before
+		inputSizes = append(inputSizes, float64(i))
+		allocs = append(allocs, float64(delta))
+		fmt.Printf("Input size: [log2(%3dx) = %.2f], Total Alloc: [log2(%3d MB) = %.2f]\n",
+			i, math.Log2(float64(i)),
+			delta/1024/1024, math.Log2(float64(delta)),
+		)
+	}
+	sl, err := factorize(allocs, inputSizes)
+	if err != nil {
+		return "", fmt.Errorf("factorizing: %w", err)
+	}
+	return sl, nil
+}
