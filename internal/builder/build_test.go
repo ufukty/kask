@@ -2,6 +2,7 @@ package builder
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -343,10 +344,6 @@ func docSiteOfSize(dst, mid, src string, size int) error {
 			}
 		}
 	}
-	err = Build(Args{Src: mid, Dst: dst, Domain: "/"})
-	if err != nil {
-		return fmt.Errorf("Build: %w", err)
-	}
 	return nil
 }
 
@@ -354,8 +351,16 @@ func docSiteOfSize(dst, mid, src string, size int) error {
 // its pages are de-duplicated 2*i times each run to check if the memory
 // consumption scales sublinear.
 func TestBuilder_docsSiteAllocationScaling(t *testing.T) {
+	tmp := []string{}
+	for range 21 {
+		tmp = append(tmp, t.TempDir())
+	}
 	f, err := scales.Allocations(1024, func(size int) error {
-		return docSiteOfSize(t.TempDir(), t.TempDir(), "../../docs", size)
+		i := int(math.Log2(float64(size)))
+		return docSiteOfSize(tmp[i], tmp[i+10], "../../docs", i)
+	}, func(size int) error {
+		i := int(math.Log2(float64(size)))
+		return Build(Args{Src: tmp[i], Dst: tmp[i+10], Domain: "/"})
 	})
 	if err != nil {
 		t.Errorf("act, unexpected error: %v", err)

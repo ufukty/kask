@@ -57,16 +57,19 @@ func totalAllocs() uint64 {
 	return m.TotalAlloc
 }
 
-func Allocations(maxsize int, f func(size int) error) (Factor, error) {
+func Allocations(maxsize int, prep, perform func(size int) error) (Factor, error) {
 	if e := math.Log2(float64(maxsize)); (e - float64(int(e))) > 0.0 {
 		return "", fmt.Errorf("max size should be a power of 2")
 	}
 	inputSizes := []float64{}
 	allocs := []float64{}
 	for i := 1; i <= maxsize; i *= 2 {
+		if err := prep(i); err != nil {
+			return "", fmt.Errorf("prep(%d): %w", i, err)
+		}
 		before := totalAllocs()
-		if err := f(i); err != nil {
-			return "", fmt.Errorf("f(%d): %w", i, err)
+		if err := perform(i); err != nil {
+			return "", fmt.Errorf("prep(%d): %w", i, err)
 		}
 		delta := totalAllocs() - before
 		inputSizes = append(inputSizes, float64(i))
