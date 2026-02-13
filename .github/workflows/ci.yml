@@ -23,6 +23,16 @@ jobs:
       - run: go mod verify
       - { run: du -sh $(find docs -type f) | sort -h, shell: bash }
       - { run: du -sh docs, shell: bash }
+      - run: go test -cpuprofile cpu.pprof -memprofile mem.pprof -race -timeout 300s -v -count=1 -run ^TestBuilder_docsSiteAllocationScaling$ go.ufukty.com/kask/internal/builder
+        shell: bash
+      - uses: actions/upload-artifact@v6
+        with:
+          name: cpu.pprof
+          path: cpu.proof
+      - uses: actions/upload-artifact@v6
+        with:
+          name: mem.pprof
+          path: mem.proof
       - run: go mod tidy; git diff --exit-code go.mod go.sum
       - uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9
       - run: go test -race -v -timeout 600s ./...
