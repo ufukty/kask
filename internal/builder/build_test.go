@@ -319,6 +319,7 @@ func docSiteOfSize(dst, mid, src string, size int) error {
 		return fmt.Errorf("os.ReadDir: %w", err)
 	}
 	for _, entry := range entries {
+		fmt.Println(entry.Name(), entry.IsDir())
 		if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
 			for i := range size {
 				dst2 := filepath.Join(dst, entry.Name()+strconv.Itoa(i))
