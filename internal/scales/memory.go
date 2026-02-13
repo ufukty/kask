@@ -69,7 +69,7 @@ func Allocations(maxsize int, prep, perform func(size int) error) (Factor, error
 		}
 		before := totalAllocs()
 		if err := perform(i); err != nil {
-			return "", fmt.Errorf("prep(%d): %w", i, err)
+			return "", fmt.Errorf("perform(%d): %w", i, err)
 		}
 		delta := totalAllocs() - before
 		inputSizes = append(inputSizes, float64(i))
