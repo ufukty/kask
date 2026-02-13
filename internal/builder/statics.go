@@ -33,9 +33,6 @@ func (b *builder) write(dst, content string) error {
 }
 
 func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) error {
-	b.acc.Check("builder.bundleAndPropagateStylesheets start")
-	defer b.acc.Check("builder.bundleAndPropagateStylesheets end")
-
 	d.stylesheets = slices.Clone(toPropagate)
 
 	if d.original.Kask != nil && d.original.Kask.Propagate != nil && len(d.original.Kask.Propagate.Css) > 0 {
@@ -73,9 +70,6 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 }
 
 func (b *builder) copyAssetsFolders(d *dir2) error {
-	b.acc.Check("builder.copyAssetsFolders start")
-	defer b.acc.Check("builder.copyAssetsFolders end")
-
 	if d.original.Assets {
 		err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.dst), 0o755)
 		if err != nil {
