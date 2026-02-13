@@ -313,13 +313,11 @@ func ExampleBuilder_mdLinkReplacements() {
 }
 
 func docSiteOfSize(dst, mid, src string, size int) error {
-	fmt.Println(os.Getenv("PWD"), dst, mid, src)
 	entries, err := os.ReadDir(src)
 	if err != nil {
 		return fmt.Errorf("os.ReadDir: %w", err)
 	}
 	for _, entry := range entries {
-		fmt.Println(entry.Name(), entry.IsDir())
 		if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
 			for i := range size {
 				dst2 := filepath.Join(dst, entry.Name()+strconv.Itoa(i))
@@ -356,7 +354,7 @@ func docSiteOfSize(dst, mid, src string, size int) error {
 // its pages are de-duplicated 2*i times each run to check if the memory
 // consumption scales sublinear.
 func TestBuilder_docsSiteAllocationScaling(t *testing.T) {
-	f, err := scales.Allocations(32, func(size int) error {
+	f, err := scales.Allocations(1024, func(size int) error {
 		return docSiteOfSize(t.TempDir(), t.TempDir(), "../../docs", size)
 	})
 	if err != nil {
