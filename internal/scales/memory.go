@@ -51,30 +51,30 @@ func factorize(ys, xs []float64) (Factor, error) {
 	}
 }
 
-func alloc() uint64 {
+func totalAllocs() uint64 {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	return m.Alloc
+	return m.TotalAlloc
 }
 
-func Allocations(max int, f func(size int) error) (Factor, error) {
-	if e := math.Log2(float64(max)); (e - float64(int(e))) > 0.0 {
+func Allocations(maxsize int, f func(size int) error) (Factor, error) {
+	if e := math.Log2(float64(maxsize)); (e - float64(int(e))) > 0.0 {
 		return "", fmt.Errorf("max size should be a power of 2")
 	}
 	inputSizes := []float64{}
 	allocs := []float64{}
-	for i := 1; i <= max; i *= 2 {
-		runtime.GC()
-		before := alloc()
+	for i := 1; i <= maxsize; i *= 2 {
+		before := totalAllocs()
 		if err := f(i); err != nil {
 			return "", fmt.Errorf("f(%d): %w", i, err)
 		}
-		delta := alloc() - before
+		delta := totalAllocs() - before
 		inputSizes = append(inputSizes, float64(i))
 		allocs = append(allocs, float64(delta))
+		deltaMb := delta / 1024 / 1024
 		fmt.Printf("Input size: [log2(%3dx) = %.2f], Total Alloc: [log2(%3d MB) = %.2f]\n",
 			i, math.Log2(float64(i)),
-			delta/1024/1024, math.Log2(float64(delta)),
+			deltaMb, math.Log2(max(float64(deltaMb), 1e-9)),
 		)
 	}
 	sl, err := factorize(allocs, inputSizes)
