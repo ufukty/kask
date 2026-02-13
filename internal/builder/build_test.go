@@ -313,6 +313,7 @@ func ExampleBuilder_mdLinkReplacements() {
 }
 
 func docSiteOfSize(dst, mid, src string, size int) error {
+	fmt.Println(os.Getenv("PWD"), dst, mid, src)
 	entries, err := os.ReadDir(src)
 	if err != nil {
 		return fmt.Errorf("os.ReadDir: %w", err)
