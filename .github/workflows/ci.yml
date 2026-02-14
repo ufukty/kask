@@ -28,11 +28,11 @@ jobs:
       - uses: actions/upload-artifact@v6
         with:
           name: cpu.pprof
-          path: cpu.proof
+          path: cpu.pprof
       - uses: actions/upload-artifact@v6
         with:
           name: mem.pprof
-          path: mem.proof
+          path: mem.pprof
       - run: go mod tidy; git diff --exit-code go.mod go.sum
       - uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9
       - run: go test -race -v -timeout 600s ./...
