@@ -19,8 +19,8 @@ func TestFactorize_linear(t *testing.T) {
 	f, err := factorize(ys, xs)
 	if err != nil {
 		t.Error("act, unexpected error: %w", err)
-	} else if f != Linear {
-		t.Errorf("assert, expected %s got %s", Linear, f)
+	} else if f != NonSublinear {
+		t.Errorf("assert, expected %s got %s", NonSublinear, f)
 	}
 }
 
@@ -30,7 +30,7 @@ func TestFactorize_superlinear(t *testing.T) {
 	f, err := factorize(ys, xs)
 	if err != nil {
 		t.Error("act, unexpected error: %w", err)
-	} else if f != Superlinear {
-		t.Errorf("assert, expected %s got %s", Superlinear, f)
+	} else if f != NonSublinear {
+		t.Errorf("assert, expected %s got %s", NonSublinear, f)
 	}
 }

@@ -9,9 +9,8 @@ import (
 type Factor string
 
 const (
-	Superlinear Factor = "superlinear"
-	Linear      Factor = "linear"
-	Sublinear   Factor = "sublinear"
+	NonSublinear Factor = "non-sublinear" // superlinear or linear
+	Sublinear    Factor = "sublinear"
 )
 
 // This just assumes that the average data point elevation over the line
@@ -42,12 +41,10 @@ func factorize(ys, xs []float64) (Factor, error) {
 		edy := dx * m // expected dy
 		t += dy - edy
 	}
-	if t == 0 {
-		return Linear, nil
-	} else if t > 0 {
+	if t > 1e-5 {
 		return Sublinear, nil
 	} else {
-		return Superlinear, nil
+		return NonSublinear, nil
 	}
 }
 
