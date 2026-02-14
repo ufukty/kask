@@ -2,7 +2,6 @@ package scales
 
 import (
 	"fmt"
-	"math"
 	"runtime"
 )
 
@@ -54,32 +53,32 @@ func totalAllocs() uint64 {
 	return m.TotalAlloc
 }
 
-func Allocations(maxsize int, prep, perform func(size int) error) (Factor, error) {
-	if e := math.Log2(float64(maxsize)); (e - float64(int(e))) > 0.0 {
-		return "", fmt.Errorf("max size should be a power of 2")
+type allocations struct {
+	Sizes, Allocs []float64
+}
+
+func Allocations(steps int, prep func() (float64, error), perform func() error) (Factor, allocations, error) {
+	a := allocations{
+		Sizes:  []float64{},
+		Allocs: []float64{},
 	}
-	inputSizes := []float64{}
-	allocs := []float64{}
-	for i := 1; i <= maxsize; i *= 2 {
-		if err := prep(i); err != nil {
-			return "", fmt.Errorf("prep(%d): %w", i, err)
+	for i := range steps {
+		size, err := prep()
+		if err != nil {
+			return "", allocations{}, fmt.Errorf("prep(%d): %w", i, err)
 		}
 		before := totalAllocs()
-		if err := perform(i); err != nil {
-			return "", fmt.Errorf("perform(%d): %w", i, err)
+		if err := perform(); err != nil {
+			return "", allocations{}, fmt.Errorf("perform(%d): %w", i, err)
 		}
-		delta := totalAllocs() - before
-		inputSizes = append(inputSizes, float64(i))
-		allocs = append(allocs, float64(delta))
-		deltaMb := delta / 1024 / 1024
-		fmt.Printf("Input size: [log2(%3dx) = %.2f], Total Alloc: [log2(%3d MB) = %.2f]\n",
-			i, math.Log2(float64(i)),
-			deltaMb, math.Log2(max(float64(deltaMb), 1e-9)),
-		)
+		delta := float64(totalAllocs() - before)
+		a.Sizes = append(a.Sizes, size)
+		a.Allocs = append(a.Allocs, delta)
+		fmt.Printf("Input / Total alloc: %.2f MB => %.2f MB\n", size/1024/1024, delta/1024/1024)
 	}
-	sl, err := factorize(allocs, inputSizes)
+	sl, err := factorize(a.Allocs, a.Sizes)
 	if err != nil {
-		return "", fmt.Errorf("factorizing: %w", err)
+		return "", allocations{}, fmt.Errorf("factorizing: %w", err)
 	}
-	return sl, nil
+	return sl, a, nil
 }
