@@ -40,7 +40,7 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 		if err != nil {
 			return fmt.Errorf("bundling propagated css file: %w", err)
 		}
-		dst := "/" + filepath.Join(d.paths.dst, "styles.propagate.css")
+		dst := "/" + filepath.Join(d.paths.Dst, "styles.propagate.css")
 		if err := b.write(filepath.Join(b.args.Dst, dst), css); err != nil {
 			return fmt.Errorf("writing propagated css file: %w", err)
 		}
@@ -53,7 +53,7 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 		if err != nil {
 			return fmt.Errorf("bundling at-level css file: %w", err)
 		}
-		dst := "/" + filepath.Join(d.paths.dst, "styles.css")
+		dst := "/" + filepath.Join(d.paths.Dst, "styles.css")
 		if err := b.write(filepath.Join(b.args.Dst, dst), css); err != nil {
 			return fmt.Errorf("writing at-level css file: %w", err)
 		}
@@ -62,7 +62,7 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 
 	for _, subdir := range d.subdirs {
 		if err := b.bundleAndPropagateStylesheets(subdir, slices.Clone(toPropagate)); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.Src), err)
 		}
 	}
 
@@ -71,12 +71,12 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 
 func (b *builder) copyAssetsFolders(d *dir2) error {
 	if d.original.Assets {
-		err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.dst), 0o755)
+		err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.Dst), 0o755)
 		if err != nil {
 			return fmt.Errorf("creating directory: %w", err)
 		}
-		dst := filepath.Join(b.args.Dst, d.paths.dst, ".assets")
-		src := filepath.Join(b.args.Src, d.paths.src, ".assets")
+		dst := filepath.Join(b.args.Dst, d.paths.Dst, ".assets")
+		src := filepath.Join(b.args.Src, d.paths.Src, ".assets")
 		if b.args.Verbose {
 			fmt.Println("copying", dst)
 		}
@@ -87,7 +87,7 @@ func (b *builder) copyAssetsFolders(d *dir2) error {
 	}
 	for _, subdir := range d.subdirs {
 		if err := b.copyAssetsFolders(subdir); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.Src), err)
 		}
 	}
 	return nil

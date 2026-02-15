@@ -1,4 +1,4 @@
-package builder
+package paths
 
 import (
 	"net/url"
@@ -86,24 +86,24 @@ func fileUri(parent, child string, strip bool) string {
 	}
 }
 
-type paths struct {
-	src string
-	dst string // stripped ordering
-	url string // path encoded
+type Paths struct {
+	Src string
+	Dst string // stripped ordering
+	Url string // path encoded
 }
 
-func (p paths) subdir(basename string, strip bool) paths {
-	return paths{
-		src: filepath.Join(p.src, basename),
-		dst: dirDst(p.dst, basename, strip),
-		url: dirUri(p.url, basename, strip),
+func (p Paths) Subdir(basename string, strip bool) Paths {
+	return Paths{
+		Src: filepath.Join(p.Src, basename),
+		Dst: dirDst(p.Dst, basename, strip),
+		Url: dirUri(p.Url, basename, strip),
 	}
 }
 
-func (p paths) file(basename string, strip bool) paths {
-	return paths{
-		src: filepath.Join(p.src, basename),
-		dst: fileDst(p.dst, basename, strip),
-		url: fileUri(p.url, basename, strip),
+func (p Paths) File(basename string, strip bool) Paths {
+	return Paths{
+		Src: filepath.Join(p.Src, basename),
+		Dst: fileDst(p.Dst, basename, strip),
+		Url: fileUri(p.Url, basename, strip),
 	}
 }

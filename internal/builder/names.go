@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"go.ufukty.com/kask/internal/builder/paths"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -72,13 +73,13 @@ func pageTitleFromFilename(base string) string {
 	return titler.String(base)
 }
 
-func pageTitle(src string, p paths) (string, error) {
-	title, err := theExtractor.FromFile(filepath.Join(src, p.src))
+func pageTitle(src string, p paths.Paths) (string, error) {
+	title, err := theExtractor.FromFile(filepath.Join(src, p.Src))
 	if err != nil {
 		return "", fmt.Errorf("extracting from file: %w", err)
 	}
 	if title != "" {
 		return title, nil
 	}
-	return pageTitleFromFilename(filepath.Base(p.dst)), nil
+	return pageTitleFromFilename(filepath.Base(p.Dst)), nil
 }

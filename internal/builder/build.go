@@ -10,6 +10,7 @@ import (
 	"go.ufukty.com/kask/cmd/kask/commands/version"
 	"go.ufukty.com/kask/internal/builder/directory"
 	"go.ufukty.com/kask/internal/builder/markdown"
+	"go.ufukty.com/kask/internal/builder/paths"
 	"go.ufukty.com/kask/internal/builder/rewriter"
 	"go.ufukty.com/kask/pkg/kask"
 )
@@ -69,14 +70,14 @@ func (b *builder) checkCompetingEntries(dir *directory.Dir) error {
 // used in assigning destination addresses, bundling css, and propagating tmpl files
 type dir2 struct {
 	original    *directory.Dir
-	paths       paths
+	paths       paths.Paths
 	subdirs     []*dir2
 	stylesheets []string // dst paths
 	templates   *template.Template
 }
 
-func (b *builder) toDir2(d, p *directory.Dir, parent paths) *dir2 {
-	paths := parent.subdir(d.Name, p.IsToStrip())
+func (b *builder) toDir2(d, p *directory.Dir, parent paths.Paths) *dir2 {
+	paths := parent.Subdir(d.Name, p.IsToStrip())
 	d2 := &dir2{
 		original:    d,
 		subdirs:     []*dir2{},
@@ -100,25 +101,25 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 	}
 
 	for _, page := range d.original.Pages {
-		p := d.paths.file(page, d.original.IsToStrip()) // TODO: reuse calculated paths for later use in [builder.Build]
+		p := d.paths.File(page, d.original.IsToStrip()) // TODO: reuse calculated paths for later use in [builder.Build]
 		title, err := pageTitle(b.args.Src, p)
 		if err != nil {
 			return nil, fmt.Errorf("decide on title: %w", err)
 		}
 		if page == "README.md" || page == "index.tmpl" {
-			n.Href = p.url
+			n.Href = p.Url
 			n.Title = title
-			b.rw.Bank(p.src, p.url)
-			b.rw.Bank(filepath.Dir(p.src), p.url)
+			b.rw.Bank(p.Src, p.Url)
+			b.rw.Bank(filepath.Dir(p.Src), p.Url)
 		} else {
 			c := &kask.Node{
 				Title:    title,
-				Href:     p.url,
+				Href:     p.Url,
 				Parent:   n,
 				Children: []*kask.Node{},
 			}
-			b.rw.Bank(p.src, p.url)
-			b.leaves[p.url] = c
+			b.rw.Bank(p.Src, p.Url)
+			b.leaves[p.Url] = c
 			n.Children = append(n.Children, c)
 		}
 	}
@@ -127,16 +128,16 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 		if d.original.Meta != nil {
 			n.Title = d.original.Meta.Title
 		} else {
-			n.Title = filepath.Base(d.paths.dst)
+			n.Title = filepath.Base(d.paths.Dst)
 		}
 	}
 
-	b.leaves[d.paths.url] = n
+	b.leaves[d.paths.Url] = n
 
 	for _, subdir := range d.subdirs {
 		s, err := b.toNode(subdir, n)
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", filepath.Base(d.paths.src), err)
+			return nil, fmt.Errorf("%s: %w", filepath.Base(d.paths.Src), err)
 		}
 		n.Children = append(n.Children, s)
 	}
@@ -147,17 +148,17 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 func (b *builder) renderMarkdown(d *dir2) error {
 	for _, page := range d.original.Pages {
 		if filepath.Ext(page) == ".md" {
-			p := d.paths.file(page, d.original.IsToStrip())
-			html, err := markdown.ToHtml(b.args.Src, p.src, b.rw)
+			p := d.paths.File(page, d.original.IsToStrip())
+			html, err := markdown.ToHtml(b.args.Src, p.Src, b.rw)
 			if err != nil {
 				return fmt.Errorf("rendering %s: %w", page, err)
 			}
-			b.markdown[p.src] = html
+			b.markdown[p.Src] = html
 		}
 	}
 	for _, subdir := range d.subdirs {
 		if err := b.renderMarkdown(subdir); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.Src), err)
 		}
 	}
 	return nil
@@ -174,7 +175,7 @@ func (b *builder) Build() error {
 	if err := b.checkCompetingEntries(root); err != nil {
 		return fmt.Errorf("checking competing files and folders: %w", err)
 	}
-	root2 := b.toDir2(root, nil, paths{src: "."})
+	root2 := b.toDir2(root, nil, paths.Paths{Src: "."})
 	if err := b.bundleAndPropagateStylesheets(root2, []string{}); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}

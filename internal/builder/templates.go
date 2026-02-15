@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"go.ufukty.com/kask/internal/builder/paths"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -45,7 +46,7 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 	d.templates = atLevel
 	for _, subdir := range d.subdirs {
 		if err := b.propagateTemplates(subdir, toPropagate); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.Src), err)
 		}
 	}
 	return nil
@@ -58,13 +59,13 @@ func pageTemplateName(path string) string {
 	return "page"
 }
 
-func (b *builder) prepareTemplates(d *dir2, p paths) (*template.Template, error) {
+func (b *builder) prepareTemplates(d *dir2, p paths.Paths) (*template.Template, error) {
 	t, err := d.templates.Clone()
 	if err != nil {
 		return nil, fmt.Errorf("clone: %w", err)
 	}
-	if filepath.Ext(p.src) == ".tmpl" {
-		t, err = t.ParseFiles(filepath.Join(b.args.Src, p.src))
+	if filepath.Ext(p.Src) == ".tmpl" {
+		t, err = t.ParseFiles(filepath.Join(b.args.Src, p.Src))
 		if err != nil {
 			return nil, fmt.Errorf("parsing itself: %w", err)
 		}
@@ -72,38 +73,38 @@ func (b *builder) prepareTemplates(d *dir2, p paths) (*template.Template, error)
 	return t, nil
 }
 
-func (b *builder) executeTemplates(p paths, t *template.Template, c *kask.TemplateContent) error {
+func (b *builder) executeTemplates(p paths.Paths, t *template.Template, c *kask.TemplateContent) error {
 	if b.args.Verbose {
-		fmt.Printf("printing %s\n", p.dst)
+		fmt.Printf("printing %s\n", p.Dst)
 	}
 	buf := bytes.NewBuffer([]byte{})
 	if _, err := fmt.Fprintln(buf, fileheader); err != nil {
 		return fmt.Errorf("writing the autogen notice: %w", err)
 	}
-	if err := t.ExecuteTemplate(buf, pageTemplateName(p.src), c); err != nil {
+	if err := t.ExecuteTemplate(buf, pageTemplateName(p.Src), c); err != nil {
 		return fmt.Errorf("executing: %w", err)
 	}
 	bs := buf.Bytes()
-	if filepath.Ext(p.src) == ".tmpl" {
+	if filepath.Ext(p.Src) == ".tmpl" {
 		var err error
-		bs, err = rewriteLinksInHtmlPage(b.rw, p.dst, bs)
+		bs, err = rewriteLinksInHtmlPage(b.rw, p.Dst, bs)
 		if err != nil {
 			return fmt.Errorf("rewriting the links found at the page: %w", err)
 		}
 	}
-	err := os.WriteFile(filepath.Join(b.args.Dst, p.dst), bs, 0o666)
+	err := os.WriteFile(filepath.Join(b.args.Dst, p.Dst), bs, 0o666)
 	if err != nil {
 		return fmt.Errorf("creating: %w", err)
 	}
 	return nil
 }
 
-func (b *builder) execPage(d *dir2, p paths) error {
+func (b *builder) execPage(d *dir2, p paths.Paths) error {
 	c := &kask.TemplateContent{
 		Stylesheets: d.stylesheets,
-		Node:        b.leaves[p.url],
+		Node:        b.leaves[p.Url],
 		Root:        b.root3,
-		Markdown:    b.markdown[p.src], // otherwise `nil`
+		Markdown:    b.markdown[p.Src], // otherwise `nil`
 		Time:        b.start,
 	}
 	t, err := b.prepareTemplates(d, p)
@@ -118,19 +119,19 @@ func (b *builder) execPage(d *dir2, p paths) error {
 }
 
 func (b *builder) execDir(d *dir2) error {
-	err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.dst), 0o755)
+	err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.Dst), 0o755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
 	for _, page := range d.original.Pages {
-		p := d.paths.file(page, d.original.IsToStrip())
+		p := d.paths.File(page, d.original.IsToStrip())
 		if err := b.execPage(d, p); err != nil {
 			return fmt.Errorf("%q: %w", page, err)
 		}
 	}
 	for _, subdir := range d.subdirs {
 		if err := b.execDir(subdir); err != nil {
-			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.src), err)
+			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.Src), err)
 		}
 	}
 	return nil
