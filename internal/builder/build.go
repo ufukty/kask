@@ -22,6 +22,7 @@ type Args struct {
 	Domain   string
 	Dev      bool // suffixes css bundles with unique ids to bypass browser caching
 	Verbose  bool
+	UrlMode  paths.UrlMode
 }
 
 type builder struct {
@@ -101,7 +102,7 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 	}
 
 	for _, page := range d.original.Pages {
-		p := d.paths.File(page, d.original.IsToStrip()) // TODO: reuse calculated paths for later use in [builder.Build]
+		p := d.paths.File(page, d.original.IsToStrip(), b.args.UrlMode) // TODO: reuse calculated paths for later use in [builder.Build]
 		title, err := pageTitle(b.args.Src, p)
 		if err != nil {
 			return nil, fmt.Errorf("decide on title: %w", err)
@@ -148,7 +149,7 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 func (b *builder) renderMarkdown(d *dir2) error {
 	for _, page := range d.original.Pages {
 		if filepath.Ext(page) == ".md" {
-			p := d.paths.File(page, d.original.IsToStrip())
+			p := d.paths.File(page, d.original.IsToStrip(), b.args.UrlMode)
 			html, err := markdown.ToHtml(b.args.Src, p.Src, b.rw)
 			if err != nil {
 				return fmt.Errorf("rendering %s: %w", page, err)
