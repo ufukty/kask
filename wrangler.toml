@@ -1,0 +1,22 @@
+name = "kask-ufukty-com"
+compatibility_date = "2026-02-16"
+preview_urls = true
+
+[build]
+command = "bash .workers/build.sh"
+
+[assets]
+directory = "./public"
+not_found_handling = "404-page"
+
+[[routes]]
+pattern = "kask.ufukty.com"
+zone_name = "kask.ufukty.com"
+custom_domain = true
+
+[observability]
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
