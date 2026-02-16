@@ -15,7 +15,7 @@ func isExternal(url string) bool {
 		strings.HasPrefix(url, "https://")
 }
 
-func has(m map[string]string, k string) bool {
+func has[C comparable, V any](m map[C]V, k C) bool {
 	_, ok := m[k]
 	return ok
 }
@@ -29,17 +29,20 @@ func unescape(target string) string {
 }
 
 type Rewriter struct {
-	links map[string]string // src path -> uri
+	links   map[string]string // src path -> url
+	targets map[string]any    // urls
 }
 
 func New() *Rewriter {
 	return &Rewriter{
-		links: map[string]string{},
+		links:   map[string]string{},
+		targets: map[string]any{},
 	}
 }
 
 func (rw *Rewriter) Bank(src, dst string) {
 	rw.links[src] = dst
+	rw.targets[dst] = nil
 }
 
 func splitQuery(path string) (string, string) {
@@ -57,11 +60,28 @@ func assureAbsolute(dst, src string) string {
 	return filepath.Join(filepath.Dir(src), dst)
 }
 
+func assureLeadingSlash(path string) string {
+	if !strings.HasPrefix(path, "/") {
+		return "/" + path
+	}
+	return path
+}
+
+func (rw Rewriter) isValid(dst, src string) (string, bool) {
+	src = assureLeadingSlash(src)
+	dst = assureAbsolute(dst, src)
+	dst = filepath.Clean(dst)
+	return dst, has(rw.targets, dst)
+}
+
 func (rw Rewriter) Rewrite(dst, src string) (string, error) {
 	if isExternal(dst) || strings.HasPrefix(dst, "#") || strings.HasPrefix(dst, "?") {
 		return dst, nil
 	}
 	dst = unescape(dst)
+	if dst, ok := rw.isValid(dst, src); ok {
+		return dst, nil
+	}
 	dst = assureAbsolute(dst, src)
 	dst = filepath.Clean(dst)
 	dst, query := splitQuery(dst)
