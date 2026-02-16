@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+type UrlMode int
+
+const (
+	UrlModeDefault = UrlMode(iota) // eg. "/", "/dir/", "/page.html"
+	UrlModeExtless                 // eg. "/", "/dir/", "/page"
+)
+
 var orderingStripper = regexp.MustCompile(`^(\d+[\-., ]*)?(.*)$`)
 
 func stripOrdering(s string) string {
@@ -71,7 +78,14 @@ func dirUri(parent, child string, strip bool) string {
 	return uri
 }
 
-func fileUri(parent, child string, strip bool) string {
+func assureExtension(path string, um UrlMode) string {
+	if um == UrlModeExtless {
+		return path
+	}
+	return path + ".html"
+}
+
+func fileUri(parent, child string, strip bool, um UrlMode) string {
 	if child == "README.md" || child == "index.tmpl" {
 		return parent
 	} else {
@@ -79,7 +93,7 @@ func fileUri(parent, child string, strip bool) string {
 		child = strings.TrimSuffix(child, ext)
 		child = withStripping(child, strip)
 		child = url.PathEscape(child)
-		child = child + ".html"
+		child = assureExtension(child, um)
 		uri := filepath.Join(parent, child)
 		uri = assureLeadingSlash(uri)
 		return uri
@@ -100,10 +114,10 @@ func (p Paths) Subdir(basename string, strip bool) Paths {
 	}
 }
 
-func (p Paths) File(basename string, strip bool) Paths {
+func (p Paths) File(basename string, strip bool, um UrlMode) Paths {
 	return Paths{
 		Src: filepath.Join(p.Src, basename),
 		Dst: fileDst(p.Dst, basename, strip),
-		Url: fileUri(p.Url, basename, strip),
+		Url: fileUri(p.Url, basename, strip, um),
 	}
 }
