@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"go.ufukty.com/kask/internal/builder"
+	"go.ufukty.com/kask/internal/builder/paths"
 )
 
 type args struct {
@@ -14,6 +15,14 @@ type args struct {
 	Domain  string
 	Dev     bool
 	Verbose bool
+	Cfw     bool
+}
+
+func urlmode(cfw bool) paths.UrlMode {
+	if cfw {
+		return paths.UrlModeExtless
+	}
+	return paths.UrlModeDefault
 }
 
 var zero args
@@ -25,6 +34,7 @@ func readargs() (*args, error) {
 	flag.StringVar(&a.Domain, "domain", "", "domain that will be used to prefix each link to static assets, pages and css files")
 	flag.BoolVar(&a.Dev, "dev", false, "adds unique suffixes to the bundled CSS to prevent browsers reusing cached stylesheets")
 	flag.BoolVar(&a.Verbose, "v", false, "enables verbose output")
+	flag.BoolVar(&a.Cfw, "cfw", false, "adjusts Kask' behavior for Cloudflare Workers")
 
 	flag.Parse()
 
@@ -55,6 +65,7 @@ func Run() error {
 		Dst:     a.Out,
 		Src:     a.In,
 		Verbose: a.Verbose,
+		UrlMode: urlmode(a.Cfw),
 	})
 	if err != nil {
 		return fmt.Errorf("building: %w", err)

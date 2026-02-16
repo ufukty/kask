@@ -55,7 +55,7 @@ func TestUri_dir(t *testing.T) {
 	}
 }
 
-func TestUri_file(t *testing.T) {
+func TestUri_file_urlModeDefault(t *testing.T) {
 	type input struct{ parent, child string }
 	type output = string
 	tcs := map[input]output{
@@ -64,14 +64,36 @@ func TestUri_file(t *testing.T) {
 		{"/a/", "b.md"}:   "/a/b.html",
 		{"/a/b/", "c.md"}: "/a/b/c.html",
 	}
-
 	for i, o := range tcs {
 		tn := fmt.Sprintf("parent=%q dir=%q",
 			strings.ReplaceAll(i.parent, "/", "\\"),
 			strings.ReplaceAll(i.child, "/", "\\"),
 		)
 		t.Run(tn, func(t *testing.T) {
-			got := fileUri(i.parent, i.child, false)
+			got := fileUri(i.parent, i.child, false, UrlModeDefault)
+			if got != o {
+				t.Errorf("expected %q got %q", o, got)
+			}
+		})
+	}
+}
+
+func TestUri_file_urlModeExtless(t *testing.T) {
+	type input struct{ parent, child string }
+	type output = string
+	tcs := map[input]output{
+		{"", "a.md"}:      "/a",
+		{"/a", "b.md"}:    "/a/b",
+		{"/a/", "b.md"}:   "/a/b",
+		{"/a/b/", "c.md"}: "/a/b/c",
+	}
+	for i, o := range tcs {
+		tn := fmt.Sprintf("parent=%q dir=%q",
+			strings.ReplaceAll(i.parent, "/", "\\"),
+			strings.ReplaceAll(i.child, "/", "\\"),
+		)
+		t.Run(tn, func(t *testing.T) {
+			got := fileUri(i.parent, i.child, false, UrlModeExtless)
 			if got != o {
 				t.Errorf("expected %q got %q", o, got)
 			}
@@ -102,7 +124,7 @@ func TestPaths_File(t *testing.T) {
 	}
 	for _, tn := range slices.Sorted(maps.Keys(tcs)) {
 		tc := tcs[tn]
-		got := parent.File(tc.inputBasename, tc.inputStripped)
+		got := parent.File(tc.inputBasename, tc.inputStripped, UrlModeDefault)
 		if got.Src != tc.expected.Src {
 			t.Run(filepath.Join(tn, "assert src"), func(t *testing.T) { t.Errorf("expected %q got %q", tc.expected.Src, got.Src) })
 		}
@@ -153,7 +175,7 @@ func TestPaths_File_preserveEncodedParent(t *testing.T) {
 		Dst: "/a ",
 		Url: "/a%20/",
 	}
-	got := parent.File("b.tmpl", false)
+	got := parent.File("b.tmpl", false, UrlModeDefault)
 	if filepath.Dir(got.Url) != "/a%20" {
 		t.Errorf("assert, expected the parent path to stay encoded: %q, got. %q", "/a%20", got.Url)
 	}
