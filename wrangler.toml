@@ -6,7 +6,7 @@ preview_urls = true
 command = "bash .workers/build.sh"
 
 [assets]
-directory = "./public"
+directory = "./docs-build"
 not_found_handling = "404-page"
 
 [[routes]]
