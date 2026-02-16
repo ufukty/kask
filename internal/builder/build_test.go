@@ -313,6 +313,19 @@ func ExampleBuilder_mdLinkReplacements() {
 	// <a href="/a/tmpl.html#Title">sibling</a>
 }
 
+func ExampleBuilder_correctLinks() {
+	_, dst := buildTestSite("testdata/correct-links")
+	fmt.Println(strings.Join(anchor.FindAllString(readFile(filepath.Join(dst, "page1.html")), -1), "\n"))
+	fmt.Println(strings.Join(anchor.FindAllString(readFile(filepath.Join(dst, "page2.html")), -1), "\n"))
+	// Output:
+	// <a href="/page2.html"></a>
+	// <a href="/page2.html"></a>
+	// <a href="/page2.html"></a>
+	// <a href="/page1.html"></a>
+	// <a href="/page1.html"></a>
+	// <a href="/page1.html"></a>
+}
+
 func dirSize(path string) (int64, error) {
 	var size int64
 	err := filepath.WalkDir(path, func(_ string, d fs.DirEntry, err error) error {
