@@ -34,7 +34,7 @@ func readargs() (*args, error) {
 	flag.StringVar(&a.Domain, "domain", "", "domain that will be used to prefix each link to static assets, pages and css files")
 	flag.BoolVar(&a.Dev, "dev", false, "adds unique suffixes to the bundled CSS to prevent browsers reusing cached stylesheets")
 	flag.BoolVar(&a.Verbose, "v", false, "enables verbose output")
-	flag.BoolVar(&a.Cfw, "cfw", false, "adjusts Kask for Cloudflare Workers")
+	flag.BoolVar(&a.Cfw, "cfw", false, "adjusts Kask' behavior for Cloudflare Workers")
 
 	flag.Parse()
 
