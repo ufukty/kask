@@ -6,11 +6,11 @@ import (
 )
 
 func spaces(depth int) string {
-	s := ""
+	var s strings.Builder
 	for range depth {
-		s += "    "
+		s.WriteString("    ")
 	}
-	return s
+	return s.String()
 }
 
 func (d *Dir) String() string {
