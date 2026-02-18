@@ -124,7 +124,7 @@ func (b *builder) execDir(d *dir2) error {
 		return fmt.Errorf("creating directory: %w", err)
 	}
 	for _, page := range d.original.Pages {
-		p := d.paths.File(page, d.original.IsToStrip(), b.args.UrlMode)
+		p := d.paths.File(page, d.original.IsToStrip(), b.args.Provider.UrlMode())
 		if err := b.execPage(d, p); err != nil {
 			return fmt.Errorf("%q: %w", page, err)
 		}
