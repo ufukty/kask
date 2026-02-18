@@ -23,14 +23,6 @@ type Renderer struct {
 }
 
 func New(src string, rw *rewriter.Rewriter) *Renderer {
-	p := parser.NewWithExtensions(
-		parser.CommonExtensions |
-			parser.Attributes |
-			parser.AutoHeadingIDs |
-			parser.NoEmptyLineBeforeBlock |
-			parser.Mmark |
-			parser.MathJax,
-	)
 	v := visitor.New(rw)
 	r := html.NewRenderer(html.RendererOptions{
 		Flags:          html.CommonFlags | html.HrefTargetBlank,
@@ -38,7 +30,6 @@ func New(src string, rw *rewriter.Rewriter) *Renderer {
 	})
 	return &Renderer{
 		src:      src,
-		parser:   p,
 		visitor:  v,
 		renderer: r,
 	}
@@ -50,7 +41,15 @@ func (r Renderer) ToHtml(page paths.Paths) (*kask.Markdown, error) {
 		return nil, fmt.Errorf("os.ReadFile: %w", err)
 	}
 	r.visitor.Prepare(page)
-	n := r.parser.Parse(c).(*ast.Document)
+	p := parser.NewWithExtensions(
+		parser.CommonExtensions |
+			parser.Attributes |
+			parser.AutoHeadingIDs |
+			parser.NoEmptyLineBeforeBlock |
+			parser.Mmark |
+			parser.MathJax,
+	)
+	n := p.Parse(c).(*ast.Document)
 	html := markdown.Render(n, r.renderer)
 	err = r.visitor.Error()
 	if err != nil {
