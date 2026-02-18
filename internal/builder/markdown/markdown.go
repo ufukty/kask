@@ -11,6 +11,7 @@ import (
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
 	"go.ufukty.com/kask/internal/builder/markdown/hook"
+	"go.ufukty.com/kask/internal/builder/paths"
 	"go.ufukty.com/kask/internal/builder/rewriter"
 	"go.ufukty.com/kask/pkg/kask"
 )
@@ -22,7 +23,7 @@ func serializeInvalidTargets(ts []string) string {
 	return strings.Join(ts, ", ")
 }
 
-func ToHtml(root, page string, rw *rewriter.Rewriter) (*kask.Markdown, error) {
+func ToHtml(root string, page paths.Paths, rw *rewriter.Rewriter) (*kask.Markdown, error) {
 	p := parser.NewWithExtensions(
 		parser.CommonExtensions |
 			parser.Attributes |
@@ -31,7 +32,7 @@ func ToHtml(root, page string, rw *rewriter.Rewriter) (*kask.Markdown, error) {
 			parser.Mmark |
 			parser.MathJax,
 	)
-	c, err := os.ReadFile(filepath.Join(root, page))
+	c, err := os.ReadFile(filepath.Join(root, page.Src))
 	if err != nil {
 		return nil, fmt.Errorf("os.ReadFile: %w", err)
 	}

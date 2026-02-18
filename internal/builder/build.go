@@ -164,7 +164,7 @@ func (b *builder) renderMarkdown(d *dir2) error {
 	for _, page := range d.original.Pages {
 		if filepath.Ext(page) == ".md" {
 			p := d.paths.File(page, d.original.IsToStrip(), b.args.Provider.UrlMode())
-			html, err := markdown.ToHtml(b.args.Src, p.Src, b.rw)
+			html, err := markdown.ToHtml(b.args.Src, p, b.rw)
 			if err != nil {
 				return fmt.Errorf("rendering %s: %w", page, err)
 			}
