@@ -17,7 +17,6 @@ import (
 
 type Renderer struct {
 	src      string
-	parser   *parser.Parser
 	renderer *html.Renderer
 	visitor  *visitor.Visitor
 }
