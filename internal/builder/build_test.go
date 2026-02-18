@@ -286,7 +286,7 @@ func TestBuilder_assets(t *testing.T) {
 
 func TestBuilder_workers(t *testing.T) {
 	tmp := t.TempDir()
-	Build(Args{Src: "testdata/workers", Dst: tmp, Provider: ProviderCloudflareWorkers})
+	Build(Args{Src: "testdata/workers", Dst: tmp, Verbose: true, Provider: ProviderCloudflareWorkers})
 	assertfile(t, tmp, "_headers")
 }
 

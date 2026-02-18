@@ -11,7 +11,7 @@ func (b *builder) createDeploymentConfiguration() error {
 	case ProviderDefault:
 		return nil
 	case ProviderCloudflareWorkers:
-		err := providers.CloudflareWorkers(b.args.Dst)
+		err := providers.CloudflareWorkers(b.args.Dst, b.args.Verbose)
 		if err != nil {
 			return fmt.Errorf("cloudflare workers: %w", err)
 		}
