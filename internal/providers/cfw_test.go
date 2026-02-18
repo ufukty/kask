@@ -8,7 +8,7 @@ import (
 
 func TestCloudflareWorkers(t *testing.T) {
 	b := bytes.NewBuffer([]byte{})
-	err := CloudflareWorkers(b)
+	err := cloudflareWorkers(b)
 	if err != nil {
 		t.Errorf("act, unexpected error: %v", err)
 	}
