@@ -11,7 +11,7 @@ func Test_FromFile(t *testing.T) {
 	r := rewriter.New()
 	r.Bank(".assets/img.jpg", "/.assets/img.jpg")
 	r.Bank("sibling.md", "/sibling.html")
-	p, err := ToHtml("testdata", "input.md", r)
+	p, err := ToHtml("testdata", "page.md", r)
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
 	}
