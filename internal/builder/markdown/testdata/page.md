@@ -14,7 +14,7 @@ A paragraph.
 - dolor
   - sit
 
-## An ordered list
+### An ordered list
 
 1. another day
 
@@ -26,6 +26,6 @@ A paragraph.
 class lorem {}
 ```
 
-| foo 1            | foo 2            | foo 3            |
-| ---------------- | ---------------- | ---------------- |
-| Row `1` Cell `1` | Row `1` Cell `2` | Row `1` Cell `3` |
+| Header     |
+| ---------- |
+| Cell `1/1` |
