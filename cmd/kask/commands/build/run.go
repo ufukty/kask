@@ -6,7 +6,6 @@ import (
 	"runtime"
 
 	"go.ufukty.com/kask/internal/builder"
-	"go.ufukty.com/kask/internal/builder/paths"
 )
 
 type args struct {
@@ -16,13 +15,6 @@ type args struct {
 	Dev     bool
 	Verbose bool
 	Cfw     bool
-}
-
-func urlmode(cfw bool) paths.UrlMode {
-	if cfw {
-		return paths.UrlModeExtless
-	}
-	return paths.UrlModeDefault
 }
 
 var zero args
@@ -53,6 +45,13 @@ func ending(a *args) {
 	}
 }
 
+func provider(a *args) builder.Provider {
+	if a.Cfw {
+		return builder.ProviderCloudflareWorkers
+	}
+	return builder.ProviderDefault
+}
+
 func Run() error {
 	a, err := readargs()
 	if err != nil {
@@ -60,12 +59,12 @@ func Run() error {
 	}
 	defer ending(a)
 	err = builder.Build(builder.Args{
-		Dev:     a.Dev,
-		Domain:  a.Domain,
-		Dst:     a.Out,
-		Src:     a.In,
-		Verbose: a.Verbose,
-		UrlMode: urlmode(a.Cfw),
+		Dev:      a.Dev,
+		Domain:   a.Domain,
+		Dst:      a.Out,
+		Src:      a.In,
+		Verbose:  a.Verbose,
+		Provider: provider(a),
 	})
 	if err != nil {
 		return fmt.Errorf("building: %w", err)

@@ -270,6 +270,7 @@ func ExampleBuilder_metaTitle() {
 func assertfile(t *testing.T, tmp, path string) {
 	t.Run(strings.ReplaceAll(path, "/", "\\"), func(t *testing.T) {
 		if !check(tmp, path) {
+			t.Log(tmp)
 			t.Errorf("assert, file not found: %s", path)
 		}
 	})
@@ -281,6 +282,24 @@ func TestBuilder_assets(t *testing.T) {
 	for _, tc := range tcs {
 		assertfile(t, tmp, tc)
 	}
+}
+
+func ExampleBuilder_workersConfigurationFile() {
+	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-*")
+	if err != nil {
+		panic(fmt.Errorf("prep, os.MkdirTemp: %w", err))
+	}
+	err = Build(Args{Src: "testdata/workers", Dst: tmp, Provider: ProviderCloudflareWorkers})
+	if err != nil {
+		panic(fmt.Errorf("Build: %w", err))
+	}
+	fmt.Println(readFile(filepath.Join(tmp, "_headers")))
+	// Output:
+	// /.assets/*
+	//   Cache-Control: public, max-age=14400, must-revalidate
+	//
+	// /section/.assets/*
+	//   Cache-Control: public, max-age=14400, must-revalidate
 }
 
 func readFile(path string) string {
