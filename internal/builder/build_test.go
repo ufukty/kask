@@ -284,10 +284,22 @@ func TestBuilder_assets(t *testing.T) {
 	}
 }
 
-func TestBuilder_workers(t *testing.T) {
-	tmp := t.TempDir()
-	Build(Args{Src: "testdata/workers", Dst: tmp, Verbose: true, Provider: ProviderCloudflareWorkers})
-	assertfile(t, tmp, "_headers")
+func ExampleBuilder_workersConfigurationFile() {
+	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-*")
+	if err != nil {
+		panic(fmt.Errorf("prep, os.MkdirTemp: %w", err))
+	}
+	err = Build(Args{Src: "testdata/workers", Dst: tmp, Provider: ProviderCloudflareWorkers})
+	if err != nil {
+		panic(fmt.Errorf("Build: %w", err))
+	}
+	fmt.Println(readFile(filepath.Join(tmp, "_headers")))
+	// Output:
+	// /.assets/*
+	//   Cache-Control: public, max-age=14400, must-revalidate
+	//
+	// /section/.assets/*
+	//   Cache-Control: public, max-age=14400, must-revalidate
 }
 
 func readFile(path string) string {

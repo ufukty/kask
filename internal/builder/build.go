@@ -210,7 +210,7 @@ func (b *builder) Build() error {
 	if err := b.copyAssetsFolders(root2); err != nil {
 		return fmt.Errorf("copying assets folders: %w", err)
 	}
-	if err := b.createDeploymentConfiguration(); err != nil {
+	if err := b.createDeploymentConfiguration(root2); err != nil {
 		return fmt.Errorf("copying assets folders: %w", err)
 	}
 	return nil
