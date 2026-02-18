@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"go.ufukty.com/kask/internal/builder/paths"
 	"go.ufukty.com/kask/internal/builder/rewriter"
 	"go.ufukty.com/kask/pkg/kask"
 )
@@ -18,7 +19,7 @@ func TestToHtml_content(t *testing.T) {
 	r := rewriter.New()
 	r.Bank(".assets/img.jpg", "/.assets/img.jpg")
 	r.Bank("sibling.md", "/sibling.html")
-	p, err := ToHtml("testdata", "page.md", r)
+	p, err := ToHtml("testdata", paths.Paths{Src: "page.md"}, r)
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
 	}
@@ -110,7 +111,7 @@ func ExampleToHtml_toc() {
 	r := rewriter.New()
 	r.Bank(".assets/img.jpg", "/.assets/img.jpg")
 	r.Bank("sibling.md", "/sibling.html")
-	p, err := ToHtml("testdata", "page.md", r)
+	p, err := ToHtml("testdata", paths.Paths{Src: "page.md"}, r)
 	if err != nil {
 		panic(fmt.Errorf("act, ToHtml: %w", err))
 	}
