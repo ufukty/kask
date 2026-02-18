@@ -6,7 +6,6 @@ import (
 	"runtime"
 
 	"go.ufukty.com/kask/internal/builder"
-	"go.ufukty.com/kask/internal/builder/paths"
 )
 
 type args struct {
@@ -16,13 +15,6 @@ type args struct {
 	Dev     bool
 	Verbose bool
 	Cfw     bool
-}
-
-func urlmode(cfw bool) paths.UrlMode {
-	if cfw {
-		return paths.UrlModeExtless
-	}
-	return paths.UrlModeDefault
 }
 
 var zero args
