@@ -270,6 +270,7 @@ func ExampleBuilder_metaTitle() {
 func assertfile(t *testing.T, tmp, path string) {
 	t.Run(strings.ReplaceAll(path, "/", "\\"), func(t *testing.T) {
 		if !check(tmp, path) {
+			t.Log(tmp)
 			t.Errorf("assert, file not found: %s", path)
 		}
 	})
@@ -281,6 +282,12 @@ func TestBuilder_assets(t *testing.T) {
 	for _, tc := range tcs {
 		assertfile(t, tmp, tc)
 	}
+}
+
+func TestBuilder_workers(t *testing.T) {
+	tmp := t.TempDir()
+	Build(Args{Src: "testdata/workers", Dst: tmp, Provider: ProviderCloudflareWorkers})
+	assertfile(t, tmp, "_headers")
 }
 
 func readFile(path string) string {
