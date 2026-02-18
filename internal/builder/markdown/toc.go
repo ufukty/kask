@@ -5,11 +5,21 @@ import (
 	"fmt"
 
 	"github.com/gomarkdown/markdown/ast"
-	"github.com/gomarkdown/markdown/html"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
-func getTableOfContent(doc *ast.Document, r *html.Renderer) *kask.MarkdownTocNode {
+func (r Renderer) renderHeadingText(h *ast.Heading) string {
+	var buf bytes.Buffer
+	for _, child := range h.Children {
+		err := r.renderer.RenderNode(&buf, child, true)
+		if err != ast.Terminate {
+			continue
+		}
+	}
+	return buf.String()
+}
+
+func (r Renderer) getTableOfContent(doc *ast.Document) *kask.MarkdownTocNode {
 	root := &kask.MarkdownTocNode{Title: "root", Level: 0}
 	stack := []*kask.MarkdownTocNode{root}
 	headingCount := 0
@@ -22,7 +32,7 @@ func getTableOfContent(doc *ast.Document, r *html.Renderer) *kask.MarkdownTocNod
 			}
 			headingCount++
 
-			title := renderHeadingText(h, r)
+			title := r.renderHeadingText(h)
 			newNode := &kask.MarkdownTocNode{
 				Title: title,
 				ID:    h.HeadingID,
@@ -41,15 +51,4 @@ func getTableOfContent(doc *ast.Document, r *html.Renderer) *kask.MarkdownTocNod
 	})
 
 	return root
-}
-
-func renderHeadingText(h *ast.Heading, r *html.Renderer) string {
-	var buf bytes.Buffer
-	for _, child := range h.Children {
-		err := r.RenderNode(&buf, child, true)
-		if err != ast.Terminate {
-			continue
-		}
-	}
-	return buf.String()
 }
