@@ -3,10 +3,10 @@ package scales
 import (
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"testing"
 
 	"go.ufukty.com/kask/internal/builder"
 	"go.ufukty.com/kask/internal/builder/copy"
@@ -30,14 +30,17 @@ func dirSize(path string) (int64, error) {
 	return size, err
 }
 
-// it duplicates the content folder root as a section
+// it linearly increases the content folder root as a section (1x, 2x, 3x...)
 //
-//	docs    docs
-//	|-a     |-a
-//	|-b  => |-b
-//	        |-docs
-//	          |-a
-//	          |-b
+//	docs    docs            docs
+//	|-a     |-a             |-a
+//	|-b  => |-b          => |-b
+//	        |-docs-again    |-docs-again
+//	          |-a             |-a
+//	          |-b             |-b
+//	                          |-docs-again
+//	                            |-a
+//	                            |-b
 func doubleUpContentFolder(path string) (float64, error) {
 	copy.Dir(filepath.Join(path, "docs-again"), path)
 	s, err := dirSize(path)
@@ -55,21 +58,36 @@ func toPythonArraySyntax(vs []float64) string {
 	return fmt.Sprintf("[%s]", strings.Join(ss, ", "))
 }
 
-// TestBuilder_docsSite performs a series of builds with the docs site which
-// its pages are de-duplicated 2*i times each run to check if the memory
-// consumption scales sublinear.
-func TestBuilder_docsSiteAllocationScaling(t *testing.T) {
-	tmp := t.TempDir()
-	fmt.Println(tmp)
-	err := copy.Dir(tmp, "../../docs")
+func mkTempDir() (string, error) {
+	tmp, err := os.MkdirTemp(os.TempDir(), "kask-scales-*")
 	if err != nil {
-		t.Errorf("prep, copying docs site into the test directory to recursively duplicate its contents: %v", err)
+		return "", fmt.Errorf("os.MkdirTemp: %w", err)
 	}
+	return tmp, nil
+}
+
+func main(docssite string) error {
+	tmp, err := mkTempDir()
+	if err != nil {
+		return fmt.Errorf("creating the test directory: %w", err)
+	}
+	fmt.Println("Using:", tmp)
+
+	i := 0
 	f, a, err := Allocations(20, func() (float64, error) {
-		return doubleUpContentFolder(tmp)
+		err = copy.Dir(filepath.Join(tmp, fmt.Sprintf("docs-%d", i)), docssite)
+		if err != nil {
+			return -1, fmt.Errorf("copying the docs site: %w", err)
+		}
+		return 0, nil
 	}, func() error {
-		return builder.Build(builder.Args{Src: tmp, Dst: t.TempDir(), Domain: "/"})
+		err := builder.Build(builder.Args{Src: tmp, Dst: mkTempDir(), Domain: "/"})
+		if err != nil {
+			return fmt.Errorf("builder.Build: %w", err)
+		}
+		return nil
 	})
+
 	if err != nil {
 		t.Errorf("act, unexpected error: %v", err)
 	} else if f == NonSublinear {
