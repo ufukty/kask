@@ -1,15 +1,22 @@
-package scales
+package main
 
 import (
 	"fmt"
+	"io/fs"
+	"math"
+	"os"
+	"path/filepath"
 	"runtime"
+
+	"go.ufukty.com/kask/internal/builder"
+	"go.ufukty.com/kask/internal/builder/copy"
 )
 
-type Factor string
+type factor string
 
 const (
-	NonSublinear Factor = "non-sublinear" // superlinear or linear
-	Sublinear    Factor = "sublinear"
+	NonSublinear factor = "non-sublinear" // superlinear or linear
+	Sublinear    factor = "sublinear"
 )
 
 // This just assumes that the average data point elevation over the line
@@ -25,7 +32,7 @@ const (
 //	|  x
 //	| x
 //	+----------------------------->
-func factorize(ys, xs []float64) (Factor, error) {
+func factorize(ys, xs []uint64) (factor, error) {
 	if len(ys) != len(xs) {
 		return "", fmt.Errorf("expected same number of x and y values")
 	}
@@ -34,51 +41,144 @@ func factorize(ys, xs []float64) (Factor, error) {
 		return "", fmt.Errorf("constant scaling (impossible, check your code)")
 	}
 	m := dy / dx
-	t := 0.0
+	t := 0
 	for i := 1; i+1 < len(ys); i++ {
 		dy, dx := ys[i]-ys[0], xs[i]-xs[0]
 		edy := dx * m // expected dy
-		t += dy - edy
+		t += int(dy) - int(edy)
 	}
-	if t > 1e-5 {
+	if t > 0 {
 		return Sublinear, nil
 	} else {
 		return NonSublinear, nil
 	}
 }
 
-func totalAllocs() uint64 {
+func measure() (uint64, uint64) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	return m.TotalAlloc
+	return m.TotalAlloc, m.Sys
 }
 
 type allocations struct {
-	Sizes, Allocs []float64
+	Sizes, TotalAllocs, Sys []uint64
 }
 
-func Allocations(steps int, prep func() (float64, error), perform func() error) (Factor, allocations, error) {
-	a := allocations{
-		Sizes:  []float64{},
-		Allocs: []float64{},
-	}
-	for i := range steps {
-		size, err := prep()
+func prepare(tmp, docssite string, step int) error {
+	if step == 0 {
+		err := copy.Dir(tmp, "docs")
 		if err != nil {
-			return "", allocations{}, fmt.Errorf("prep(%d): %w", i, err)
+			return fmt.Errorf("initial copying of docs contents: %w", err)
 		}
-		before := totalAllocs()
-		if err := perform(); err != nil {
-			return "", allocations{}, fmt.Errorf("perform(%d): %w", i, err)
+		return nil
+	} else {
+		for j := range int(math.Pow(1.6, float64(step))) {
+			err := copy.Dir(filepath.Join(tmp, fmt.Sprintf("new-section-%d-%d", step, j)), docssite)
+			if err != nil {
+				return fmt.Errorf("copying the docs site: %w", err)
+			}
 		}
-		delta := float64(totalAllocs() - before)
-		a.Sizes = append(a.Sizes, size)
-		a.Allocs = append(a.Allocs, delta)
-		fmt.Printf("Input / Total alloc: %.2f MB => %.2f MB\n", size/1024/1024, delta/1024/1024)
+		return nil
 	}
-	sl, err := factorize(a.Allocs, a.Sizes)
+}
+
+func mkTempDir() (string, error) {
+	tmp, err := os.MkdirTemp(os.TempDir(), "kask-scales-*")
 	if err != nil {
-		return "", allocations{}, fmt.Errorf("factorizing: %w", err)
+		return "", fmt.Errorf("os.MkdirTemp: %w", err)
 	}
-	return sl, a, nil
+	return tmp, nil
+}
+
+func dirSize(path string) (uint64, error) {
+	var size uint64
+	err := filepath.WalkDir(path, func(_ string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("filepath.WalkDir: %w", err)
+		}
+		if !d.IsDir() {
+			info, err := d.Info()
+			if err != nil {
+				return fmt.Errorf("d.Info: %w", err)
+			}
+			size += uint64(info.Size())
+		}
+		return nil
+	})
+	return size, err
+}
+
+func invoke(tmp string) error {
+	dst, err := mkTempDir()
+	if err != nil {
+		return fmt.Errorf("creating a directory in temp for output: %w", err)
+	}
+	args := builder.Args{Src: tmp, Dst: dst, Domain: "/"}
+	err = builder.Build(args)
+	if err != nil {
+		return fmt.Errorf("builder.Build: %w", err)
+	}
+	return nil
+}
+
+func rmTempDir(tmp string) {
+	fmt.Printf("deleting: %s\n", tmp)
+	err := os.RemoveAll(tmp)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func Main() error {
+	tmp, err := mkTempDir()
+	if err != nil {
+		return fmt.Errorf("creating the test directory: %w", err)
+	}
+	defer rmTempDir(tmp)
+	fmt.Println("Using:", tmp)
+	fmt.Printf("%13s %13s %13s\n", "Input size", "TotalAlloc", "Sys")
+
+	a := allocations{
+		Sizes:       []uint64{},
+		TotalAllocs: []uint64{},
+		Sys:         []uint64{},
+	}
+	for i := range 10 {
+		err := prepare(tmp, "docs", i)
+		if err != nil {
+			return fmt.Errorf("preparing content directory: %w", err)
+		}
+		size, err := dirSize(tmp)
+		if err != nil {
+			return fmt.Errorf("sizing content directory: %w", err)
+		}
+		taBefore, _ := measure()
+		if err := invoke(tmp); err != nil {
+			return fmt.Errorf("invoking at step %d: %w", i, err)
+		}
+		taAfter, sysAfter := measure()
+		taDelta := taAfter - taBefore
+		a.Sizes = append(a.Sizes, size)
+		a.TotalAllocs = append(a.TotalAllocs, taDelta)
+		a.Sys = append(a.Sys, sysAfter)
+		fmt.Printf("%10.2f MB %10.2f MB %10.2f MB\n",
+			float64(size)/1024/1024, float64(taDelta)/1024/1024, float64(sysAfter)/1024/1024)
+	}
+
+	sl, err := factorize(a.Sys, a.Sizes)
+	if err != nil {
+		return fmt.Errorf("factorizing: %w", err)
+	}
+
+	if sl != Sublinear {
+		return fmt.Errorf("not sublinear")
+	}
+	return nil
+}
+
+func main() {
+	if err := Main(); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
 }

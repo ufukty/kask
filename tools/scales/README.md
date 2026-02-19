@@ -9,3 +9,5 @@ Scaler grows the sample site size at each iteration drammatically in order to sa
 At last, Scaler performs a heuristic and returns with the status code. Success means Kask allocates memory from the system grows sublinearly with the content directory size.
 
 Scaler designed to be used in the CI pipeline; inside a separate workflow than the push/PR triggered main workflow to perform checks occasionally and warn when a regression happens without constant CI wait and noise.
+
+Total allocations are accounted with the deltas (subtracting after TA from before TA) but system allocations are accounted directly as the last measured value. Previous invokations of builder on smaller input sizes should not affect the results too much.
