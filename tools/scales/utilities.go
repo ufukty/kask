@@ -81,7 +81,8 @@ func main(docssite string) error {
 		}
 		return 0, nil
 	}, func() error {
-		err := builder.Build(builder.Args{Src: tmp, Dst: mkTempDir(), Domain: "/"})
+		args := builder.Args{Src: tmp, Dst: mkTempDir(), Domain: "/"}
+		err := builder.Build(args)
 		if err != nil {
 			return fmt.Errorf("builder.Build: %w", err)
 		}
