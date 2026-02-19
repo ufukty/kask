@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/fs"
 	"math"
@@ -34,7 +35,7 @@ type allocations struct {
 
 func prepare(tmp, docssite string, step int) error {
 	if step == 0 {
-		err := copy.Dir(tmp, "docs")
+		err := copy.Dir(tmp, docssite)
 		if err != nil {
 			return fmt.Errorf("initial copying of docs contents: %w", err)
 		}
@@ -129,7 +130,18 @@ func factorize(ys, xs []uint64) (factor, error) {
 	}
 }
 
+type args struct {
+	docspath string
+}
+
 func Main() error {
+	args := args{}
+	flag.StringVar(&args.docspath, "path", "", "path to the docs site")
+	flag.Parse()
+	if args.docspath == "" {
+		return fmt.Errorf("checking -path: missing arg")
+	}
+
 	tmp, err := mkTempDir()
 	if err != nil {
 		return fmt.Errorf("creating the test directory: %w", err)
@@ -144,7 +156,7 @@ func Main() error {
 		Sys:         []uint64{},
 	}
 	for i := range 10 {
-		err := prepare(tmp, "docs", i)
+		err := prepare(tmp, args.docspath, i)
 		if err != nil {
 			return fmt.Errorf("preparing content directory: %w", err)
 		}
