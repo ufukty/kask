@@ -12,6 +12,81 @@ import (
 	"go.ufukty.com/kask/internal/builder/copy"
 )
 
+func mkTempDir() (string, error) {
+	tmp, err := os.MkdirTemp(os.TempDir(), "kask-scales-*")
+	if err != nil {
+		return "", fmt.Errorf("os.MkdirTemp: %w", err)
+	}
+	return tmp, nil
+}
+
+func rmTempDir(tmp string) {
+	fmt.Printf("deleting: %s\n", tmp)
+	err := os.RemoveAll(tmp)
+	if err != nil {
+		panic(err)
+	}
+}
+
+type allocations struct {
+	Sizes, TotalAllocs, Sys []uint64
+}
+
+func prepare(tmp, docssite string, step int) error {
+	if step == 0 {
+		err := copy.Dir(tmp, "docs")
+		if err != nil {
+			return fmt.Errorf("initial copying of docs contents: %w", err)
+		}
+		return nil
+	} else {
+		for j := range int(math.Pow(1.6, float64(step))) {
+			err := copy.Dir(filepath.Join(tmp, fmt.Sprintf("new-section-%d-%d", step, j)), docssite)
+			if err != nil {
+				return fmt.Errorf("copying the docs site: %w", err)
+			}
+		}
+		return nil
+	}
+}
+
+func dirSize(path string) (uint64, error) {
+	var size uint64
+	err := filepath.WalkDir(path, func(_ string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("filepath.WalkDir: %w", err)
+		}
+		if !d.IsDir() {
+			info, err := d.Info()
+			if err != nil {
+				return fmt.Errorf("d.Info: %w", err)
+			}
+			size += uint64(info.Size())
+		}
+		return nil
+	})
+	return size, err
+}
+
+func measure() (uint64, uint64) {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	return m.TotalAlloc, m.Sys
+}
+
+func invoke(tmp string) error {
+	dst, err := mkTempDir()
+	if err != nil {
+		return fmt.Errorf("creating a directory in temp for output: %w", err)
+	}
+	args := builder.Args{Src: tmp, Dst: dst, Domain: "/"}
+	err = builder.Build(args)
+	if err != nil {
+		return fmt.Errorf("builder.Build: %w", err)
+	}
+	return nil
+}
+
 type factor string
 
 const (
@@ -51,81 +126,6 @@ func factorize(ys, xs []uint64) (factor, error) {
 		return Sublinear, nil
 	} else {
 		return NonSublinear, nil
-	}
-}
-
-func measure() (uint64, uint64) {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	return m.TotalAlloc, m.Sys
-}
-
-type allocations struct {
-	Sizes, TotalAllocs, Sys []uint64
-}
-
-func prepare(tmp, docssite string, step int) error {
-	if step == 0 {
-		err := copy.Dir(tmp, "docs")
-		if err != nil {
-			return fmt.Errorf("initial copying of docs contents: %w", err)
-		}
-		return nil
-	} else {
-		for j := range int(math.Pow(1.6, float64(step))) {
-			err := copy.Dir(filepath.Join(tmp, fmt.Sprintf("new-section-%d-%d", step, j)), docssite)
-			if err != nil {
-				return fmt.Errorf("copying the docs site: %w", err)
-			}
-		}
-		return nil
-	}
-}
-
-func mkTempDir() (string, error) {
-	tmp, err := os.MkdirTemp(os.TempDir(), "kask-scales-*")
-	if err != nil {
-		return "", fmt.Errorf("os.MkdirTemp: %w", err)
-	}
-	return tmp, nil
-}
-
-func dirSize(path string) (uint64, error) {
-	var size uint64
-	err := filepath.WalkDir(path, func(_ string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return fmt.Errorf("filepath.WalkDir: %w", err)
-		}
-		if !d.IsDir() {
-			info, err := d.Info()
-			if err != nil {
-				return fmt.Errorf("d.Info: %w", err)
-			}
-			size += uint64(info.Size())
-		}
-		return nil
-	})
-	return size, err
-}
-
-func invoke(tmp string) error {
-	dst, err := mkTempDir()
-	if err != nil {
-		return fmt.Errorf("creating a directory in temp for output: %w", err)
-	}
-	args := builder.Args{Src: tmp, Dst: dst, Domain: "/"}
-	err = builder.Build(args)
-	if err != nil {
-		return fmt.Errorf("builder.Build: %w", err)
-	}
-	return nil
-}
-
-func rmTempDir(tmp string) {
-	fmt.Printf("deleting: %s\n", tmp)
-	err := os.RemoveAll(tmp)
-	if err != nil {
-		panic(err)
 	}
 }
 
