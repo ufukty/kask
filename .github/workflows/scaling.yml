@@ -1,0 +1,24 @@
+name: Scaling
+
+on:
+  workflow_dispatch:
+  schedule: [cron: 0 6 * * 1]
+
+concurrency:
+  group: scaling-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+  Go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with: { go-version-file: go.mod, cache: true }
+      - run: go mod download
+      - run: go run ./tools/scaler -path=docs | tee scaler.txt
+      - uses: actions/upload-artifact@v6
+        with: { name: scaler, path: scaler.txt }
