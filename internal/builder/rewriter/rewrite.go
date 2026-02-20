@@ -26,7 +26,7 @@ func unescape(target string) string {
 }
 
 type Rewriter struct {
-	links   map[string]string // src path -> url
+	links   map[string]string // src -> url
 	targets map[string]any    // urls
 }
 
@@ -37,43 +37,41 @@ func New() *Rewriter {
 	}
 }
 
-func (rw *Rewriter) Bank(src, dst string) {
-	rw.links[src] = dst
-	rw.targets[dst] = nil
+func (rw *Rewriter) Bank(src, url string) {
+	rw.links[src] = url
+	rw.targets[url] = nil
 }
 
 func splitQuery(path string) (string, string) {
-	cutoff := max(strings.Index(path, "#"), strings.Index(path, "?"))
-	if cutoff == -1 {
-		cutoff = len(path)
+	i := max(strings.Index(path, "#"), strings.Index(path, "?"))
+	if i == -1 {
+		i = len(path)
 	}
-	url, query := path[:cutoff], path[cutoff:]
-	if url == "" {
-		url = "."
-	}
-	return path, query
-}
-
-func assureAbsolute(dst, src string) string {
-	if filepath.IsAbs(dst) {
-		return dst
-	}
-	return filepath.Join(filepath.Dir(src), dst)
+	return path[:i], path[i:]
 }
 
 // returns the absolute URL for the linked resource in content directory
 func (rw Rewriter) locateByContentDir(linked string, linker paths.Paths) (string, bool) {
-	if !filepath.IsAbs(linked) {
-		linked = filepath.Join(linker.Src, linked)
+	if linked == "" { // same-page anchor links
+		linked = linker.Src
+	} else if !filepath.IsAbs(linked) {
+		linked = filepath.Join(filepath.Dir(linker.Src), linked)
+	} else {
+		linked = strings.TrimPrefix(linked, "/")
 	}
 	dst, ok := rw.links[linked]
-	return dst, ok
+	if ok {
+		return dst, true
+	}
+	return "", false
 }
 
-// returns the absolute URL for the linked resource in build directory
-func (rw Rewriter) locateByBuildDir(linked string, linker paths.Paths) (string, bool) {
-	if !filepath.IsAbs(linked) {
-		linked = filepath.Join(linker.Dst, linked)
+// returns the absolute URL for the linked resource in sitemap
+func (rw Rewriter) locateByUrl(linked string, linker paths.Paths) (string, bool) {
+	if linked == "" { // same-page anchor links
+		linked = linker.Url
+	} else if !filepath.IsAbs(linked) {
+		linked = filepath.Join(filepath.Dir(linker.Url), linked)
 	}
 	_, ok := rw.targets[linked]
 	if ok {
@@ -87,25 +85,27 @@ func (rw Rewriter) locate(linked string, linker paths.Paths) (string, bool) {
 	if ok {
 		return byContentDir, true
 	}
-	byBuildDir, ok := rw.locateByBuildDir(linked, linker)
+	byBuildDir, ok := rw.locateByUrl(linked, linker)
 	if ok {
 		return byBuildDir, true
 	}
 	return "", false
 }
 
-// user can link a page by
-//   - its path in local content directory
-//   - its path in local content directory, with encoding special characters
-//   - its path in build directory
-//   - its path in build directory, with encoding special characters
-//
-// either relative to the linker page, or in absolute form. using leading slash for content directory root.
-// at either combination, [Rewriter.Rewrite] creates encoded absolute URLs (except the domain).
-// The bank may contain a rule for the parent or ancestor directory of linked page instead of the direct file.
+func isEvil(linked string, linker paths.Paths) bool {
+	return strings.HasPrefix(filepath.Join(filepath.Dir(linker.Src), linked), "..")
+}
+
+// Rewriter returns an absolute and encoded URL for a resource which the user linked it either:
+//   - by its path in the content or build directory;
+//   - with its absolute path (by the content directory root) or relative (to the linker page);
+//   - with/out url encoded path segments.
 func (rw Rewriter) Rewrite(linked string, linker paths.Paths) (string, error) {
 	if isExternal(linked) {
 		return linked, nil
+	}
+	if isEvil(linked, linker) {
+		return "", ErrInvalidTarget
 	}
 	linked = unescape(linked)
 	linked, query := splitQuery(linked)
