@@ -80,12 +80,11 @@ func TestRewrite_Rewrite(t *testing.T) {
 		{linker: d2, linked: "/"}:                     "/",
 	}
 	for tc, te := range tcs {
-		t.Run(te, func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Dst), testname(tc.linked)), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
-			}
-			if te != got {
+			} else if te != got {
 				t.Errorf("expected %q got %q", te, got)
 			}
 		})
