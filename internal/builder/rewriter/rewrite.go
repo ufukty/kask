@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+
+	"go.ufukty.com/kask/internal/builder/paths"
 )
 
 var ErrInvalidTarget = fmt.Errorf("invalid link: internal target doesn't exist.")
@@ -74,25 +76,25 @@ func (rw Rewriter) isValid(dst, src string) (string, bool) {
 	return dst, has(rw.targets, dst)
 }
 
-func (rw Rewriter) Rewrite(dst, src string) (string, error) {
-	if isExternal(dst) || strings.HasPrefix(dst, "#") || strings.HasPrefix(dst, "?") {
+func (rw Rewriter) Rewrite(linked string, linker paths.Paths) (string, error) {
+	if isExternal(linked) || strings.HasPrefix(linked, "#") || strings.HasPrefix(linked, "?") {
+		return linked, nil
+	}
+	linked = unescape(linked)
+	if dst, ok := rw.isValid(linked, linker.Src); ok {
 		return dst, nil
 	}
-	dst = unescape(dst)
-	if dst, ok := rw.isValid(dst, src); ok {
-		return dst, nil
+	linked = assureAbsolute(linked, linker.Src)
+	linked = filepath.Clean(linked)
+	linked, query := splitQuery(linked)
+	linked = strings.TrimPrefix(linked, "/")
+	linked = strings.TrimSuffix(linked, "/")
+	if linked == "" {
+		linked = "."
 	}
-	dst = assureAbsolute(dst, src)
-	dst = filepath.Clean(dst)
-	dst, query := splitQuery(dst)
-	dst = strings.TrimPrefix(dst, "/")
-	dst = strings.TrimSuffix(dst, "/")
-	if dst == "" {
-		dst = "."
-	}
-	if !has(rw.links, dst) {
+	if !has(rw.links, linked) {
 		return "", ErrInvalidTarget
 	}
-	dst = rw.links[dst]
-	return dst + query, nil
+	linked = rw.links[linked]
+	return linked + query, nil
 }

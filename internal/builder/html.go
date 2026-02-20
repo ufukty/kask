@@ -6,12 +6,13 @@ import (
 	"slices"
 	"strings"
 
+	"go.ufukty.com/kask/internal/builder/paths"
 	"go.ufukty.com/kask/internal/builder/rewriter"
 )
 
 var anchorHref = regexp.MustCompile(`<a[^>]*href="([^"]*)"[^>]*>[^<]*</a>`)
 
-func rewriteLinksInHtmlPage(rw *rewriter.Rewriter, page string, bs []byte) ([]byte, error) {
+func rewriteLinksInHtmlPage(rw *rewriter.Rewriter, page paths.Paths, bs []byte) ([]byte, error) {
 	invTargets := []string{}
 	delta := 0
 	for _, matches := range anchorHref.FindAllSubmatchIndex(bs, -1) {

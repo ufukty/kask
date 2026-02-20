@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"go.ufukty.com/kask/internal/builder/paths"
 )
 
 // /a and /a/b/c is not visitable
@@ -43,15 +45,17 @@ func sorted[K cmp.Ordered, V any](m map[K]V) iter.Seq2[K, V] {
 }
 
 func TestRewrite_linksToParents(t *testing.T) {
+	linker := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := map[string]string{
-		"../../":          "/",
-		"../../page.md":   "/page.html",
-		"./../../":        "/",
-		"./../../page.md": "/page.html",
+		"../../":               "/",
+		"../../page.md":        "/page.html",
+		"./../../":             "/",
+		"./../../page.md":      "/page.html",
+		"./../../page.md#home": "/page.html#home",
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
-			got, err := rw.Rewrite(input, "a/b/page.tmpl")
+			got, err := rw.Rewrite(input, linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
 			}
@@ -63,15 +67,17 @@ func TestRewrite_linksToParents(t *testing.T) {
 }
 
 func TestRewrite_linksToSubdirs(t *testing.T) {
+	linker := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
 	tcs := map[string]string{
-		"a/b":               "/a/b/",
-		"a/b/c/d":           "/a/b/c/d/",
-		"a/b/c/d/README.md": "/a/b/c/d/",
-		"a/b/page.tmpl":     "/a/b/page.html",
+		"a/b":                "/a/b/",
+		"a/b/c/d":            "/a/b/c/d/",
+		"a/b/c/d/README.md":  "/a/b/c/d/",
+		"a/b/page.tmpl":      "/a/b/page.html",
+		"a/b/page.tmpl#home": "/a/b/page.html#home",
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
-			got, err := rw.Rewrite(input, "page.tmpl")
+			got, err := rw.Rewrite(input, linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
 			}
@@ -83,15 +89,17 @@ func TestRewrite_linksToSubdirs(t *testing.T) {
 }
 
 func TestRewrite_linksWithReduntantSegments(t *testing.T) {
+	linker := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
 	tcs := map[string]string{
-		"a/../a/b":               "/a/b/",
-		"a/../a/b/c/d":           "/a/b/c/d/",
-		"a/../a/b/c/d/README.md": "/a/b/c/d/",
-		"a/../a/b/page.tmpl":     "/a/b/page.html",
+		"a/../a/b":                "/a/b/",
+		"a/../a/b/c/d":            "/a/b/c/d/",
+		"a/../a/b/c/d/README.md":  "/a/b/c/d/",
+		"a/../a/b/page.tmpl":      "/a/b/page.html",
+		"a/../a/b/page.tmpl#home": "/a/b/page.html#home",
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
-			got, err := rw.Rewrite(input, "page.tmpl")
+			got, err := rw.Rewrite(input, linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
 			}
@@ -103,16 +111,18 @@ func TestRewrite_linksWithReduntantSegments(t *testing.T) {
 }
 
 func TestRewrite_absoluteLinks(t *testing.T) {
+	linker := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
 	tcs := map[string]string{
-		"/":               "/",
-		"/README.md":      "/",
-		"/page.md":        "/page.html",
-		"/a/b":            "/a/b/",
-		"/a/b/index.tmpl": "/a/b/",
+		"/":                    "/",
+		"/README.md":           "/",
+		"/page.md":             "/page.html",
+		"/a/b":                 "/a/b/",
+		"/a/b/index.tmpl":      "/a/b/",
+		"/a/b/index.tmpl#home": "/a/b/#home",
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
-			got, err := rw.Rewrite(input, "page.tmpl")
+			got, err := rw.Rewrite(input, linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
 			}
@@ -124,13 +134,14 @@ func TestRewrite_absoluteLinks(t *testing.T) {
 }
 
 func TestRewrite_internalAnchorLinks(t *testing.T) {
+	linker := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
 	tcs := map[string]string{
 		"#":      "#",
 		"#title": "#title",
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
-			got, err := rw.Rewrite(input, "page.md")
+			got, err := rw.Rewrite(input, linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
 			}
@@ -142,6 +153,7 @@ func TestRewrite_internalAnchorLinks(t *testing.T) {
 }
 
 func TestRewrite_externalAnchorLinks(t *testing.T) {
+	linker := paths.Paths{Src: "page.md", Dst: "page.html", Url: "/page.html"}
 	tcs := map[string]string{
 		"/#title":                 "/#title",
 		"/README.md#title":        "/#title",
@@ -155,7 +167,7 @@ func TestRewrite_externalAnchorLinks(t *testing.T) {
 	}
 	for input, expected := range sorted(tcs) {
 		t.Run(testname(input), func(t *testing.T) {
-			got, err := rw.Rewrite(input, "page.md")
+			got, err := rw.Rewrite(input, linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
 			}
@@ -167,6 +179,7 @@ func TestRewrite_externalAnchorLinks(t *testing.T) {
 }
 
 func TestRewrite_linksToUnvisitableDirs(t *testing.T) {
+	linker := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := []string{
 		"..",      // /a/
 		"../",     // /a/
@@ -180,7 +193,7 @@ func TestRewrite_linksToUnvisitableDirs(t *testing.T) {
 	}
 	for _, input := range tcs {
 		t.Run(testname(input), func(t *testing.T) {
-			_, err := rw.Rewrite(input, "a/b/page.tmpl")
+			_, err := rw.Rewrite(input, linker)
 			if err == nil {
 				t.Errorf("act, unexpected success")
 			}
@@ -189,6 +202,7 @@ func TestRewrite_linksToUnvisitableDirs(t *testing.T) {
 }
 
 func TestRewrite_linksToUnexistingNodes(t *testing.T) {
+	linker := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := []string{
 		"../../..",     // /../
 		"../x",         // /x/
@@ -196,7 +210,7 @@ func TestRewrite_linksToUnexistingNodes(t *testing.T) {
 	}
 	for _, input := range tcs {
 		t.Run(testname(input), func(t *testing.T) {
-			_, err := rw.Rewrite(input, "a/b/page.tmpl")
+			_, err := rw.Rewrite(input, linker)
 			if err == nil {
 				t.Errorf("act, unexpected success")
 			}

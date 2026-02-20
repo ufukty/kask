@@ -50,7 +50,7 @@ func (v *Visitor) links(node *ast.Link, entering bool) (ast.WalkStatus, bool) {
 	if !entering {
 		return ast.GoToNext, false
 	}
-	h2, err := v.rw.Rewrite(string(node.Destination), v.Page.Src)
+	h2, err := v.rw.Rewrite(string(node.Destination), v.Page)
 	if err == rewriter.ErrInvalidTarget {
 		v.InvTargets = append(v.InvTargets, string(node.Destination))
 		return ast.GoToNext, false
