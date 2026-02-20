@@ -1,10 +1,7 @@
 package rewriter
 
 import (
-	"cmp"
-	"iter"
-	"maps"
-	"slices"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -34,17 +31,7 @@ func testname(tn string) string {
 	return tn
 }
 
-func sorted[K cmp.Ordered, V any](m map[K]V) iter.Seq2[K, V] {
-	return func(yield func(K, V) bool) {
-		for _, k := range slices.Sorted(maps.Keys(m)) {
-			if !yield(k, m[k]) {
-				return
-			}
-		}
-	}
-}
-
-func TestRewrite_linksToParents(t *testing.T) {
+func TestRewrite_Rewrite(t *testing.T) {
 	type tc struct {
 		linker paths.Paths
 		linked string
@@ -105,7 +92,7 @@ func TestRewrite_linksToParents(t *testing.T) {
 	}
 }
 
-func TestRewrite_linksToUnvisitableDirs(t *testing.T) {
+func TestRewrite_Rewrite_linksToUnvisitableDirs(t *testing.T) {
 	linker := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := []string{
 		"..",      // /a/
@@ -128,7 +115,7 @@ func TestRewrite_linksToUnvisitableDirs(t *testing.T) {
 	}
 }
 
-func TestRewrite_linksToUnexistingNodes(t *testing.T) {
+func TestRewrite_Rewrite_linksToUnexistingNodes(t *testing.T) {
 	linker := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := []string{
 		"../../..",     // /../
