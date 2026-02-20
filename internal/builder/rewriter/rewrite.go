@@ -17,11 +17,6 @@ func isExternal(url string) bool {
 		strings.HasPrefix(url, "https://")
 }
 
-func has[C comparable, V any](m map[C]V, k C) bool {
-	_, ok := m[k]
-	return ok
-}
-
 func unescape(target string) string {
 	t2, err := url.PathUnescape(target)
 	if err != nil {
@@ -48,11 +43,15 @@ func (rw *Rewriter) Bank(src, dst string) {
 }
 
 func splitQuery(path string) (string, string) {
-	query := max(strings.Index(path, "#"), strings.Index(path, "?"))
-	if query != -1 {
-		return path[:query], path[query:]
+	cutoff := max(strings.Index(path, "#"), strings.Index(path, "?"))
+	if cutoff == -1 {
+		cutoff = len(path)
 	}
-	return path, ""
+	url, query := path[:cutoff], path[cutoff:]
+	if url == "" {
+		url = "."
+	}
+	return path, query
 }
 
 func assureAbsolute(dst, src string) string {
@@ -62,39 +61,57 @@ func assureAbsolute(dst, src string) string {
 	return filepath.Join(filepath.Dir(src), dst)
 }
 
-func assureLeadingSlash(path string) string {
-	if !strings.HasPrefix(path, "/") {
-		return "/" + path
+// returns the absolute URL for the linked resource in content directory
+func (rw Rewriter) locateByContentDir(linked string, linker paths.Paths) (string, bool) {
+	if !filepath.IsAbs(linked) {
+		linked = filepath.Join(linker.Src, linked)
 	}
-	return path
+	dst, ok := rw.links[linked]
+	return dst, ok
 }
 
-func (rw Rewriter) isValid(dst, src string) (string, bool) {
-	src = assureLeadingSlash(src)
-	dst = assureAbsolute(dst, src)
-	dst = filepath.Clean(dst)
-	return dst, has(rw.targets, dst)
+// returns the absolute URL for the linked resource in build directory
+func (rw Rewriter) locateByBuildDir(linked string, linker paths.Paths) (string, bool) {
+	if !filepath.IsAbs(linked) {
+		linked = filepath.Join(linker.Dst, linked)
+	}
+	_, ok := rw.targets[linked]
+	if ok {
+		return linked, true
+	}
+	return "", false
 }
 
+func (rw Rewriter) locate(linked string, linker paths.Paths) (string, bool) {
+	byContentDir, ok := rw.locateByContentDir(linked, linker)
+	if ok {
+		return byContentDir, true
+	}
+	byBuildDir, ok := rw.locateByBuildDir(linked, linker)
+	if ok {
+		return byBuildDir, true
+	}
+	return "", false
+}
+
+// user can link a page by
+//   - its path in local content directory
+//   - its path in local content directory, with encoding special characters
+//   - its path in build directory
+//   - its path in build directory, with encoding special characters
+//
+// either relative to the linker page, or in absolute form. using leading slash for content directory root.
+// at either combination, [Rewriter.Rewrite] creates encoded absolute URLs (except the domain).
+// The bank may contain a rule for the parent or ancestor directory of linked page instead of the direct file.
 func (rw Rewriter) Rewrite(linked string, linker paths.Paths) (string, error) {
-	if isExternal(linked) || strings.HasPrefix(linked, "#") || strings.HasPrefix(linked, "?") {
+	if isExternal(linked) {
 		return linked, nil
 	}
 	linked = unescape(linked)
-	if dst, ok := rw.isValid(linked, linker.Src); ok {
-		return dst, nil
-	}
-	linked = assureAbsolute(linked, linker.Src)
-	linked = filepath.Clean(linked)
 	linked, query := splitQuery(linked)
-	linked = strings.TrimPrefix(linked, "/")
-	linked = strings.TrimSuffix(linked, "/")
-	if linked == "" {
-		linked = "."
-	}
-	if !has(rw.links, linked) {
+	dst, ok := rw.locate(linked, linker)
+	if !ok {
 		return "", ErrInvalidTarget
 	}
-	linked = rw.links[linked]
-	return linked + query, nil
+	return dst + query, nil
 }
