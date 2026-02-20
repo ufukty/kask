@@ -62,8 +62,10 @@ func TestRewrite_linksToParents(t *testing.T) {
 		{linker: d0, linked: "/README.md"}:            "/",
 		{linker: d0, linked: "/README.md#title"}:      "/#title",
 
-		{linker: d0, linked: "#"}:      "#",
-		{linker: d0, linked: "#title"}: "#title",
+		{linker: d0, linked: "#"}:      "/#",
+		{linker: d0, linked: "#title"}: "/#title",
+		{linker: d2, linked: "#"}:      "/a/b/page.html/#",
+		{linker: d2, linked: "#title"}: "/a/b/page.html/#title",
 
 		{linker: d0, linked: "a/../a/b"}:                 "/a/b/",
 		{linker: d0, linked: "a/../a/b/c/d"}:             "/a/b/c/d/",
