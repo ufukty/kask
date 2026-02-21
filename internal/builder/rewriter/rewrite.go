@@ -68,14 +68,18 @@ func (rw Rewriter) locateByContentDir(linked string, linker paths.Paths) (string
 
 // returns the absolute URL for the linked resource in sitemap
 func (rw Rewriter) locateByUrl(linked string, linker paths.Paths) (string, bool) {
-	if linked == "" { // same-page anchor links
-		linked = linker.Url
-	} else if !filepath.IsAbs(linked) {
-		linked = filepath.Join(filepath.Dir(linker.Url), linked)
+	lr, err := url.Parse(linker.Url)
+	if err != nil {
+		return "", false
 	}
-	_, ok := rw.targets[linked]
+	ld, err := url.Parse(linked)
+	if err != nil {
+		return "", false
+	}
+	ld = lr.ResolveReference(ld)
+	_, ok := rw.targets[ld.String()]
 	if ok {
-		return linked, true
+		return ld.String(), true
 	}
 	return "", false
 }
