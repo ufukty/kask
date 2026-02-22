@@ -17,14 +17,6 @@ func isExternal(url string) bool {
 		strings.HasPrefix(url, "https://")
 }
 
-func unescape(target string) string {
-	t2, err := url.PathUnescape(target)
-	if err != nil {
-		return target
-	}
-	return t2
-}
-
 type Rewriter struct {
 	links   map[string]string // src -> url
 	targets map[string]any    // urls
@@ -56,8 +48,6 @@ func (rw Rewriter) locateByContentDir(linked string, linker paths.Paths) (string
 		linked = linker.Src
 	} else if !filepath.IsAbs(linked) {
 		linked = filepath.Join(filepath.Dir(linker.Src), linked)
-	} else {
-		linked = strings.TrimPrefix(linked, "/")
 	}
 	dst, ok := rw.links[linked]
 	if ok {
@@ -100,6 +90,20 @@ func isEvil(linked string, linker paths.Paths) bool {
 	return strings.HasPrefix(filepath.Join(filepath.Dir(linker.Src), linked), "..")
 }
 
+var contentDirectory = paths.Paths{
+	Src: "",
+	Dst: "",
+	Url: "/",
+}
+
+// toRelative rewrites absolute paths as if they're relative to the root
+func toRelative(linked string, linker paths.Paths) (string, paths.Paths) {
+	if filepath.IsAbs(linked) {
+		return strings.TrimPrefix(linked, "/"), contentDirectory
+	}
+	return linked, linker
+}
+
 // Rewriter returns an absolute and encoded URL for a resource which the user linked it either:
 //   - by its path in the content or build directory;
 //   - with its absolute path (by the content directory root) or relative (to the linker page);
@@ -111,7 +115,7 @@ func (rw Rewriter) Rewrite(linked string, linker paths.Paths) (string, error) {
 	if isEvil(linked, linker) {
 		return "", ErrInvalidTarget
 	}
-	linked = unescape(linked)
+	linked, linker = toRelative(linked, linker)
 	linked, query := splitQuery(linked)
 	dst, ok := rw.locate(linked, linker)
 	if !ok {
