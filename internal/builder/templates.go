@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.ufukty.com/kask/internal/builder/paths"
+	"go.ufukty.com/kask/internal/paths"
 	"go.ufukty.com/kask/pkg/kask"
 )
 

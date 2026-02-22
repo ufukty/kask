@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"go.ufukty.com/kask/internal/builder/paths"
-	"go.ufukty.com/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/internal/paths"
+	"go.ufukty.com/kask/internal/rewriter"
 	"go.ufukty.com/kask/pkg/kask"
 )
 

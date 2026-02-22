@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.ufukty.com/kask/internal/builder/paths"
+	"go.ufukty.com/kask/internal/paths"
 )
 
 // /a and /a/b/c is not visitable

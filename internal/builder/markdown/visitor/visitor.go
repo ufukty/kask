@@ -7,8 +7,8 @@ import (
 
 	"github.com/gomarkdown/markdown/ast"
 	"go.ufukty.com/kask/internal/builder/markdown/visitor/codefence"
-	"go.ufukty.com/kask/internal/builder/paths"
-	"go.ufukty.com/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/internal/paths"
+	"go.ufukty.com/kask/internal/rewriter"
 )
 
 // unsafe for concurrency
