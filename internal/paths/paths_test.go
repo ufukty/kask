@@ -35,7 +35,7 @@ func TestUri_dir(t *testing.T) {
 	type input struct{ parent, child string }
 	type output = string
 	tcs := map[input]output{
-		{"", "a"}:      "/a/",
+		{"/", "a"}:      "/a/",
 		{"/a", "b"}:    "/a/b/",
 		{"/a/", "b"}:   "/a/b/",
 		{"/a/b/", "c"}: "/a/b/c/",
@@ -59,7 +59,7 @@ func TestUri_file_urlModeDefault(t *testing.T) {
 	type input struct{ parent, child string }
 	type output = string
 	tcs := map[input]output{
-		{"", "a.md"}:      "/a.html",
+		{"/", "a.md"}:      "/a.html",
 		{"/a", "b.md"}:    "/a/b.html",
 		{"/a/", "b.md"}:   "/a/b.html",
 		{"/a/b/", "c.md"}: "/a/b/c.html",
@@ -82,7 +82,7 @@ func TestUri_file_urlModeExtless(t *testing.T) {
 	type input struct{ parent, child string }
 	type output = string
 	tcs := map[input]output{
-		{"", "a.md"}:      "/a",
+		{"/", "a.md"}:      "/a",
 		{"/a", "b.md"}:    "/a/b",
 		{"/a/", "b.md"}:   "/a/b",
 		{"/a/b/", "c.md"}: "/a/b/c",
