@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"go.ufukty.com/kask/internal/builder/paths"
+	"go.ufukty.com/kask/internal/paths"
 )
 
 var ErrInvalidTarget = fmt.Errorf("invalid link: internal target doesn't exist.")

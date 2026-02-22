@@ -3,8 +3,8 @@ package builder
 import (
 	"fmt"
 
-	"go.ufukty.com/kask/internal/builder/paths"
-	"go.ufukty.com/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/internal/paths"
+	"go.ufukty.com/kask/internal/rewriter"
 )
 
 func Example_builder_rewriteLinksInHtmlPage() {

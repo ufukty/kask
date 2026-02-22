@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"go.ufukty.com/kask/internal/builder/paths"
+	"go.ufukty.com/kask/internal/paths"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
