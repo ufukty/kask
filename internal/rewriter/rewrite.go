@@ -46,7 +46,7 @@ func splitQuery(path string) (string, string) {
 func (rw Rewriter) locateByContentDir(linked string, linker paths.Paths) (string, bool) {
 	if linked == "" { // same-page anchor links
 		linked = linker.Src
-	} else if !filepath.IsAbs(linked) {
+	} else {
 		linked = filepath.Join(filepath.Dir(linker.Src), linked)
 	}
 	dst, ok := rw.links[linked]
