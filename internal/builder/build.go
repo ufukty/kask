@@ -10,8 +10,8 @@ import (
 	"go.ufukty.com/kask/cmd/kask/commands/version"
 	"go.ufukty.com/kask/internal/builder/directory"
 	"go.ufukty.com/kask/internal/builder/markdown"
-	"go.ufukty.com/kask/internal/builder/paths"
-	"go.ufukty.com/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/internal/paths"
+	"go.ufukty.com/kask/internal/rewriter"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -42,6 +42,7 @@ type Args struct {
 type builder struct {
 	args     Args
 	rw       *rewriter.Rewriter
+	mr       *markdown.Renderer
 	assets   []string                  // src
 	markdown map[string]*kask.Markdown // src -> content
 	leaves   map[string]*kask.Node     // dst -> node
@@ -164,7 +165,7 @@ func (b *builder) renderMarkdown(d *dir2) error {
 	for _, page := range d.original.Pages {
 		if filepath.Ext(page) == ".md" {
 			p := d.paths.File(page, d.original.IsToStrip(), b.args.Provider.UrlMode())
-			html, err := markdown.ToHtml(b.args.Src, p.Src, b.rw)
+			html, err := b.mr.ToHtml(p)
 			if err != nil {
 				return fmt.Errorf("rendering %s: %w", page, err)
 			}
@@ -218,9 +219,11 @@ func (b *builder) Build() error {
 
 // split for testing
 func newBuilder(args Args) *builder {
+	rw := rewriter.New()
 	return &builder{
 		args:     args,
-		rw:       rewriter.New(),
+		rw:       rw,
+		mr:       markdown.New(args.Src, rw),
 		assets:   []string{},
 		markdown: map[string]*kask.Markdown{},
 		leaves:   map[string]*kask.Node{},

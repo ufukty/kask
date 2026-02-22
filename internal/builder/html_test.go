@@ -3,7 +3,8 @@ package builder
 import (
 	"fmt"
 
-	"go.ufukty.com/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/internal/paths"
+	"go.ufukty.com/kask/internal/rewriter"
 )
 
 func Example_builder_rewriteLinksInHtmlPage() {
@@ -17,7 +18,8 @@ func Example_builder_rewriteLinksInHtmlPage() {
 	// visitable dirs:
 	rw.Bank("a/", "/a/")
 	rw.Bank("a/b", "/a/b/")
-	new, _ := rewriteLinksInHtmlPage(rw, "a/page.tmpl", []byte(input))
+	page := paths.Paths{Src: "a/page.tmpl", Dst: "a/page.html", Url: "/a/page.html"}
+	new, _ := rewriteLinksInHtmlPage(rw, page, []byte(input))
 	fmt.Println(string(new))
 	// Output:
 	// <a href="/a/b/#Title">link with redundant traverse</a>

@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.ufukty.com/kask/internal/builder/paths"
+	"go.ufukty.com/kask/internal/paths"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -87,7 +87,7 @@ func (b *builder) executeTemplates(p paths.Paths, t *template.Template, c *kask.
 	bs := buf.Bytes()
 	if filepath.Ext(p.Src) == ".tmpl" {
 		var err error
-		bs, err = rewriteLinksInHtmlPage(b.rw, p.Dst, bs)
+		bs, err = rewriteLinksInHtmlPage(b.rw, p, bs)
 		if err != nil {
 			return fmt.Errorf("rewriting the links found at the page: %w", err)
 		}

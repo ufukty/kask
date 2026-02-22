@@ -6,7 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"go.ufukty.com/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/internal/paths"
+	"go.ufukty.com/kask/internal/rewriter"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -14,11 +15,12 @@ func matcher(tokens ...string) *regexp.Regexp {
 	return regexp.MustCompile(strings.Join(tokens, `\s*`))
 }
 
-func TestToHtml_content(t *testing.T) {
-	r := rewriter.New()
-	r.Bank(".assets/img.jpg", "/.assets/img.jpg")
-	r.Bank("sibling.md", "/sibling.html")
-	p, err := ToHtml("testdata", "page.md", r)
+func TestRewriter_ToHtml_content(t *testing.T) {
+	rw := rewriter.New()
+	rw.Bank(".assets/img.jpg", "/.assets/img.jpg")
+	rw.Bank("sibling.md", "/sibling.html")
+	rn := New("testdata", rw)
+	p, err := rn.ToHtml(paths.Paths{Src: "page.md"})
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
 	}
@@ -106,11 +108,12 @@ func printToc(n *kask.MarkdownTocNode) {
 	}
 }
 
-func ExampleToHtml_toc() {
-	r := rewriter.New()
-	r.Bank(".assets/img.jpg", "/.assets/img.jpg")
-	r.Bank("sibling.md", "/sibling.html")
-	p, err := ToHtml("testdata", "page.md", r)
+func ExampleRewriter_toHtml_toc() {
+	rw := rewriter.New()
+	rw.Bank(".assets/img.jpg", "/.assets/img.jpg")
+	rw.Bank("sibling.md", "/sibling.html")
+	rn := New("testdata", rw)
+	p, err := rn.ToHtml(paths.Paths{Src: "page.md"})
 	if err != nil {
 		panic(fmt.Errorf("act, ToHtml: %w", err))
 	}
