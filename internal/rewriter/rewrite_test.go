@@ -12,6 +12,38 @@ import (
 	"go.ufukty.com/kask/internal/paths"
 )
 
+func TestSplit(t *testing.T) {
+	// path can be:
+	//   - <query>
+	//   - <assets>
+	//   - <page/dir>
+	//   - <page/dir> <query>
+	//   - <page/dir> <assets>
+	//   - <page/dir> <assets> <query>
+	tcs := map[string]struct{ path, assets, query string }{
+		"#title":                       {"", "", "#title"},
+		".assets/img.jpg":              {"", ".assets/img.jpg", ""},
+		"/a/b/c":                       {"/a/b/c", "", ""},
+		"/a/b/c#title":                 {"/a/b/c", "", "#title"},
+		".assets/img.jpg#title":        {"", ".assets/img.jpg", "#title"},
+		"/a/b/c/.assets/img.jpg#title": {"/a/b/c/", ".assets/img.jpg", "#title"},
+	}
+	for input, expected := range tcs {
+		t.Run(testname(input), func(t *testing.T) {
+			p, a, q := split(input)
+			if expected.path != p {
+				t.Errorf("assert path: expected %q, got %q", expected.path, p)
+			}
+			if expected.assets != a {
+				t.Errorf("assert assets: expected %q, got %q", expected.assets, a)
+			}
+			if expected.query != q {
+				t.Errorf("assert query: expected %q, got %q", expected.query, q)
+			}
+		})
+	}
+}
+
 // /a and /a/b/c is not visitable
 func rewriter() *Rewriter {
 	links := map[string]string{
@@ -75,11 +107,9 @@ func sorted(m map[tc]string) iter.Seq2[tc, string] {
 // TODO: add cases where (linker ⋁ linked) (has ⋁ should contain) encoded parts
 func TestRewrite_Rewrite_toVisitableDir(t *testing.T) {
 	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
-	d2 := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := map[tc]string{
 		{linker: d0, linked: "/"}:                       "/",
 		{linker: d0, linked: "/a/b"}:                    "/a/b/",
-		{linker: d0, linked: "/a/b/"}:                   "/a/b/",
 		{linker: d0, linked: "/a/b/index.tmpl"}:         "/a/b/",
 		{linker: d0, linked: "/README.md"}:              "/",
 		{linker: d0, linked: "a/../a/b"}:                "/a/b/",
@@ -88,8 +118,30 @@ func TestRewrite_Rewrite_toVisitableDir(t *testing.T) {
 		{linker: d0, linked: "a/b"}:                     "/a/b/",
 		{linker: d0, linked: "a/b/c /d"}:                "/a/b/c%20/d/",
 		{linker: d0, linked: "a/b/c /d/README.md"}:      "/a/b/c%20/d/",
-		{linker: d2, linked: "../../"}:                  "/",
-		{linker: d2, linked: "./../../"}:                "/",
+	}
+	rw := rewriter()
+	for tc, te := range sorted(tcs) {
+		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+			got, err := rw.Rewrite(tc.linked, tc.linker)
+			if err != nil {
+				t.Errorf("act, unexpected error: %v", err)
+			} else if te != got {
+				t.Errorf("expected %q got %q", te, got)
+			}
+		})
+	}
+}
+
+func TestRewrite_Rewrite_toPageURLs(t *testing.T) {
+	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
+	d2 := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
+	tcs := map[tc]string{
+		{linker: d0, linked: "/a/b/"}:          "/a/b/",
+		{linker: d0, linked: "/"}:              "/",
+		{linker: d0, linked: "a/../a/b/c /d/"}: "/a/b/c%20/d/",
+		{linker: d0, linked: "a/b/c /d/"}:      "/a/b/c%20/d/",
+		{linker: d2, linked: "../../"}:         "/",
+		{linker: d2, linked: "./../../"}:       "/",
 	}
 	rw := rewriter()
 	for tc, te := range sorted(tcs) {
@@ -208,17 +260,82 @@ func TestRewrite_Rewrite_linksToUnvisitableDirs(t *testing.T) {
 func TestRewrite_Rewrite_linksToUnexistingNodes(t *testing.T) {
 	linker := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := []string{
-		"../x",         // /x/
-		"../../x.tmpl", // /x.html
-		"../../..",     // path escape
-		"../../../..",  // path escape
+		"../x",                    // /x/
+		"../../x.tmpl",            // /x.html
+		"../../..",                // path escape
+		"../../../..",             // path escape
+		"a/b/c/../../../../../..", // path escape
 	}
 	rw := rewriter()
 	for _, input := range tcs {
 		t.Run(testname(input), func(t *testing.T) {
-			_, err := rw.Rewrite(input, linker)
+			got, err := rw.Rewrite(input, linker)
 			if err == nil {
-				t.Errorf("act, unexpected success")
+				t.Errorf("act, unexpected success with value: %s", got)
+			}
+		})
+	}
+}
+
+func TestRewrite_Rewrite_idempotency(t *testing.T) {
+	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
+	d2 := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
+	tcs := map[tc]string{
+		{linker: d0, linked: "/"}:                        "/",
+		{linker: d0, linked: "/"}:                        "/",
+		{linker: d0, linked: "/#title"}:                  "/#title",
+		{linker: d0, linked: "/a/b"}:                     "/a/b/",
+		{linker: d0, linked: "/a/b/"}:                    "/a/b/",
+		{linker: d0, linked: "/a/b/#title"}:              "/a/b/#title",
+		{linker: d0, linked: "/a/b/index.tmpl"}:          "/a/b/",
+		{linker: d0, linked: "/a/b/index.tmpl#title"}:    "/a/b/#title",
+		{linker: d0, linked: "/a/b#title"}:               "/a/b/#title",
+		{linker: d0, linked: "/page.md"}:                 "/page.html",
+		{linker: d0, linked: "/README.md"}:               "/",
+		{linker: d0, linked: "/README.md#title"}:         "/#title",
+		{linker: d0, linked: "#"}:                        "/page.html#",
+		{linker: d0, linked: "#title"}:                   "/page.html#title",
+		{linker: d0, linked: "a/../a/b"}:                 "/a/b/",
+		{linker: d0, linked: "a/../a/b/c /d"}:            "/a/b/c%20/d/",
+		{linker: d0, linked: "a/../a/b/c /d/"}:           "/a/b/c%20/d/",
+		{linker: d0, linked: "a/../a/b/c /d/README.md"}:  "/a/b/c%20/d/",
+		{linker: d0, linked: "a/../a/b/page.tmpl"}:       "/a/b/page.html",
+		{linker: d0, linked: "a/../a/b/page.tmpl#title"}: "/a/b/page.html#title",
+		{linker: d0, linked: "a/b"}:                      "/a/b/",
+		{linker: d0, linked: "a/b/#title"}:               "/a/b/#title",
+		{linker: d0, linked: "a/b/c /d"}:                 "/a/b/c%20/d/",
+		{linker: d0, linked: "a/b/c /d/"}:                "/a/b/c%20/d/",
+		{linker: d0, linked: "a/b/c /d/#title"}:          "/a/b/c%20/d/#title",
+		{linker: d0, linked: "a/b/c /d/README.md"}:       "/a/b/c%20/d/",
+		{linker: d0, linked: "a/b/c /d/README.md#title"}: "/a/b/c%20/d/#title",
+		{linker: d0, linked: "a/b/c /page.md#title"}:     "/a/b/c%20/page.html#title",
+		{linker: d0, linked: "a/b/index.tmpl#title"}:     "/a/b/#title",
+		{linker: d0, linked: "a/b/page.tmpl"}:            "/a/b/page.html",
+		{linker: d0, linked: "a/b/page.tmpl#title"}:      "/a/b/page.html#title",
+		{linker: d0, linked: "page.md#title"}:            "/page.html#title",
+		{linker: d2, linked: "../../"}:                   "/",
+		{linker: d2, linked: "../../page.md"}:            "/page.html",
+		{linker: d2, linked: "./../../"}:                 "/",
+		{linker: d2, linked: "./../../page.md"}:          "/page.html",
+		{linker: d2, linked: "./../../page.md#title"}:    "/page.html#title",
+		{linker: d2, linked: "/page.md#title"}:           "/page.html#title",
+		{linker: d2, linked: "#"}:                        "/a/b/page.html#",
+		{linker: d2, linked: "#title"}:                   "/a/b/page.html#title",
+	}
+	rw := rewriter()
+	for tc, te := range sorted(tcs) {
+		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+			initial, err := rw.Rewrite(tc.linked, tc.linker)
+			if err != nil {
+				t.Errorf("1st act, unexpected error: %v", err)
+			} else if te != initial {
+				t.Errorf("1st assert, expected: %q got: %q", te, initial)
+			}
+			secondary, err := rw.Rewrite(initial, tc.linker)
+			if err != nil {
+				t.Errorf("2nd act, unexpected error: %v", err)
+			} else if secondary != initial {
+				t.Errorf("2nd assert, expected: %q got: %q", te, secondary)
 			}
 		})
 	}

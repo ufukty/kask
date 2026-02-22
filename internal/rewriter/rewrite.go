@@ -9,7 +9,15 @@ import (
 	"go.ufukty.com/kask/internal/paths"
 )
 
-var ErrInvalidTarget = fmt.Errorf("invalid link: internal target doesn't exist.")
+var (
+	ErrInvalidTarget = fmt.Errorf("invalid link: internal target doesn't exist.")
+	ErrOutsideTarget = fmt.Errorf("outside target: link escapes the content directory.")
+)
+
+func has[K comparable, V any](m map[K]V, k K) bool {
+	_, ok := m[k]
+	return ok
+}
 
 func isExternal(url string) bool {
 	return false ||
@@ -34,92 +42,101 @@ func (rw *Rewriter) Bank(src, url string) {
 	rw.targets[url] = nil
 }
 
-func splitQuery(path string) (string, string) {
-	i := max(strings.Index(path, "#"), strings.Index(path, "?"))
-	if i == -1 {
-		i = len(path)
+func split(path string) (string, string, string) {
+	assets := strings.Index(path, ".assets")
+	anchor := strings.Index(path, "#")
+	query := strings.Index(path, "?")
+	tail := -1
+	if anchor != -1 && query != -1 {
+		tail = min(anchor, query)
+	} else if anchor != -1 || query != -1 {
+		tail = max(anchor, query)
 	}
-	return path[:i], path[i:]
-}
-
-// returns the absolute URL for the linked resource in content directory
-func (rw Rewriter) locateByContentDir(linked string, linker paths.Paths) (string, bool) {
-	if linked == "" { // same-page anchor links
-		linked = linker.Src
+	if assets == -1 && tail == -1 {
+		return path, "", ""
+	} else if assets == -1 {
+		return path[:tail], "", path[tail:]
+	} else if tail == -1 {
+		return path[:assets], path[assets:], ""
 	} else {
-		linked = filepath.Join(filepath.Dir(linker.Src), linked)
+		return path[:assets], path[assets:tail], path[tail:]
 	}
-	dst, ok := rw.links[linked]
-	if ok {
-		return dst, true
-	}
-	return "", false
 }
 
-// returns the absolute URL for the linked resource in sitemap
-func (rw Rewriter) locateByUrl(linked string, linker paths.Paths) (string, bool) {
-	lr, err := url.Parse(linker.Url)
-	if err != nil {
-		return "", false
-	}
-	ld, err := url.Parse(linked)
-	if err != nil {
-		return "", false
-	}
-	ld = lr.ResolveReference(ld)
-	_, ok := rw.targets[ld.String()]
-	if ok {
-		return ld.String(), true
-	}
-	return "", false
-}
-
-func (rw Rewriter) locate(linked string, linker paths.Paths) (string, bool) {
-	byContentDir, ok := rw.locateByContentDir(linked, linker)
-	if ok {
-		return byContentDir, true
-	}
-	byBuildDir, ok := rw.locateByUrl(linked, linker)
-	if ok {
-		return byBuildDir, true
-	}
-	return "", false
-}
-
-func isEvil(linked string, linker paths.Paths) bool {
-	return strings.HasPrefix(filepath.Join(filepath.Dir(linker.Src), linked), "..")
-}
-
+// TODO: take as parameter to support domains
 var contentDirectory = paths.Paths{
-	Src: "",
-	Dst: "",
+	Src: ".",
+	Dst: ".",
 	Url: "/",
 }
 
 // toRelative rewrites absolute paths as if they're relative to the root
-func toRelative(linked string, linker paths.Paths) (string, paths.Paths) {
+func toRelative(linked, linker, root string) (string, string) {
 	if filepath.IsAbs(linked) {
-		return strings.TrimPrefix(linked, "/"), contentDirectory
+		return strings.TrimPrefix(linked, "/"), root
 	}
 	return linked, linker
 }
 
-// Rewriter returns an absolute and encoded URL for a resource which the user linked it either:
-//   - by its path in the content or build directory;
-//   - with its absolute path (by the content directory root) or relative (to the linker page);
-//   - with/out url encoded path segments.
+func joinSrcPaths(dst, src string) string {
+	if dst == "" { // same-page anchor links
+		return src
+	}
+	return filepath.Join(filepath.Dir(src), dst)
+}
+
+func (rw Rewriter) rewriteByContentDir(linked string, linker string) (string, bool, error) {
+	linked, assets, query := split(linked)
+	linked, linker = toRelative(linked, linker, contentDirectory.Src)
+	linked = joinSrcPaths(linked, linker)
+	if strings.HasPrefix(linked, "..") {
+		return "", false, ErrOutsideTarget
+	}
+	dst, ok := rw.links[linked]
+	return dst + assets + query, ok, nil
+}
+
+// RFC 3986 Section 5.2
+func join3986(dst, src string) (string, error) {
+	d, err := url.Parse(dst)
+	if err != nil {
+		return "", fmt.Errorf("parsing destination url: %w", err)
+	}
+	s, err := url.Parse(src)
+	if err != nil {
+		return "", fmt.Errorf("parsing source url: %w", err)
+	}
+	return s.ResolveReference(d).String(), nil
+}
+
+func (rw Rewriter) canonicalizeIfUrl(linked, linker string) (string, bool, error) {
+	linked, assets, query := split(linked)
+	linked, linker = toRelative(linked, linker, contentDirectory.Url)
+	linked, err := join3986(linked, linker)
+	if err != nil {
+		return "", false, fmt.Errorf("join: %w", err)
+	}
+	return linked + assets + query, has(rw.targets, linked), nil
+}
+
+// Idempotent.
+// Input can be absolute/relative local-path/URL of target.
+// Return value is absolute and encoded URL.
 func (rw Rewriter) Rewrite(linked string, linker paths.Paths) (string, error) {
 	if isExternal(linked) {
 		return linked, nil
 	}
-	if isEvil(linked, linker) {
-		return "", ErrInvalidTarget
+	dst, ok, err := rw.rewriteByContentDir(linked, linker.Src)
+	if err != nil {
+		return "", fmt.Errorf("rewriting by content directory: %w", err)
+	} else if ok {
+		return dst, nil
 	}
-	linked, linker = toRelative(linked, linker)
-	linked, query := splitQuery(linked)
-	dst, ok := rw.locate(linked, linker)
-	if !ok {
-		return "", ErrInvalidTarget
+	dst, ok, err = rw.canonicalizeIfUrl(linked, linker.Url) // for idempotency
+	if err != nil {
+		return "", fmt.Errorf("canonicalizing: %w", err)
+	} else if ok {
+		return dst, nil
 	}
-	return dst + query, nil
+	return dst, ErrInvalidTarget
 }
