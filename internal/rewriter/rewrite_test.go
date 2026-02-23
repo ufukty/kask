@@ -12,40 +12,18 @@ import (
 	"go.ufukty.com/kask/internal/paths"
 )
 
-func TestSplit(t *testing.T) {
-	// path can be:
-	//   - <query>
-	//   - <assets>
-	//   - <page/dir>
-	//   - <page/dir> <query>
-	//   - <page/dir> <assets>
-	//   - <page/dir> <assets> <query>
-	tcs := map[string]struct{ path, assets, query string }{
-		"#title":                       {"", "", "#title"},
-		".assets/img.jpg":              {"", ".assets/img.jpg", ""},
-		"/a/b/c":                       {"/a/b/c", "", ""},
-		"/a/b/c#title":                 {"/a/b/c", "", "#title"},
-		".assets/img.jpg#title":        {"", ".assets/img.jpg", "#title"},
-		"/a/b/c/.assets/img.jpg#title": {"/a/b/c/", ".assets/img.jpg", "#title"},
-	}
-	for input, expected := range tcs {
-		t.Run(testname(input), func(t *testing.T) {
-			p, a, q := split(input)
-			if expected.path != p {
-				t.Errorf("assert path: expected %q, got %q", expected.path, p)
-			}
-			if expected.assets != a {
-				t.Errorf("assert assets: expected %q, got %q", expected.assets, a)
-			}
-			if expected.query != q {
-				t.Errorf("assert query: expected %q, got %q", expected.query, q)
-			}
-		})
-	}
+func tescape(tn string) string {
+	tn = strings.ReplaceAll(tn, "/", "\\")
+	tn = strings.ReplaceAll(tn, "%20", " ")
+	return tn
+}
+
+func testname(a, b string) string {
+	return fmt.Sprintf("%s=>%s", tescape(a), tescape(b))
 }
 
 // /a and /a/b/c is not visitable
-func rewriter() *Rewriter {
+func rewriter(domain string) *Rewriter {
 	links := map[string]string{
 		// pages
 		"README.md":          "/",
@@ -59,17 +37,11 @@ func rewriter() *Rewriter {
 		"a/b":      "/a/b/",
 		"a/b/c /d": "/a/b/c%20/d/",
 	}
-	r := New()
+	r := New(paths.Paths{Src: ".", Dst: ".", Url: domain})
 	for src, url := range links {
 		r.Bank(src, url)
 	}
 	return r
-}
-
-func testname(tn string) string {
-	tn = strings.ReplaceAll(tn, "/", "\\")
-	tn = strings.ReplaceAll(tn, "%20", " ")
-	return tn
 }
 
 type tc struct {
@@ -119,9 +91,9 @@ func TestRewrite_Rewrite_toVisitableDir(t *testing.T) {
 		{linker: d0, linked: "a/b/c /d"}:                "/a/b/c%20/d/",
 		{linker: d0, linked: "a/b/c /d/README.md"}:      "/a/b/c%20/d/",
 	}
-	rw := rewriter()
+	rw := rewriter("/")
 	for tc, te := range sorted(tcs) {
-		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
@@ -143,9 +115,9 @@ func TestRewrite_Rewrite_toPageURLs(t *testing.T) {
 		{linker: d2, linked: "../../"}:         "/",
 		{linker: d2, linked: "./../../"}:       "/",
 	}
-	rw := rewriter()
+	rw := rewriter("/")
 	for tc, te := range sorted(tcs) {
-		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
@@ -166,9 +138,9 @@ func TestRewrite_Rewrite_toPage(t *testing.T) {
 		{linker: d2, linked: "../../page.md"}:      "/page.html",
 		{linker: d2, linked: "./../../page.md"}:    "/page.html",
 	}
-	rw := rewriter()
+	rw := rewriter("/")
 	for tc, te := range sorted(tcs) {
-		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
@@ -192,9 +164,9 @@ func TestRewrite_Rewrite_toVisitableDirAnchor(t *testing.T) {
 		{linker: d0, linked: "a/b/c /d/README.md#title"}: "/a/b/c%20/d/#title",
 		{linker: d0, linked: "a/b/index.tmpl#title"}:     "/a/b/#title",
 	}
-	rw := rewriter()
+	rw := rewriter("/")
 	for tc, te := range sorted(tcs) {
-		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
@@ -220,9 +192,9 @@ func TestRewrite_Rewrite_toPageAnchor(t *testing.T) {
 		{linker: d2, linked: "#"}:                        "/a/b/page.html#",
 		{linker: d2, linked: "#title"}:                   "/a/b/page.html#title",
 	}
-	rw := rewriter()
+	rw := rewriter("/")
 	for tc, te := range sorted(tcs) {
-		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
@@ -246,9 +218,9 @@ func TestRewrite_Rewrite_linksToUnvisitableDirs(t *testing.T) {
 		"c",       // /a/b/c%20/
 		"c/",      // /a/b/c%20/
 	}
-	rw := rewriter()
+	rw := rewriter("/")
 	for _, input := range tcs {
-		t.Run(testname(input), func(t *testing.T) {
+		t.Run(tescape(input), func(t *testing.T) {
 			_, err := rw.Rewrite(input, linker)
 			if err == nil {
 				t.Errorf("act, unexpected success")
@@ -266,9 +238,9 @@ func TestRewrite_Rewrite_linksToUnexistingNodes(t *testing.T) {
 		"../../../..",             // path escape
 		"a/b/c/../../../../../..", // path escape
 	}
-	rw := rewriter()
+	rw := rewriter("/")
 	for _, input := range tcs {
-		t.Run(testname(input), func(t *testing.T) {
+		t.Run(tescape(input), func(t *testing.T) {
 			got, err := rw.Rewrite(input, linker)
 			if err == nil {
 				t.Errorf("act, unexpected success with value: %s", got)
@@ -292,9 +264,9 @@ func TestRewrite_Rewrite_toVisitableDirWithDomain(t *testing.T) {
 		{linker: d0, linked: "a/b/c /d"}:                "https://kask.ufukty.com/a/b/c%20/d/",
 		{linker: d0, linked: "a/b/c /d/README.md"}:      "https://kask.ufukty.com/a/b/c%20/d/",
 	}
-	rw := rewriter()
+	rw := rewriter("https://kask.ufukty.com")
 	for tc, te := range sorted(tcs) {
-		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
@@ -316,9 +288,9 @@ func TestRewrite_Rewrite_toPageURLsWithDomain(t *testing.T) {
 		{linker: d2, linked: "../../"}:         "https://kask.ufukty.com/",
 		{linker: d2, linked: "./../../"}:       "https://kask.ufukty.com/",
 	}
-	rw := rewriter()
+	rw := rewriter("https://kask.ufukty.com")
 	for tc, te := range sorted(tcs) {
-		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
@@ -339,9 +311,9 @@ func TestRewrite_Rewrite_toPageWithDomain(t *testing.T) {
 		{linker: d2, linked: "../../page.md"}:      "https://kask.ufukty.com/page.html",
 		{linker: d2, linked: "./../../page.md"}:    "https://kask.ufukty.com/page.html",
 	}
-	rw := rewriter()
+	rw := rewriter("https://kask.ufukty.com")
 	for tc, te := range sorted(tcs) {
-		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
@@ -365,9 +337,9 @@ func TestRewrite_Rewrite_toVisitableDirAnchorWithDomain(t *testing.T) {
 		{linker: d0, linked: "a/b/c /d/README.md#title"}: "https://kask.ufukty.com/a/b/c%20/d/#title",
 		{linker: d0, linked: "a/b/index.tmpl#title"}:     "https://kask.ufukty.com/a/b/#title",
 	}
-	rw := rewriter()
+	rw := rewriter("https://kask.ufukty.com")
 	for tc, te := range sorted(tcs) {
-		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
@@ -393,9 +365,9 @@ func TestRewrite_Rewrite_toPageAnchorWithDomain(t *testing.T) {
 		{linker: d2, linked: "#"}:                        "https://kask.ufukty.com/a/b/page.html#",
 		{linker: d2, linked: "#title"}:                   "https://kask.ufukty.com/a/b/page.html#title",
 	}
-	rw := rewriter()
+	rw := rewriter("https://kask.ufukty.com")
 	for tc, te := range sorted(tcs) {
-		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
@@ -419,9 +391,9 @@ func TestRewrite_Rewrite_linksToUnvisitableDirsWithDomain(t *testing.T) {
 		"c",       // /a/b/c%20/
 		"c/",      // /a/b/c%20/
 	}
-	rw := rewriter()
+	rw := rewriter("https://kask.ufukty.com")
 	for _, input := range tcs {
-		t.Run(testname(input), func(t *testing.T) {
+		t.Run(tescape(input), func(t *testing.T) {
 			_, err := rw.Rewrite(input, linker)
 			if err == nil {
 				t.Errorf("act, unexpected success")
@@ -439,9 +411,9 @@ func TestRewrite_Rewrite_linksToUnexistingNodesWithDomain(t *testing.T) {
 		"../../../..",             // path escape
 		"a/b/c/../../../../../..", // path escape
 	}
-	rw := rewriter()
+	rw := rewriter("https://kask.ufukty.com")
 	for _, input := range tcs {
-		t.Run(testname(input), func(t *testing.T) {
+		t.Run(tescape(input), func(t *testing.T) {
 			got, err := rw.Rewrite(input, linker)
 			if err == nil {
 				t.Errorf("act, unexpected success with value: %s", got)
@@ -495,9 +467,9 @@ func TestRewrite_Rewrite_idempotency(t *testing.T) {
 		{linker: d2, linked: "#"}:                        "/a/b/page.html#",
 		{linker: d2, linked: "#title"}:                   "/a/b/page.html#title",
 	}
-	rw := rewriter()
+	rw := rewriter("/")
 	for tc, te := range sorted(tcs) {
-		t.Run(fmt.Sprintf("%s=>%s", testname(tc.linker.Src), testname(tc.linked)), func(t *testing.T) {
+		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			initial, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("1st act, unexpected error: %v", err)
@@ -525,7 +497,7 @@ func TestAssetLink(t *testing.T) {
 		"relative with parent dir and special character": {linked: "../.assets/x 2.png", expected: "/a/.assets/x%202.png"},
 		"relative with parent dir":                       {linked: "../.assets/x.png", expected: "/a/.assets/x.png"},
 	}
-	rw := rewriter()
+	rw := rewriter("/")
 	for tn, tc := range tcs {
 		t.Run(tn, func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, linker)
