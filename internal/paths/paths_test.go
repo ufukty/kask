@@ -31,22 +31,26 @@ func TestStripOrdering(t *testing.T) {
 	}
 }
 
+func tescape(s string) string {
+	return strings.ReplaceAll(s, "/", "\\")
+}
+
+func testname(parent, child string) string {
+	return fmt.Sprintf("%s=>%s", tescape(parent), tescape(child))
+}
+
 func TestUri_dir(t *testing.T) {
 	type input struct{ parent, child string }
 	type output = string
 	tcs := map[input]output{
-		{"/", "a"}:      "/a/",
+		{"/", "a"}:     "/a/",
 		{"/a", "b"}:    "/a/b/",
 		{"/a/", "b"}:   "/a/b/",
 		{"/a/b/", "c"}: "/a/b/c/",
 	}
 
 	for i, o := range tcs {
-		tn := fmt.Sprintf("parent=%q dir=%q",
-			strings.ReplaceAll(i.parent, "/", "\\"),
-			strings.ReplaceAll(i.child, "/", "\\"),
-		)
-		t.Run(tn, func(t *testing.T) {
+		t.Run(testname(i.parent, i.child), func(t *testing.T) {
 			got := dirUri(i.parent, i.child, true)
 			if got != o {
 				t.Errorf("expected %q got %q", o, got)
@@ -59,17 +63,13 @@ func TestUri_file_urlModeDefault(t *testing.T) {
 	type input struct{ parent, child string }
 	type output = string
 	tcs := map[input]output{
-		{"/", "a.md"}:      "/a.html",
+		{"/", "a.md"}:     "/a.html",
 		{"/a", "b.md"}:    "/a/b.html",
 		{"/a/", "b.md"}:   "/a/b.html",
 		{"/a/b/", "c.md"}: "/a/b/c.html",
 	}
 	for i, o := range tcs {
-		tn := fmt.Sprintf("parent=%q dir=%q",
-			strings.ReplaceAll(i.parent, "/", "\\"),
-			strings.ReplaceAll(i.child, "/", "\\"),
-		)
-		t.Run(tn, func(t *testing.T) {
+		t.Run(testname(i.parent, i.child), func(t *testing.T) {
 			got := fileUri(i.parent, i.child, false, UrlModeDefault)
 			if got != o {
 				t.Errorf("expected %q got %q", o, got)
@@ -82,17 +82,13 @@ func TestUri_file_urlModeExtless(t *testing.T) {
 	type input struct{ parent, child string }
 	type output = string
 	tcs := map[input]output{
-		{"/", "a.md"}:      "/a",
+		{"/", "a.md"}:     "/a",
 		{"/a", "b.md"}:    "/a/b",
 		{"/a/", "b.md"}:   "/a/b",
 		{"/a/b/", "c.md"}: "/a/b/c",
 	}
 	for i, o := range tcs {
-		tn := fmt.Sprintf("parent=%q dir=%q",
-			strings.ReplaceAll(i.parent, "/", "\\"),
-			strings.ReplaceAll(i.child, "/", "\\"),
-		)
-		t.Run(tn, func(t *testing.T) {
+		t.Run(testname(i.parent, i.child), func(t *testing.T) {
 			got := fileUri(i.parent, i.child, false, UrlModeExtless)
 			if got != o {
 				t.Errorf("expected %q got %q", o, got)
