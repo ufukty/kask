@@ -10,12 +10,11 @@ func before(s string, substr string) int {
 	return i
 }
 
-func after(s, substr string) int {
-	i := strings.Index(s, substr)
-	if i == -1 {
-		return 0
+func afterPrefix(s, domain string) int {
+	if strings.HasPrefix(s, domain) {
+		return len(domain)
 	}
-	return i + len(substr)
+	return 0
 }
 
 func between(s string, before, after int) string {
@@ -27,7 +26,7 @@ func between(s string, before, after int) string {
 
 func (rw Rewriter) split(url string) (string, string, string, string) {
 	var (
-		aDomain = after(url, rw.contentDir.Url)
+		aDomain = afterPrefix(url, rw.contentDir.Url)
 		bAssets = before(url, ".assets")
 		bAnchor = before(url, "#")
 		bQuery  = before(url, "?")
