@@ -98,11 +98,7 @@ func TestUri_file_urlModeExtless(t *testing.T) {
 }
 
 func TestPaths_File(t *testing.T) {
-	parent := Paths{
-		Src: "/a",
-		Dst: "/a",
-		Url: "/a/",
-	}
+	parent := Paths{Src: "/a", Dst: "/a", Url: "/a/"}
 	type tc struct {
 		inputBasename string
 		inputStripped bool
@@ -133,12 +129,36 @@ func TestPaths_File(t *testing.T) {
 	}
 }
 
-func TestPaths_Dir(t *testing.T) {
-	parent := Paths{
-		Src: "/a",
-		Dst: "/a",
-		Url: "/a/",
+func TestPaths_File_domain(t *testing.T) {
+	parent := Paths{Src: "/a", Dst: "/a", Url: "https://kask.ufukty.com/a/"}
+	type tc struct {
+		inputBasename string
+		inputStripped bool
+		expected      Paths
 	}
+	tcs := map[string]tc{
+		"index file md with stripped ordering":                 {inputBasename: "README.md", inputStripped: true, expected: Paths{Src: "/a/README.md", Dst: "/a/index.html", Url: "https://kask.ufukty.com/a/"}},
+		"index file md":                                        {inputBasename: "README.md", inputStripped: false, expected: Paths{Src: "/a/README.md", Dst: "/a/index.html", Url: "https://kask.ufukty.com/a/"}},
+		"index file tmpl with stripped ordering":               {inputBasename: "index.tmpl", inputStripped: true, expected: Paths{Src: "/a/index.tmpl", Dst: "/a/index.html", Url: "https://kask.ufukty.com/a/"}},
+		"index file tmpl":                                      {inputBasename: "index.tmpl", inputStripped: false, expected: Paths{Src: "/a/index.tmpl", Dst: "/a/index.html", Url: "https://kask.ufukty.com/a/"}},
+		"non-index file with stripped ordering":                {inputBasename: "3.page.tmpl", inputStripped: true, expected: Paths{Src: "/a/3.page.tmpl", Dst: "/a/page.html", Url: "https://kask.ufukty.com/a/page.html"}},
+		"non-index file with whitespace and stripped ordering": {inputBasename: "3.pge .tmpl", inputStripped: true, expected: Paths{Src: "/a/3.pge .tmpl", Dst: "/a/pge .html", Url: "https://kask.ufukty.com/a/pge%20.html"}},
+		"non-index file with whitespace":                       {inputBasename: "3.pge .tmpl", inputStripped: false, expected: Paths{Src: "/a/3.pge .tmpl", Dst: "/a/3.pge .html", Url: "https://kask.ufukty.com/a/3.pge%20.html"}},
+		"non-index file":                                       {inputBasename: "3.page.tmpl", inputStripped: false, expected: Paths{Src: "/a/3.page.tmpl", Dst: "/a/3.page.html", Url: "https://kask.ufukty.com/a/3.page.html"}},
+	}
+	for _, tn := range slices.Sorted(maps.Keys(tcs)) {
+		t.Run(tn, func(t *testing.T) {
+			tc := tcs[tn]
+			got := parent.File(tc.inputBasename, tc.inputStripped, UrlModeDefault)
+			if got.Url != tc.expected.Url {
+				t.Errorf("assert, expected: %q got: %q", tc.expected.Url, got.Url)
+			}
+		})
+	}
+}
+
+func TestPaths_Dir(t *testing.T) {
+	parent := Paths{Src: "/a", Dst: "/a", Url: "/a/"}
 	type tc struct {
 		inputBasename string
 		inputStripped bool
@@ -165,12 +185,32 @@ func TestPaths_Dir(t *testing.T) {
 	}
 }
 
-func TestPaths_File_preserveEncodedParent(t *testing.T) {
-	parent := Paths{
-		Src: "/a ",
-		Dst: "/a ",
-		Url: "/a%20/",
+func TestPaths_Dir_domain(t *testing.T) {
+	parent := Paths{Src: "/a", Dst: "/a", Url: "https://kask.ufukty.com/a/"}
+	type tc struct {
+		inputBasename string
+		inputStripped bool
+		expected      Paths
 	}
+	tcs := map[string]tc{
+		"subdir":                                      {inputBasename: "1.b", inputStripped: false, expected: Paths{Src: "/a/1.b", Dst: "/a/1.b", Url: "https://kask.ufukty.com/a/1.b/"}},
+		"subdir with special char":                    {inputBasename: "1.b ", inputStripped: false, expected: Paths{Src: "/a/1.b ", Dst: "/a/1.b ", Url: "https://kask.ufukty.com/a/1.b%20/"}},
+		"subdir with stripped ordering":               {inputBasename: "1.b", inputStripped: true, expected: Paths{Src: "/a/1.b", Dst: "/a/b", Url: "https://kask.ufukty.com/a/b/"}},
+		"subdir with special char and strip ordering": {inputBasename: "1.b ", inputStripped: true, expected: Paths{Src: "/a/1.b ", Dst: "/a/b ", Url: "https://kask.ufukty.com/a/b%20/"}},
+	}
+	for _, tn := range slices.Sorted(maps.Keys(tcs)) {
+		t.Run(tn, func(t *testing.T) {
+			tc := tcs[tn]
+			got := parent.Subdir(tc.inputBasename, tc.inputStripped)
+			if got.Url != tc.expected.Url {
+				t.Errorf("assert, expected: %q got: %q", tc.expected.Url, got.Url)
+			}
+		})
+	}
+}
+
+func TestPaths_File_preserveEncodedParent(t *testing.T) {
+	parent := Paths{Src: "/a ", Dst: "/a ", Url: "/a%20/"}
 	got := parent.File("b.tmpl", false, UrlModeDefault)
 	if filepath.Dir(got.Url) != "/a%20" {
 		t.Errorf("assert, expected the parent path to stay encoded: %q, got. %q", "/a%20", got.Url)
@@ -178,11 +218,7 @@ func TestPaths_File_preserveEncodedParent(t *testing.T) {
 }
 
 func TestPaths_Dir_preserveEncodedParent(t *testing.T) {
-	parent := Paths{
-		Src: "/a ",
-		Dst: "/a ",
-		Url: "/a%20/",
-	}
+	parent := Paths{Src: "/a ", Dst: "/a ", Url: "/a%20/"}
 	got := parent.Subdir("b", false)
 	if filepath.Dir(filepath.Dir(got.Url)) != "/a%20" {
 		t.Errorf("assert, expected the parent path to stay encoded: %q, got. %q", "/a%20", got.Url)

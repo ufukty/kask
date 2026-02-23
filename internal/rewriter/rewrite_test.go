@@ -59,7 +59,7 @@ func rewriter() *Rewriter {
 		"a/b":      "/a/b/",
 		"a/b/c /d": "/a/b/c%20/d/",
 	}
-	r := New()
+	r := New(paths.Paths{Src: ".", Dst: ".", Url: "/"})
 	for src, url := range links {
 		r.Bank(src, url)
 	}
@@ -336,6 +336,30 @@ func TestRewrite_Rewrite_idempotency(t *testing.T) {
 				t.Errorf("2nd act, unexpected error: %v", err)
 			} else if secondary != initial {
 				t.Errorf("2nd assert, expected: %q got: %q", te, secondary)
+			}
+		})
+	}
+}
+
+func TestAssetLink(t *testing.T) {
+	type tc struct{ linked, expected string }
+	linker := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
+	tcs := map[string]tc{
+		"absolute with special character": {linked: "/.assets/x 2.png", expected: "/.assets/x%202.png"},
+		"absolute":                        {linked: "/.assets/x.png", expected: "/.assets/x.png"},
+		"relative with special character": {linked: ".assets/x 2.png", expected: "/a/b/.assets/x%202.png"},
+		"relative":                        {linked: ".assets/x.png", expected: "/a/b/.assets/x.png"},
+		"relative with parent dir and special character": {linked: "../.assets/x 2.png", expected: "/a/.assets/x%202.png"},
+		"relative with parent dir":                       {linked: "../.assets/x.png", expected: "/a/.assets/x.png"},
+	}
+	rw := rewriter()
+	for tn, tc := range tcs {
+		t.Run(tn, func(t *testing.T) {
+			got, err := rw.Rewrite(tc.linked, linker)
+			if err != nil {
+				t.Errorf("act, unexpected error: %v", err)
+			} else if tc.expected != got {
+				t.Errorf("assert, expected %q got %q", tc.expected, got)
 			}
 		})
 	}
