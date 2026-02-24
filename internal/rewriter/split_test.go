@@ -27,16 +27,25 @@ func TestSplit(t *testing.T) {
 		{"/", "/a/b/c"}:                       {"/", "a/b/c", "", ""},
 		{"/", "/a/b/c#title"}:                 {"/", "a/b/c", "", "#title"},
 		{"/", "/a/b/c/.assets/img.jpg#title"}: {"/", "a/b/c/", ".assets/img.jpg", "#title"},
+		{"/", "a/b/c"}:                        {"", "a/b/c", "", ""},
+		{"/", "a/b/c#title"}:                  {"", "a/b/c", "", "#title"},
+		{"/", "a/b/c/.assets/img.jpg#title"}:  {"", "a/b/c/", ".assets/img.jpg", "#title"},
 		{"https://kask.ufukty.com/", "https://kask.ufukty.com/a/b/c"}:                       {"https://kask.ufukty.com/", "a/b/c", "", ""},
 		{"https://kask.ufukty.com/", "https://kask.ufukty.com/a/b/c#title"}:                 {"https://kask.ufukty.com/", "a/b/c", "", "#title"},
 		{"https://kask.ufukty.com/", "https://kask.ufukty.com/a/b/c/.assets/img.jpg#title"}: {"https://kask.ufukty.com/", "a/b/c/", ".assets/img.jpg", "#title"},
+		{"https://kask.ufukty.com/", "/a/b/c"}:                                              {"/", "a/b/c", "", ""},
+		{"https://kask.ufukty.com/", "/a/b/c#title"}:                                        {"/", "a/b/c", "", "#title"},
+		{"https://kask.ufukty.com/", "/a/b/c/.assets/img.jpg#title"}:                        {"/", "a/b/c/", ".assets/img.jpg", "#title"},
+		{"https://kask.ufukty.com/", "a/b/c"}:                                               {"", "a/b/c", "", ""},
+		{"https://kask.ufukty.com/", "a/b/c#title"}:                                         {"", "a/b/c", "", "#title"},
+		{"https://kask.ufukty.com/", "a/b/c/.assets/img.jpg#title"}:                         {"", "a/b/c/", ".assets/img.jpg", "#title"},
 	}
 
 	for input, expected := range tcs {
 		t.Run(testname(input.domain, input.url), func(t *testing.T) {
 			splits := New(paths.Paths{Url: input.domain}).split(input.url)
-			if expected.domain != splits.domain {
-				t.Errorf("assert domain: expected %q, got %q", expected.domain, splits.domain)
+			if expected.prePath != splits.prePath {
+				t.Errorf("assert domain: expected %q, got %q", expected.prePath, splits.prePath)
 			}
 			if expected.path != splits.path {
 				t.Errorf("assert path: expected %q, got %q", expected.path, splits.path)
