@@ -20,7 +20,7 @@ func TestSplit(t *testing.T) {
 	//   - <domain> <page/dir> <query>
 	//   - <domain> <page/dir> <assets>
 	//   - <domain> <page/dir> <assets> <query>
-	tcs := map[struct{ domain, url string }]struct{ domain, path, assets, tail string }{
+	tcs := map[struct{ domain, url string }]splits{
 		{"/", "#title"}:                       {"", "", "", "#title"},
 		{"/", ".assets/img.jpg"}:              {"", "", ".assets/img.jpg", ""},
 		{"/", ".assets/img.jpg#title"}:        {"", "", ".assets/img.jpg", "#title"},
@@ -34,18 +34,18 @@ func TestSplit(t *testing.T) {
 
 	for input, expected := range tcs {
 		t.Run(testname(input.domain, input.url), func(t *testing.T) {
-			d, p, a, tl := New(paths.Paths{Url: input.domain}).split(input.url)
-			if expected.domain != d {
-				t.Errorf("assert domain: expected %q, got %q", expected.domain, d)
+			splits := New(paths.Paths{Url: input.domain}).split(input.url)
+			if expected.domain != splits.domain {
+				t.Errorf("assert domain: expected %q, got %q", expected.domain, splits.domain)
 			}
-			if expected.path != p {
-				t.Errorf("assert path: expected %q, got %q", expected.path, p)
+			if expected.path != splits.path {
+				t.Errorf("assert path: expected %q, got %q", expected.path, splits.path)
 			}
-			if expected.assets != a {
-				t.Errorf("assert assets: expected %q, got %q", expected.assets, a)
+			if expected.assets != splits.assets {
+				t.Errorf("assert assets: expected %q, got %q", expected.assets, splits.assets)
 			}
-			if expected.tail != tl {
-				t.Errorf("assert query: expected %q, got %q", expected.tail, tl)
+			if expected.tail != splits.tail {
+				t.Errorf("assert query: expected %q, got %q", expected.tail, splits.tail)
 			}
 		})
 	}

@@ -24,18 +24,24 @@ func between(s string, before, after int) string {
 	return ""
 }
 
-func (rw Rewriter) split(url string) (string, string, string, string) {
+type splits struct {
+	domain string
+	path   string
+	assets string
+	tail   string
+}
+
+func (rw Rewriter) split(url string) splits {
 	var (
 		aDomain = afterPrefix(url, rw.contentDir.Url)
 		bAssets = before(url, ".assets")
 		bAnchor = before(url, "#")
 		bQuery  = before(url, "?")
 	)
-	var (
-		domain = between(url, 0, aDomain)
-		path   = between(url, aDomain, min(bAssets, bAnchor, bQuery))
-		assets = between(url, bAssets, min(bQuery, bAnchor))
-		tail   = between(url, min(bQuery, bAnchor), len(url))
-	)
-	return domain, path, assets, tail
+	return splits{
+		domain: between(url, 0, aDomain),
+		path:   between(url, aDomain, min(bAssets, bAnchor, bQuery)),
+		assets: between(url, bAssets, min(bQuery, bAnchor)),
+		tail:   between(url, min(bQuery, bAnchor), len(url)),
+	}
 }
