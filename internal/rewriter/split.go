@@ -1,6 +1,9 @@
 package rewriter
 
-import "strings"
+import (
+	"cmp"
+	"strings"
+)
 
 func before(s string, substr string) int {
 	i := strings.Index(s, substr)
@@ -25,23 +28,23 @@ func between(s string, before, after int) string {
 }
 
 type splits struct {
-	domain string
-	path   string
-	assets string
-	tail   string
+	prePath string // domain or slash
+	path    string
+	assets  string
+	tail    string
 }
 
-func (rw Rewriter) split(url string) splits {
+func (rw Rewriter) split(path string) splits {
 	var (
-		aDomain = afterPrefix(url, rw.contentDir.Url)
-		bAssets = before(url, ".assets")
-		bAnchor = before(url, "#")
-		bQuery  = before(url, "?")
+		aDomain = cmp.Or(afterPrefix(path, rw.contentDir.Url), afterPrefix(path, "/"))
+		bAssets = before(path, ".assets")
+		bAnchor = before(path, "#")
+		bQuery  = before(path, "?")
 	)
 	return splits{
-		domain: between(url, 0, aDomain),
-		path:   between(url, aDomain, min(bAssets, bAnchor, bQuery)),
-		assets: between(url, bAssets, min(bQuery, bAnchor)),
-		tail:   between(url, min(bQuery, bAnchor), len(url)),
+		prePath: between(path, 0, aDomain),
+		path:    between(path, aDomain, min(bAssets, bAnchor, bQuery)),
+		assets:  between(path, bAssets, min(bQuery, bAnchor)),
+		tail:    between(path, min(bQuery, bAnchor), len(path)),
 	}
 }
