@@ -21,40 +21,37 @@ func TestSplit(t *testing.T) {
 	//   - <domain> <page/dir> <assets>
 	//   - <domain> <page/dir> <assets> <query>
 	tcs := map[struct{ domain, url string }]splits{
-		{"/", "#title"}:                       {"", "", "", "#title"},
-		{"/", ".assets/img.jpg"}:              {"", "", ".assets/img.jpg", ""},
-		{"/", ".assets/img.jpg#title"}:        {"", "", ".assets/img.jpg", "#title"},
-		{"/", "/a/b/c"}:                       {"/", "a/b/c", "", ""},
-		{"/", "/a/b/c#title"}:                 {"/", "a/b/c", "", "#title"},
-		{"/", "/a/b/c/.assets/img.jpg#title"}: {"/", "a/b/c/", ".assets/img.jpg", "#title"},
-		{"/", "a/b/c"}:                        {"", "a/b/c", "", ""},
-		{"/", "a/b/c#title"}:                  {"", "a/b/c", "", "#title"},
-		{"/", "a/b/c/.assets/img.jpg#title"}:  {"", "a/b/c/", ".assets/img.jpg", "#title"},
-		{"https://kask.ufukty.com/", "https://kask.ufukty.com/a/b/c"}:                       {"https://kask.ufukty.com/", "a/b/c", "", ""},
-		{"https://kask.ufukty.com/", "https://kask.ufukty.com/a/b/c#title"}:                 {"https://kask.ufukty.com/", "a/b/c", "", "#title"},
-		{"https://kask.ufukty.com/", "https://kask.ufukty.com/a/b/c/.assets/img.jpg#title"}: {"https://kask.ufukty.com/", "a/b/c/", ".assets/img.jpg", "#title"},
-		{"https://kask.ufukty.com/", "/a/b/c"}:                                              {"/", "a/b/c", "", ""},
-		{"https://kask.ufukty.com/", "/a/b/c#title"}:                                        {"/", "a/b/c", "", "#title"},
-		{"https://kask.ufukty.com/", "/a/b/c/.assets/img.jpg#title"}:                        {"/", "a/b/c/", ".assets/img.jpg", "#title"},
-		{"https://kask.ufukty.com/", "a/b/c"}:                                               {"", "a/b/c", "", ""},
-		{"https://kask.ufukty.com/", "a/b/c#title"}:                                         {"", "a/b/c", "", "#title"},
-		{"https://kask.ufukty.com/", "a/b/c/.assets/img.jpg#title"}:                         {"", "a/b/c/", ".assets/img.jpg", "#title"},
+		{"/", "#title"}:                       {"", "", "#title"},
+		{"/", ".assets/img.jpg"}:              {"", ".assets/img.jpg", ""},
+		{"/", ".assets/img.jpg#title"}:        {"", ".assets/img.jpg", "#title"},
+		{"/", "/a/b/c"}:                       {"/", "a/b/c", ""},
+		{"/", "/a/b/c#title"}:                 {"/", "a/b/c", "#title"},
+		{"/", "/a/b/c/.assets/img.jpg#title"}: {"/", "a/b/c/.assets/img.jpg", "#title"},
+		{"/", "a/b/c"}:                        {"", "a/b/c", ""},
+		{"/", "a/b/c#title"}:                  {"", "a/b/c", "#title"},
+		{"/", "a/b/c/.assets/img.jpg#title"}:  {"", "a/b/c/.assets/img.jpg", "#title"},
+		{"https://kask.ufukty.com/", "https://kask.ufukty.com/a/b/c"}:                       {"https://kask.ufukty.com/", "a/b/c", ""},
+		{"https://kask.ufukty.com/", "https://kask.ufukty.com/a/b/c#title"}:                 {"https://kask.ufukty.com/", "a/b/c", "#title"},
+		{"https://kask.ufukty.com/", "https://kask.ufukty.com/a/b/c/.assets/img.jpg#title"}: {"https://kask.ufukty.com/", "a/b/c/.assets/img.jpg", "#title"},
+		{"https://kask.ufukty.com/", "/a/b/c"}:                                              {"/", "a/b/c", ""},
+		{"https://kask.ufukty.com/", "/a/b/c#title"}:                                        {"/", "a/b/c", "#title"},
+		{"https://kask.ufukty.com/", "/a/b/c/.assets/img.jpg#title"}:                        {"/", "a/b/c/.assets/img.jpg", "#title"},
+		{"https://kask.ufukty.com/", "a/b/c"}:                                               {"", "a/b/c", ""},
+		{"https://kask.ufukty.com/", "a/b/c#title"}:                                         {"", "a/b/c", "#title"},
+		{"https://kask.ufukty.com/", "a/b/c/.assets/img.jpg#title"}:                         {"", "a/b/c/.assets/img.jpg", "#title"},
 	}
 
 	for input, expected := range tcs {
 		t.Run(testname(input.domain, input.url), func(t *testing.T) {
 			splits := New(paths.Paths{Url: input.domain}).split(input.url)
-			if expected.prePath != splits.prePath {
-				t.Errorf("assert domain: expected %q, got %q", expected.prePath, splits.prePath)
+			if expected.base != splits.base {
+				t.Errorf("assert base: expected %q, got %q", expected.base, splits.base)
 			}
-			if expected.path != splits.path {
-				t.Errorf("assert path: expected %q, got %q", expected.path, splits.path)
-			}
-			if expected.assets != splits.assets {
-				t.Errorf("assert assets: expected %q, got %q", expected.assets, splits.assets)
+			if expected.ref != splits.ref {
+				t.Errorf("assert ref: expected %q, got %q", expected.ref, splits.ref)
 			}
 			if expected.tail != splits.tail {
-				t.Errorf("assert query: expected %q, got %q", expected.tail, splits.tail)
+				t.Errorf("assert tail: expected %q, got %q", expected.tail, splits.tail)
 			}
 		})
 	}

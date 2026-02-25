@@ -28,23 +28,20 @@ func between(s string, before, after int) string {
 }
 
 type splits struct {
-	prePath string // domain or slash
-	path    string
-	assets  string
-	tail    string
+	base string // domain or slash
+	ref  string
+	tail string
 }
 
 func (rw Rewriter) split(path string) splits {
 	var (
 		aDomain = cmp.Or(afterPrefix(path, rw.contentDir.Url), afterPrefix(path, "/"))
-		bAssets = before(path, ".assets")
 		bAnchor = before(path, "#")
 		bQuery  = before(path, "?")
 	)
 	return splits{
-		prePath: between(path, 0, aDomain),
-		path:    between(path, aDomain, min(bAssets, bAnchor, bQuery)),
-		assets:  between(path, bAssets, min(bQuery, bAnchor)),
-		tail:    between(path, min(bQuery, bAnchor), len(path)),
+		base: between(path, 0, aDomain),
+		ref:  between(path, aDomain, min(bAnchor, bQuery)),
+		tail: between(path, min(bQuery, bAnchor), len(path)),
 	}
 }
