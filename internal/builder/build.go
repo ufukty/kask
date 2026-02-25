@@ -107,7 +107,6 @@ func (b *builder) toDir2(d, p *directory.Dir, parent paths.Paths) *dir2 {
 	return d2
 }
 
-// TODO: domain prefix
 func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 	n := &kask.Node{
 		Title:    "",
@@ -191,7 +190,7 @@ func (b *builder) Build() error {
 	if err := b.checkCompetingEntries(root); err != nil {
 		return fmt.Errorf("checking competing files and folders: %w", err)
 	}
-	root2 := b.toDir2(root, nil, paths.Paths{Src: "."})
+	root2 := b.toDir2(root, nil, paths.Paths{Src: ".", Dst: ".", Url: b.args.Domain})
 	if err := b.bundleAndPropagateStylesheets(root2, []string{}); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
@@ -219,7 +218,10 @@ func (b *builder) Build() error {
 
 // split for testing
 func newBuilder(args Args) *builder {
-	rw := rewriter.New()
+	if !strings.HasSuffix(args.Domain, "/") {
+		args.Domain += "/"
+	}
+	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: args.Domain})
 	return &builder{
 		args:     args,
 		rw:       rw,
