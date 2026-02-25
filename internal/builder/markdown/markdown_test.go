@@ -16,7 +16,7 @@ func matcher(tokens ...string) *regexp.Regexp {
 }
 
 func TestRewriter_ToHtml_content(t *testing.T) {
-	rw := rewriter.New()
+	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: "/"})
 	rw.Bank(".assets/img.jpg", "/.assets/img.jpg")
 	rw.Bank("sibling.md", "/sibling.html")
 	rn := New("testdata", rw)
@@ -109,7 +109,7 @@ func printToc(n *kask.MarkdownTocNode) {
 }
 
 func ExampleRewriter_toHtml_toc() {
-	rw := rewriter.New()
+	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: "/"})
 	rw.Bank(".assets/img.jpg", "/.assets/img.jpg")
 	rw.Bank("sibling.md", "/sibling.html")
 	rn := New("testdata", rw)
