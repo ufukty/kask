@@ -26,16 +26,23 @@ func testname(a, b string) string {
 func rewriter(domain string) *Rewriter {
 	links := map[string]string{
 		// pages
-		"README.md":          "/",
-		"page.md":            "/page.html",
-		"a/b/index.tmpl":     "/a/b/",
-		"a/b/page.tmpl":      "/a/b/page.html",
-		"a/b/c /page.md":     "/a/b/c%20/page.html",
-		"a/b/c /d/README.md": "/a/b/c%20/d/",
+		"README.md":          domain + "",
+		"page.md":            domain + "page.html",
+		"a/b/index.tmpl":     domain + "a/b/",
+		"a/b/page.tmpl":      domain + "a/b/page.html",
+		"a/b/c /page.md":     domain + "a/b/c%20/page.html",
+		"a/b/c /d/README.md": domain + "a/b/c%20/d/",
 		// visitable directories (src => url)
-		".":        "/",
-		"a/b":      "/a/b/",
-		"a/b/c /d": "/a/b/c%20/d/",
+		".":        domain + "",
+		"a/b":      domain + "a/b/",
+		"a/b/c /d": domain + "a/b/c%20/d/",
+		// assets
+		".assets/x.png":       domain + ".assets/x.png",
+		".assets/x 2.png":     domain + ".assets/x 2.png",
+		"a/.assets/x.png":     domain + "a/.assets/x.png",
+		"a/.assets/x 2.png":   domain + "a/.assets/x 2.png",
+		"a/b/.assets/x.png":   domain + "a/b/.assets/x.png",
+		"a/b/.assets/x 2.png": domain + "a/b/.assets/x 2.png",
 	}
 	r := New(paths.Paths{Src: ".", Dst: ".", Url: domain})
 	for src, url := range links {
@@ -78,7 +85,7 @@ func sorted(m map[tc]string) iter.Seq2[tc, string] {
 
 // TODO: add cases where (linker ⋁ linked) (has ⋁ should contain) encoded parts
 func TestRewrite_Rewrite_toVisitableDir(t *testing.T) {
-	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
+	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "/page.html"}
 	tcs := map[tc]string{
 		{linker: d0, linked: "/"}:                       "/",
 		{linker: d0, linked: "/a/b"}:                    "/a/b/",
@@ -105,7 +112,7 @@ func TestRewrite_Rewrite_toVisitableDir(t *testing.T) {
 }
 
 func TestRewrite_Rewrite_toPageURLs(t *testing.T) {
-	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
+	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "/page.html"}
 	d2 := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := map[tc]string{
 		{linker: d0, linked: "/a/b/"}:          "/a/b/",
@@ -129,7 +136,7 @@ func TestRewrite_Rewrite_toPageURLs(t *testing.T) {
 }
 
 func TestRewrite_Rewrite_toPage(t *testing.T) {
-	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
+	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "/page.html"}
 	d2 := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := map[tc]string{
 		{linker: d0, linked: "/page.md"}:           "/page.html",
@@ -152,7 +159,7 @@ func TestRewrite_Rewrite_toPage(t *testing.T) {
 }
 
 func TestRewrite_Rewrite_toVisitableDirAnchor(t *testing.T) {
-	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
+	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "/page.html"}
 	tcs := map[tc]string{
 		{linker: d0, linked: "/#title"}:                  "/#title",
 		{linker: d0, linked: "/a/b/#title"}:              "/a/b/#title",
@@ -178,7 +185,7 @@ func TestRewrite_Rewrite_toVisitableDirAnchor(t *testing.T) {
 }
 
 func TestRewrite_Rewrite_toPageAnchor(t *testing.T) {
-	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
+	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "/page.html"}
 	d2 := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := map[tc]string{
 		{linker: d0, linked: "#"}:                        "/page.html#",
@@ -251,7 +258,7 @@ func TestRewrite_Rewrite_linksToUnexistingNodes(t *testing.T) {
 
 // TODO: add cases where (linker ⋁ linked) (has ⋁ should contain) encoded parts
 func TestRewrite_Rewrite_toVisitableDirWithDomain(t *testing.T) {
-	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "https://kask.ufukty.com/page.html"}
+	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "https://kask.ufukty.com/page.html"}
 	tcs := map[tc]string{
 		{linker: d0, linked: "/"}:                       "https://kask.ufukty.com/",
 		{linker: d0, linked: "/a/b"}:                    "https://kask.ufukty.com/a/b/",
@@ -264,7 +271,7 @@ func TestRewrite_Rewrite_toVisitableDirWithDomain(t *testing.T) {
 		{linker: d0, linked: "a/b/c /d"}:                "https://kask.ufukty.com/a/b/c%20/d/",
 		{linker: d0, linked: "a/b/c /d/README.md"}:      "https://kask.ufukty.com/a/b/c%20/d/",
 	}
-	rw := rewriter("https://kask.ufukty.com")
+	rw := rewriter("https://kask.ufukty.com/")
 	for tc, te := range sorted(tcs) {
 		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
@@ -278,7 +285,7 @@ func TestRewrite_Rewrite_toVisitableDirWithDomain(t *testing.T) {
 }
 
 func TestRewrite_Rewrite_toPageURLsWithDomain(t *testing.T) {
-	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "https://kask.ufukty.com/page.html"}
+	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "https://kask.ufukty.com/page.html"}
 	d2 := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "https://kask.ufukty.com/a/b/page.html"}
 	tcs := map[tc]string{
 		{linker: d0, linked: "/a/b/"}:          "https://kask.ufukty.com/a/b/",
@@ -288,7 +295,7 @@ func TestRewrite_Rewrite_toPageURLsWithDomain(t *testing.T) {
 		{linker: d2, linked: "../../"}:         "https://kask.ufukty.com/",
 		{linker: d2, linked: "./../../"}:       "https://kask.ufukty.com/",
 	}
-	rw := rewriter("https://kask.ufukty.com")
+	rw := rewriter("https://kask.ufukty.com/")
 	for tc, te := range sorted(tcs) {
 		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
@@ -302,7 +309,7 @@ func TestRewrite_Rewrite_toPageURLsWithDomain(t *testing.T) {
 }
 
 func TestRewrite_Rewrite_toPageWithDomain(t *testing.T) {
-	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "https://kask.ufukty.com/page.html"}
+	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "https://kask.ufukty.com/page.html"}
 	d2 := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "https://kask.ufukty.com/a/b/page.html"}
 	tcs := map[tc]string{
 		{linker: d0, linked: "/page.md"}:           "https://kask.ufukty.com/page.html",
@@ -311,7 +318,7 @@ func TestRewrite_Rewrite_toPageWithDomain(t *testing.T) {
 		{linker: d2, linked: "../../page.md"}:      "https://kask.ufukty.com/page.html",
 		{linker: d2, linked: "./../../page.md"}:    "https://kask.ufukty.com/page.html",
 	}
-	rw := rewriter("https://kask.ufukty.com")
+	rw := rewriter("https://kask.ufukty.com/")
 	for tc, te := range sorted(tcs) {
 		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
@@ -325,7 +332,7 @@ func TestRewrite_Rewrite_toPageWithDomain(t *testing.T) {
 }
 
 func TestRewrite_Rewrite_toVisitableDirAnchorWithDomain(t *testing.T) {
-	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "https://kask.ufukty.com/page.html"}
+	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "https://kask.ufukty.com/page.html"}
 	tcs := map[tc]string{
 		{linker: d0, linked: "/#title"}:                  "https://kask.ufukty.com/#title",
 		{linker: d0, linked: "/a/b/#title"}:              "https://kask.ufukty.com/a/b/#title",
@@ -337,7 +344,7 @@ func TestRewrite_Rewrite_toVisitableDirAnchorWithDomain(t *testing.T) {
 		{linker: d0, linked: "a/b/c /d/README.md#title"}: "https://kask.ufukty.com/a/b/c%20/d/#title",
 		{linker: d0, linked: "a/b/index.tmpl#title"}:     "https://kask.ufukty.com/a/b/#title",
 	}
-	rw := rewriter("https://kask.ufukty.com")
+	rw := rewriter("https://kask.ufukty.com/")
 	for tc, te := range sorted(tcs) {
 		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
@@ -351,7 +358,7 @@ func TestRewrite_Rewrite_toVisitableDirAnchorWithDomain(t *testing.T) {
 }
 
 func TestRewrite_Rewrite_toPageAnchorWithDomain(t *testing.T) {
-	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "https://kask.ufukty.com/page.html"}
+	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "https://kask.ufukty.com/page.html"}
 	d2 := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "https://kask.ufukty.com/a/b/page.html"}
 	tcs := map[tc]string{
 		{linker: d0, linked: "#"}:                        "https://kask.ufukty.com/page.html#",
@@ -365,7 +372,7 @@ func TestRewrite_Rewrite_toPageAnchorWithDomain(t *testing.T) {
 		{linker: d2, linked: "#"}:                        "https://kask.ufukty.com/a/b/page.html#",
 		{linker: d2, linked: "#title"}:                   "https://kask.ufukty.com/a/b/page.html#title",
 	}
-	rw := rewriter("https://kask.ufukty.com")
+	rw := rewriter("https://kask.ufukty.com/")
 	for tc, te := range sorted(tcs) {
 		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
 			got, err := rw.Rewrite(tc.linked, tc.linker)
@@ -391,7 +398,7 @@ func TestRewrite_Rewrite_linksToUnvisitableDirsWithDomain(t *testing.T) {
 		"c",       // /a/b/c%20/
 		"c/",      // /a/b/c%20/
 	}
-	rw := rewriter("https://kask.ufukty.com")
+	rw := rewriter("https://kask.ufukty.com/")
 	for _, input := range tcs {
 		t.Run(tescape(input), func(t *testing.T) {
 			_, err := rw.Rewrite(input, linker)
@@ -411,7 +418,7 @@ func TestRewrite_Rewrite_linksToUnexistingNodesWithDomain(t *testing.T) {
 		"../../../..",             // path escape
 		"a/b/c/../../../../../..", // path escape
 	}
-	rw := rewriter("https://kask.ufukty.com")
+	rw := rewriter("https://kask.ufukty.com/")
 	for _, input := range tcs {
 		t.Run(tescape(input), func(t *testing.T) {
 			got, err := rw.Rewrite(input, linker)
@@ -423,64 +430,58 @@ func TestRewrite_Rewrite_linksToUnexistingNodesWithDomain(t *testing.T) {
 }
 
 func TestRewrite_Rewrite_idempotency(t *testing.T) {
-	d0 := paths.Paths{Src: "page.tmpl", Dst: "page.html", Url: "/page.html"}
+	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "/page.html"}
 	d2 := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := map[tc]string{
-		{linker: d0, linked: "/"}:                        "/",
-		{linker: d0, linked: "/"}:                        "/",
-		{linker: d0, linked: "/#title"}:                  "/#title",
-		{linker: d0, linked: "/a/b"}:                     "/a/b/",
-		{linker: d0, linked: "/a/b/"}:                    "/a/b/",
-		{linker: d0, linked: "/a/b/#title"}:              "/a/b/#title",
-		{linker: d0, linked: "/a/b/index.tmpl"}:          "/a/b/",
-		{linker: d0, linked: "/a/b/index.tmpl#title"}:    "/a/b/#title",
-		{linker: d0, linked: "/a/b#title"}:               "/a/b/#title",
-		{linker: d0, linked: "/page.md"}:                 "/page.html",
-		{linker: d0, linked: "/README.md"}:               "/",
-		{linker: d0, linked: "/README.md#title"}:         "/#title",
-		{linker: d0, linked: "#"}:                        "/page.html#",
-		{linker: d0, linked: "#title"}:                   "/page.html#title",
-		{linker: d0, linked: "a/../a/b"}:                 "/a/b/",
-		{linker: d0, linked: "a/../a/b/c /d"}:            "/a/b/c%20/d/",
-		{linker: d0, linked: "a/../a/b/c /d/"}:           "/a/b/c%20/d/",
-		{linker: d0, linked: "a/../a/b/c /d/README.md"}:  "/a/b/c%20/d/",
-		{linker: d0, linked: "a/../a/b/page.tmpl"}:       "/a/b/page.html",
-		{linker: d0, linked: "a/../a/b/page.tmpl#title"}: "/a/b/page.html#title",
-		{linker: d0, linked: "a/b"}:                      "/a/b/",
-		{linker: d0, linked: "a/b/#title"}:               "/a/b/#title",
-		{linker: d0, linked: "a/b/c /d"}:                 "/a/b/c%20/d/",
-		{linker: d0, linked: "a/b/c /d/"}:                "/a/b/c%20/d/",
-		{linker: d0, linked: "a/b/c /d/#title"}:          "/a/b/c%20/d/#title",
-		{linker: d0, linked: "a/b/c /d/README.md"}:       "/a/b/c%20/d/",
-		{linker: d0, linked: "a/b/c /d/README.md#title"}: "/a/b/c%20/d/#title",
-		{linker: d0, linked: "a/b/c /page.md#title"}:     "/a/b/c%20/page.html#title",
-		{linker: d0, linked: "a/b/index.tmpl#title"}:     "/a/b/#title",
-		{linker: d0, linked: "a/b/page.tmpl"}:            "/a/b/page.html",
-		{linker: d0, linked: "a/b/page.tmpl#title"}:      "/a/b/page.html#title",
-		{linker: d0, linked: "page.md#title"}:            "/page.html#title",
-		{linker: d2, linked: "../../"}:                   "/",
-		{linker: d2, linked: "../../page.md"}:            "/page.html",
-		{linker: d2, linked: "./../../"}:                 "/",
-		{linker: d2, linked: "./../../page.md"}:          "/page.html",
-		{linker: d2, linked: "./../../page.md#title"}:    "/page.html#title",
-		{linker: d2, linked: "/page.md#title"}:           "/page.html#title",
-		{linker: d2, linked: "#"}:                        "/a/b/page.html#",
-		{linker: d2, linked: "#title"}:                   "/a/b/page.html#title",
+		{linker: d0, linked: "/"}:                         "/",
+		{linker: d0, linked: "/"}:                         "/",
+		{linker: d0, linked: "/#title"}:                   "/#title",
+		{linker: d0, linked: "/a/b/"}:                     "/a/b/",
+		{linker: d0, linked: "/a/b/"}:                     "/a/b/",
+		{linker: d0, linked: "/a/b/#title"}:               "/a/b/#title",
+		{linker: d0, linked: "/a/b/"}:                     "/a/b/",
+		{linker: d0, linked: "/a/b/#title"}:               "/a/b/#title",
+		{linker: d0, linked: "/a/b/#title"}:               "/a/b/#title",
+		{linker: d0, linked: "/page.html"}:                "/page.html",
+		{linker: d0, linked: "/"}:                         "/",
+		{linker: d0, linked: "/#title"}:                   "/#title",
+		{linker: d0, linked: "/page.html#"}:               "/page.html#",
+		{linker: d0, linked: "/page.html#title"}:          "/page.html#title",
+		{linker: d0, linked: "/a/b/"}:                     "/a/b/",
+		{linker: d0, linked: "/a/b/c%20/d/"}:              "/a/b/c%20/d/",
+		{linker: d0, linked: "/a/b/c%20/d/"}:              "/a/b/c%20/d/",
+		{linker: d0, linked: "/a/b/c%20/d/"}:              "/a/b/c%20/d/",
+		{linker: d0, linked: "/a/b/page.html"}:            "/a/b/page.html",
+		{linker: d0, linked: "/a/b/page.html#title"}:      "/a/b/page.html#title",
+		{linker: d0, linked: "/a/b/"}:                     "/a/b/",
+		{linker: d0, linked: "/a/b/#title"}:               "/a/b/#title",
+		{linker: d0, linked: "/a/b/c%20/d/"}:              "/a/b/c%20/d/",
+		{linker: d0, linked: "/a/b/c%20/d/"}:              "/a/b/c%20/d/",
+		{linker: d0, linked: "/a/b/c%20/d/#title"}:        "/a/b/c%20/d/#title",
+		{linker: d0, linked: "/a/b/c%20/d/"}:              "/a/b/c%20/d/",
+		{linker: d0, linked: "/a/b/c%20/d/#title"}:        "/a/b/c%20/d/#title",
+		{linker: d0, linked: "/a/b/c%20/page.html#title"}: "/a/b/c%20/page.html#title",
+		{linker: d0, linked: "/a/b/#title"}:               "/a/b/#title",
+		{linker: d0, linked: "/a/b/page.html"}:            "/a/b/page.html",
+		{linker: d0, linked: "/a/b/page.html#title"}:      "/a/b/page.html#title",
+		{linker: d0, linked: "/page.html#title"}:          "/page.html#title",
+		{linker: d2, linked: "/"}:                         "/",
+		{linker: d2, linked: "/page.html"}:                "/page.html",
+		{linker: d2, linked: "/"}:                         "/",
+		{linker: d2, linked: "/page.html"}:                "/page.html",
+		{linker: d2, linked: "/page.html#title"}:          "/page.html#title",
+		{linker: d2, linked: "/page.html#title"}:          "/page.html#title",
+		{linker: d2, linked: "/a/b/page.html#"}:           "/a/b/page.html#",
+		{linker: d2, linked: "/a/b/page.html#title"}:      "/a/b/page.html#title",
 	}
 	rw := rewriter("/")
 	for tc, te := range sorted(tcs) {
 		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
-			initial, err := rw.Rewrite(tc.linked, tc.linker)
+			got, err := rw.Rewrite(tc.linked, tc.linker)
 			if err != nil {
 				t.Errorf("1st act, unexpected error: %v", err)
-			} else if te != initial {
-				t.Errorf("1st assert, expected: %q got: %q", te, initial)
-			}
-			secondary, err := rw.Rewrite(initial, tc.linker)
-			if err != nil {
-				t.Errorf("2nd act, unexpected error: %v", err)
-			} else if secondary != initial {
-				t.Errorf("2nd assert, expected: %q got: %q", te, secondary)
+			} else if te != got {
+				t.Errorf("1st assert, expected: %q got: %q", te, got)
 			}
 		})
 	}
