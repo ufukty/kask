@@ -11,7 +11,7 @@ func Example_builder_rewriteLinksInHtmlPage() {
 	input := `<a href="../a/b/README.md#Title">link with redundant traverse</a>
 <a href="../a/b/page.md#Title">link with redundant traverse</a>
 <a href="../a/index.tmpl#Title">link with redundant traverse</a>`
-	rw := rewriter.New()
+	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: "/"})
 	rw.Bank("a/b/README.md", "/a/b/")
 	rw.Bank("a/b/page.md", "/a/b/page.html")
 	rw.Bank("a/index.tmpl", "/a/")
