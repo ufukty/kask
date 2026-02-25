@@ -28,18 +28,6 @@ func withStripping(path string, toStrip bool) string {
 }
 
 // .  => /
-// a  => /a
-// /a => /a
-func assureLeadingSlash(path string) string {
-	if path == "." {
-		return "/"
-	} else if !strings.HasPrefix(path, "/") {
-		return "/" + path
-	}
-	return path
-}
-
-// .  => /
 // a  => a/
 // a/ => a/
 func assureTrailingSlash(path string) string {
@@ -72,8 +60,7 @@ func fileDst(parent, child string, strip bool) string {
 func dirUri(parent, child string, strip bool) string {
 	child = withStripping(child, strip)
 	child = url.PathEscape(child)
-	uri := filepath.Join(parent, child)
-	uri = assureLeadingSlash(uri)
+	uri, _ := url.JoinPath(parent, child)
 	uri = assureTrailingSlash(uri)
 	return uri
 }
@@ -94,8 +81,7 @@ func fileUri(parent, child string, strip bool, um UrlMode) string {
 		child = withStripping(child, strip)
 		child = url.PathEscape(child)
 		child = assureExtension(child, um)
-		uri := filepath.Join(parent, child)
-		uri = assureLeadingSlash(uri)
+		uri, _ := url.JoinPath(parent, child)
 		return uri
 	}
 }
