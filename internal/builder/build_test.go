@@ -32,12 +32,12 @@ func each(ns []*kask.Node, f func(*kask.Node) string) []string {
 	return ss
 }
 
-func buildTestSite(path string) (*builder, string) {
+func buildTestSite(path, domain string) (*builder, string) {
 	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
 	if err != nil {
 		panic(fmt.Errorf("buildTestSite: os.MkdirTemp: %w", err))
 	}
-	b := newBuilder(Args{Src: path, Dst: tmp, Dev: true, Verbose: false})
+	b := newBuilder(Args{Src: path, Dst: tmp, Domain: domain, Dev: true, Verbose: false})
 	err = b.Build()
 	if err != nil {
 		panic(fmt.Errorf("buildTestSite: b.Build: %w", err))
@@ -46,7 +46,7 @@ func buildTestSite(path string) (*builder, string) {
 }
 
 func TestBuilder_renderWebPages(t *testing.T) {
-	_, tmp := buildTestSite("testdata/web")
+	_, tmp := buildTestSite("testdata/web", "/")
 	f, err := os.ReadFile(filepath.Join(tmp, "index.html"))
 	if err != nil {
 		t.Errorf("prep, read file: %v", err)
@@ -57,7 +57,7 @@ func TestBuilder_renderWebPages(t *testing.T) {
 }
 
 func TestBuilder_renderMarkdownPages(t *testing.T) {
-	_, tmp := buildTestSite("testdata/markdown-content")
+	_, tmp := buildTestSite("testdata/markdown-content", "/")
 	f, err := os.ReadFile(filepath.Join(tmp, "index.html"))
 	if err != nil {
 		t.Errorf("prep, read file: %v", err)
@@ -68,7 +68,7 @@ func TestBuilder_renderMarkdownPages(t *testing.T) {
 }
 
 func ExampleBuilder_renderMarkdownToc() {
-	_, tmp := buildTestSite("testdata/markdown-toc")
+	_, tmp := buildTestSite("testdata/markdown-toc", "/")
 	f, err := os.ReadFile(filepath.Join(tmp, "index.html"))
 	if err != nil {
 		panic(fmt.Errorf("prep, read file: %w", err))
@@ -86,7 +86,7 @@ func ExampleBuilder_renderMarkdownToc() {
 }
 
 func TestBuilder_recursiveTemplating(t *testing.T) {
-	_, tmp := buildTestSite("testdata/recursive-templating")
+	_, tmp := buildTestSite("testdata/recursive-templating", "/")
 	f, err := os.ReadFile(filepath.Join(tmp, "a/b/c/page.html"))
 	if err != nil {
 		t.Errorf("prep, read file: %v", err)
@@ -121,7 +121,7 @@ func TestBuilder_propagated(t *testing.T) {
 }
 
 func ExampleBuilder_strippedOrderingHrefs() {
-	b, _ := buildTestSite("testdata/stripped-ordering")
+	b, _ := buildTestSite("testdata/stripped-ordering", "/")
 	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Href) })
 	// Output:
 	// /
@@ -132,8 +132,20 @@ func ExampleBuilder_strippedOrderingHrefs() {
 	// /contact/
 }
 
+func ExampleBuilder_strippedOrderingHrefsWithDomain() {
+	b, _ := buildTestSite("testdata/stripped-ordering", "https://kask.ufukty.com/")
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Href) })
+	// Output:
+	// https://kask.ufukty.com/
+	// https://kask.ufukty.com/career.html
+	// https://kask.ufukty.com/docs.html
+	// https://kask.ufukty.com/products.html
+	// https://kask.ufukty.com/about/
+	// https://kask.ufukty.com/contact/
+}
+
 func ExampleBuilder_strippedOrderingTitles() {
-	b, _ := buildTestSite("testdata/stripped-ordering")
+	b, _ := buildTestSite("testdata/stripped-ordering", "/")
 	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// Website Title
@@ -145,7 +157,7 @@ func ExampleBuilder_strippedOrderingTitles() {
 }
 
 func ExampleBuilder_strippedOrderingBreadcrumbs() {
-	b, _ := buildTestSite("testdata/stripped-ordering")
+	b, _ := buildTestSite("testdata/stripped-ordering", "/")
 	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) {
 		bs := each(n, func(n *kask.Node) string { return n.Title })
 		fmt.Println(strings.Join(bs, " / "))
@@ -160,7 +172,7 @@ func ExampleBuilder_strippedOrderingBreadcrumbs() {
 }
 
 func ExampleBuilder_preservedOrderingHrefs() {
-	b, _ := buildTestSite("testdata/preserved-ordering")
+	b, _ := buildTestSite("testdata/preserved-ordering", "/")
 	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Href) })
 	// Output:
 	// /
@@ -171,8 +183,20 @@ func ExampleBuilder_preservedOrderingHrefs() {
 	// /2.contact/
 }
 
+func ExampleBuilder_preservedOrderingHrefsWithDomain() {
+	b, _ := buildTestSite("testdata/preserved-ordering", "https://kask.ufukty.com/")
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Href) })
+	// Output:
+	// https://kask.ufukty.com/
+	// https://kask.ufukty.com/1.career.html
+	// https://kask.ufukty.com/2.docs.html
+	// https://kask.ufukty.com/3.products.html
+	// https://kask.ufukty.com/1.about/
+	// https://kask.ufukty.com/2.contact/
+}
+
 func ExampleBuilder_preservedOrderingTitles() {
-	b, _ := buildTestSite("testdata/preserved-ordering")
+	b, _ := buildTestSite("testdata/preserved-ordering", "/")
 	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// Website Title
@@ -184,7 +208,7 @@ func ExampleBuilder_preservedOrderingTitles() {
 }
 
 func ExampleBuilder_preservedOrderingBreadcrumbs() {
-	b, _ := buildTestSite("testdata/preserved-ordering")
+	b, _ := buildTestSite("testdata/preserved-ordering", "/")
 	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) {
 		bs := each(n, func(n *kask.Node) string { return n.Title })
 		fmt.Println(strings.Join(bs, " / "))
@@ -199,7 +223,7 @@ func ExampleBuilder_preservedOrderingBreadcrumbs() {
 }
 
 func TestBuilder_cssSplitting(t *testing.T) {
-	_, tmp := buildTestSite("testdata/css-splitting")
+	_, tmp := buildTestSite("testdata/css-splitting", "/")
 	fmt.Println(tmp)
 
 	t.Run("linking the scorrect stylesheets", func(t *testing.T) {
@@ -243,7 +267,7 @@ func TestBuilder_cssSplitting(t *testing.T) {
 }
 
 func ExampleBuilder_titles() {
-	b, _ := buildTestSite("testdata/titles")
+	b, _ := buildTestSite("testdata/titles", "/")
 	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// .
@@ -254,7 +278,7 @@ func ExampleBuilder_titles() {
 }
 
 func ExampleBuilder_metaTitle() {
-	b, _ := buildTestSite("testdata/meta-title")
+	b, _ := buildTestSite("testdata/meta-title", "/")
 	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// My Beautiful Site
@@ -273,7 +297,7 @@ func assertfile(t *testing.T, tmp, path string) {
 }
 
 func TestBuilder_assets(t *testing.T) {
-	_, tmp := buildTestSite("testdata/assets")
+	_, tmp := buildTestSite("testdata/assets", "/")
 	tcs := []string{".assets/sample.txt", "section/.assets/subsample.txt"}
 	for _, tc := range tcs {
 		assertfile(t, tmp, tc)
@@ -309,7 +333,7 @@ func readFile(path string) string {
 var anchor = regexp.MustCompile(`<a[^>]*>[^<]*</a>`)
 
 func ExampleBuilder_tmplLinkReplacements() {
-	_, dst := buildTestSite("testdata/link-replacements")
+	_, dst := buildTestSite("testdata/link-replacements", "/")
 	fmt.Println(strings.Join(anchor.FindAllString(readFile(filepath.Join(dst, "a/tmpl.html")), -1), "\n"))
 	// Output:
 	// <a href="/a/b/#Title">subdir direct</a>
@@ -319,7 +343,7 @@ func ExampleBuilder_tmplLinkReplacements() {
 }
 
 func ExampleBuilder_mdLinkReplacements() {
-	_, dst := buildTestSite("testdata/link-replacements")
+	_, dst := buildTestSite("testdata/link-replacements", "/")
 	fmt.Println(strings.Join(anchor.FindAllString(readFile(filepath.Join(dst, "a/md.html")), -1), "\n"))
 	// Output:
 	// <a href="/a/b/#Title">subdir direct</a>
@@ -329,7 +353,7 @@ func ExampleBuilder_mdLinkReplacements() {
 }
 
 func ExampleBuilder_correctLinks() {
-	_, dst := buildTestSite("testdata/correct-links")
+	_, dst := buildTestSite("testdata/correct-links", "/")
 	fmt.Println(strings.Join(anchor.FindAllString(readFile(filepath.Join(dst, "page1.html")), -1), "\n"))
 	fmt.Println(strings.Join(anchor.FindAllString(readFile(filepath.Join(dst, "page2.html")), -1), "\n"))
 	// Output:
