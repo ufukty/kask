@@ -38,11 +38,11 @@ func rewriter(domain string) *Rewriter {
 		"a/b/c /d": domain + "a/b/c%20/d/",
 		// assets
 		".assets/x.png":       domain + ".assets/x.png",
-		".assets/x 2.png":     domain + ".assets/x 2.png",
+		".assets/x@2.png":     domain + ".assets/x%402.png",
 		"a/.assets/x.png":     domain + "a/.assets/x.png",
-		"a/.assets/x 2.png":   domain + "a/.assets/x 2.png",
+		"a/.assets/x@2.png":   domain + "a/.assets/x%402.png",
 		"a/b/.assets/x.png":   domain + "a/b/.assets/x.png",
-		"a/b/.assets/x 2.png": domain + "a/b/.assets/x 2.png",
+		"a/b/.assets/x@2.png": domain + "a/b/.assets/x%402.png",
 	}
 	r := New(paths.Paths{Src: ".", Dst: ".", Url: domain})
 	for src, url := range links {
@@ -514,11 +514,11 @@ func TestAssetLink(t *testing.T) {
 	type tc struct{ linked, expected string }
 	linker := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := map[string]tc{
-		"absolute with special character": {linked: "/.assets/x 2.png", expected: "/.assets/x%202.png"},
+		"absolute with special character": {linked: "/.assets/x@2.png", expected: "/.assets/x%402.png"},
 		"absolute":                        {linked: "/.assets/x.png", expected: "/.assets/x.png"},
-		"relative with special character": {linked: ".assets/x 2.png", expected: "/a/b/.assets/x%202.png"},
+		"relative with special character": {linked: ".assets/x@2.png", expected: "/a/b/.assets/x%402.png"},
 		"relative":                        {linked: ".assets/x.png", expected: "/a/b/.assets/x.png"},
-		"relative with parent dir and special character": {linked: "../.assets/x 2.png", expected: "/a/.assets/x%202.png"},
+		"relative with parent dir and special character": {linked: "../.assets/x@2.png", expected: "/a/.assets/x%402.png"},
 		"relative with parent dir":                       {linked: "../.assets/x.png", expected: "/a/.assets/x.png"},
 	}
 	rw := rewriter("/")
