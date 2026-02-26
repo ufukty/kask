@@ -43,7 +43,6 @@ type builder struct {
 	args     Args
 	rw       *rewriter.Rewriter
 	mr       *markdown.Renderer
-	assets   []string                  // src
 	markdown map[string]*kask.Markdown // src -> content
 	leaves   map[string]*kask.Node     // dst -> node
 	root3    *kask.Node                // for testing
@@ -226,7 +225,6 @@ func newBuilder(args Args) *builder {
 		args:     args,
 		rw:       rw,
 		mr:       markdown.New(args.Src, rw),
-		assets:   []string{},
 		markdown: map[string]*kask.Markdown{},
 		leaves:   map[string]*kask.Node{},
 		start:    time.Now(),
