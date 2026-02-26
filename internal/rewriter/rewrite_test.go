@@ -487,6 +487,29 @@ func TestRewrite_Rewrite_idempotency(t *testing.T) {
 	}
 }
 
+func TestRewriter_Rewrite_canonicalization(t *testing.T) {
+	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "https://kask.ufukty.com/page.html"}
+	d2 := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "https://kask.ufukty.com/a/b/page.html"}
+	tcs := map[tc]string{
+		{linker: d0, linked: "a/b/page.html"}:   "https://kask.ufukty.com/a/b/page.html",
+		{linker: d0, linked: "/a/b/page.html"}:  "https://kask.ufukty.com/a/b/page.html",
+		{linker: d0, linked: "./a/b/page.html"}: "https://kask.ufukty.com/a/b/page.html",
+		{linker: d2, linked: "/page.html"}:      "https://kask.ufukty.com/page.html",
+		{linker: d2, linked: "../../page.html"}: "https://kask.ufukty.com/page.html",
+	}
+	rw := rewriter("https://kask.ufukty.com/")
+	for tc, te := range sorted(tcs) {
+		t.Run(testname(tc.linker.Src, tc.linked), func(t *testing.T) {
+			got, err := rw.Rewrite(tc.linked, tc.linker)
+			if err != nil {
+				t.Errorf("act, unexpected error: %v", err)
+			} else if te != got {
+				t.Errorf("expected %q got %q", te, got)
+			}
+		})
+	}
+}
+
 func TestAssetLink(t *testing.T) {
 	type tc struct{ linked, expected string }
 	linker := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}

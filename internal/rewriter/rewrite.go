@@ -2,6 +2,7 @@ package rewriter
 
 import (
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -77,11 +78,26 @@ func (rw Rewriter) Rewrite(linked string, linker paths.Paths) (string, error) {
 	}
 
 	rewritten, ok := rw.links[resolved]
-	if !ok {
-		return "", ErrInvalidTarget
+	if ok {
+		// TODO: validate asset existence
+		// TODO: validate anchor target existence (via ToC)
+		return rewritten + linkedS.tail, nil
 	}
 
-	// TODO: validate asset existence
-	// TODO: validate anchor target existence (via ToC)
-	return rewritten + linkedS.tail, nil
+	if linkedS.base == "" && linkedS.ref == "" { // same page
+		base = linker.Url
+	} else if linkedS.base == "" { // same dir
+		base, _ = url.JoinPath(linker.Url, "..")
+	} else { // absolute
+		base = rw.contentDir.Url
+	}
+	canonicalized, _ := url.JoinPath(base, linkedS.ref)
+	_, ok = rw.targets[canonicalized]
+	if ok {
+		// TODO: validate asset existence
+		// TODO: validate anchor target existence (via ToC)
+		return canonicalized + linkedS.tail, nil
+	}
+
+	return "", ErrInvalidTarget
 }
