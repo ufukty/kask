@@ -206,7 +206,7 @@ func (b *builder) Build() error {
 	if err := b.execDir(root2); err != nil {
 		return fmt.Errorf("executing templates: %w", err)
 	}
-	if err := b.copyAssetsFolders(root2); err != nil {
+	if err := b.assets(root2); err != nil {
 		return fmt.Errorf("copying assets folders: %w", err)
 	}
 	if err := b.createDeploymentConfiguration(root2); err != nil {
