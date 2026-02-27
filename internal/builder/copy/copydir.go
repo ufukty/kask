@@ -10,23 +10,23 @@ import (
 func File(dst, src string) error {
 	srcfile, err := os.Open(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("os.Open: %w", err)
 	}
 	defer srcfile.Close()
 
 	dstfile, err := os.Create(dst)
 	if err != nil {
-		return err
+		return fmt.Errorf("os.Create: %w", err)
 	}
 	defer dstfile.Close()
 
 	_, err = io.Copy(dstfile, srcfile)
 	if err != nil {
-		return err
+		return fmt.Errorf("io.Copy: %w", err)
 	}
 	s, err := os.Stat(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("os.Stat: %w", err)
 	}
 	return os.Chmod(dst, s.Mode())
 }
@@ -34,7 +34,7 @@ func File(dst, src string) error {
 func Dir(dst, src string) error {
 	s, err := os.Stat(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("os.Stat: %w", err)
 	}
 	if !s.IsDir() {
 		return fmt.Errorf("source is not a directory")
@@ -42,15 +42,15 @@ func Dir(dst, src string) error {
 
 	err = os.MkdirAll(dst, s.Mode())
 	if err != nil {
-		return err
+		return fmt.Errorf("os.MkdirAll: %w", err)
 	}
 	err = filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return err
+			return fmt.Errorf("filepath.Walk: %w", err)
 		}
 		relPath, err := filepath.Rel(src, path)
 		if err != nil {
-			return err
+			return fmt.Errorf("filepath.Rel: %w", err)
 		}
 		targetPath := filepath.Join(dst, relPath)
 		if info.IsDir() {
@@ -59,5 +59,5 @@ func Dir(dst, src string) error {
 		return File(targetPath, path)
 	})
 
-	return err
+	return fmt.Errorf("return File: %w", err)
 }
