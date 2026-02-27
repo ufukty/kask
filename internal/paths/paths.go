@@ -110,6 +110,11 @@ func (p Paths) File(basename string, strip bool, um UrlMode) Paths {
 
 func (p Paths) Asset(basename string) Paths {
 	u, _ := url.JoinPath(p.Url, basename)
+	ss := strings.Split(u, "/")
+	if len(ss) > 0 {
+		ss[len(ss)-1] = strings.ReplaceAll(ss[len(ss)-1], "@", "%40")
+	}
+	u = strings.Join(ss, "/")
 	return Paths{
 		Src: filepath.Join(p.Src, basename),
 		Dst: filepath.Join(p.Dst, basename),
