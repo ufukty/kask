@@ -107,3 +107,12 @@ func (p Paths) File(basename string, strip bool, um UrlMode) Paths {
 		Url: fileUri(p.Url, basename, strip, um),
 	}
 }
+
+func (p Paths) Asset(basename string) Paths {
+	u, _ := url.JoinPath(p.Url, basename)
+	return Paths{
+		Src: filepath.Join(p.Src, basename),
+		Dst: filepath.Join(p.Dst, basename),
+		Url: u,
+	}
+}
