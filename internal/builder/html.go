@@ -10,6 +10,7 @@ import (
 	"go.ufukty.com/kask/internal/rewriter"
 )
 
+// TODO: add support for `<video>` tags
 var linkMatchers = []narrowing.Matchers{
 	narrowing.MustCompile(`<a[^>]*>[^<]*</a>`, `href="([^"]*)"`),                                    // <a href=
 	narrowing.MustCompile(`<img[^>]*/?>`, `src="([^"]*)"`),                                          // <img src=
