@@ -10,7 +10,7 @@ import (
 )
 
 func (b *builder) copyAssetDir(path paths.Paths) error {
-	err := os.MkdirAll(path.Dst, 0o755)
+	err := os.MkdirAll(filepath.Join(b.args.Dst, path.Dst), 0o755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
@@ -25,7 +25,7 @@ func (b *builder) copyAssetDir(path paths.Paths) error {
 				return fmt.Errorf("%q: %w", e.Name(), err)
 			}
 		} else {
-			file := path.File(e.Name(), false, paths.UrlModeDefault)
+			file := path.Asset(e.Name())
 			if b.args.Verbose {
 				fmt.Printf("copying %q => %q", file.Src, file.Dst)
 			}
