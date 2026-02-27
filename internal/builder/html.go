@@ -2,26 +2,27 @@ package builder
 
 import (
 	"fmt"
-	"regexp"
 	"slices"
 	"strings"
 
+	"go.ufukty.com/kask/internal/builder/narrowing"
 	"go.ufukty.com/kask/internal/paths"
 	"go.ufukty.com/kask/internal/rewriter"
 )
 
-var anchorHref = regexp.MustCompile(`<a[^>]*href="([^"]*)"[^>]*>[^<]*</a>`)
+var linkMatchers = []narrowing.Matchers{
+	narrowing.MustCompile(`<a[^>]*>[^<]*</a>`, `href="([^"]*)"`),                                    // <a href=
+	narrowing.MustCompile(`<img[^>]*/?>`, `src="([^"]*)"`),                                          // <img src=
+	narrowing.MustCompile(`<img[^>]*/?>`, `srcset="\s*([^"]*)\s*"`, `([^\s]+)\s+\d+(?:\.\d+)?[wx]`), // <img srcset=
+}
 
-func rewriteLinksInHtmlPage(rw *rewriter.Rewriter, page paths.Paths, bs []byte) ([]byte, error) {
+func (b *builder) rewriteLinksInRanges(ranges []narrowing.Range, page paths.Paths, bs []byte) ([]byte, error) {
 	invTargets := []string{}
 	delta := 0
-	for _, matches := range anchorHref.FindAllSubmatchIndex(bs, -1) {
-		if len(matches) < 4 {
-			continue
-		}
-		start, end := matches[2]+delta, matches[3]+delta
+	for _, r := range ranges {
+		start, end := r.Start+delta, r.End+delta
 		m1 := bs[start:end]
-		n, err := rw.Rewrite(string(m1), page)
+		n, err := b.rw.Rewrite(string(m1), page)
 		if err == rewriter.ErrInvalidTarget {
 			invTargets = append(invTargets, fmt.Sprintf("%q", string(m1)))
 			continue
@@ -36,4 +37,16 @@ func rewriteLinksInHtmlPage(rw *rewriter.Rewriter, page paths.Paths, bs []byte) 
 		return nil, fmt.Errorf("found links to invalid target(s): %s", strings.Join(invTargets, ", "))
 	}
 	return bs, nil
+}
+
+func findLinkRanges(bs []byte) []narrowing.Range {
+	ranges := []narrowing.Range{}
+	for _, lm := range linkMatchers {
+		ranges = append(ranges, lm.FindAll(bs)...)
+	}
+	return ranges
+}
+
+func (b *builder) htmlContent(page paths.Paths, bs []byte) ([]byte, error) {
+	return b.rewriteLinksInRanges(findLinkRanges(bs), page, bs)
 }

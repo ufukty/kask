@@ -73,6 +73,7 @@ func (b *builder) prepareTemplates(d *dir2, p paths.Paths) (*template.Template, 
 	return t, nil
 }
 
+// TODO: the [builder.htmlContent] call is redundant on markdown based pages
 func (b *builder) executeTemplates(p paths.Paths, t *template.Template, c *kask.TemplateContent) error {
 	if b.args.Verbose {
 		fmt.Printf("printing %s\n", p.Dst)
@@ -87,7 +88,7 @@ func (b *builder) executeTemplates(p paths.Paths, t *template.Template, c *kask.
 	bs := buf.Bytes()
 	if filepath.Ext(p.Src) == ".tmpl" {
 		var err error
-		bs, err = rewriteLinksInHtmlPage(b.rw, p, bs)
+		bs, err = b.htmlContent(p, bs)
 		if err != nil {
 			return fmt.Errorf("rewriting the links found at the page: %w", err)
 		}
