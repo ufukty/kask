@@ -46,28 +46,28 @@ func (v *Visitor) Error() error {
 	return nil
 }
 
-func (v *Visitor) links(node *ast.Link, entering bool) (ast.WalkStatus, bool) {
-	if !entering {
-		return ast.GoToNext, false
-	}
-	h2, err := v.rw.Rewrite(string(node.Destination), v.Page)
+func (v *Visitor) rewrite(dst []byte) []byte {
+	dst2, err := v.rw.Rewrite(string(dst), v.Page)
 	if err == rewriter.ErrInvalidTarget {
-		v.InvTargets = append(v.InvTargets, string(node.Destination))
-		return ast.GoToNext, false
+		v.InvTargets = append(v.InvTargets, string(dst))
+		return dst
 	}
-	node.Destination = []byte(h2)
-	return ast.GoToNext, false
+	return []byte(dst2)
 }
 
+// TODO: rewrite links inside the html blocks
 func (v *Visitor) Visit(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
 	switch node := node.(type) {
 	case *ast.CodeBlock:
 		return v.cf.RenderNodeHook(w, node, entering)
 	case *ast.Image:
-		// TODO: change destination
-
+		if entering {
+			node.Destination = v.rewrite(node.Destination)
+		}
 	case *ast.Link:
-		return v.links(node, entering)
+		if entering {
+			node.Destination = v.rewrite(node.Destination)
+		}
 	}
 	return ast.GoToNext, false
 }
