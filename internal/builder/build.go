@@ -200,14 +200,14 @@ func (b *builder) Build() error {
 	if err != nil {
 		return fmt.Errorf("structuring node tree: %w", err)
 	}
+	if err := b.assets(root2); err != nil {
+		return fmt.Errorf("copying assets folders: %w", err)
+	}
 	if err := b.renderMarkdown(root2); err != nil {
 		return fmt.Errorf("rendering markdown pages: %w", err)
 	}
 	if err := b.execDir(root2); err != nil {
 		return fmt.Errorf("executing templates: %w", err)
-	}
-	if err := b.assets(root2); err != nil {
-		return fmt.Errorf("copying assets folders: %w", err)
 	}
 	if err := b.createDeploymentConfiguration(root2); err != nil {
 		return fmt.Errorf("copying assets folders: %w", err)
