@@ -85,16 +85,11 @@ func (b *builder) executeTemplates(p paths.Paths, t *template.Template, c *kask.
 	if err := t.ExecuteTemplate(buf, pageTemplateName(p.Src), c); err != nil {
 		return fmt.Errorf("executing: %w", err)
 	}
-	bs := buf.Bytes()
-	if filepath.Ext(p.Src) == ".tmpl" {
-		var err error
-		bs, err = b.htmlContent(p, bs)
-		if err != nil {
-			return fmt.Errorf("rewriting the links found at the page: %w", err)
-		}
-	}
-	err := os.WriteFile(filepath.Join(b.args.Dst, p.Dst), bs, 0o666)
+	bs, err := b.htmlContent(p, buf.Bytes())
 	if err != nil {
+		return fmt.Errorf("rewriting the links found at the page: %w", err)
+	}
+	if err = os.WriteFile(filepath.Join(b.args.Dst, p.Dst), bs, 0o666); err != nil {
 		return fmt.Errorf("creating: %w", err)
 	}
 	return nil
