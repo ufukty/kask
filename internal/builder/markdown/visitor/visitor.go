@@ -21,7 +21,6 @@ func (v *Visitor) Prepare(page paths.Paths) {
 	v.Page = page
 }
 
-// TODO: rewrite links inside the html blocks
 func (v *Visitor) Visit(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
 	switch node := node.(type) {
 	case *ast.CodeBlock:
