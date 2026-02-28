@@ -43,7 +43,7 @@ func TestRewriter_ToHtml_content(t *testing.T) {
 	t.Run("img", func(t *testing.T) {
 		pattern := matcher(
 			"<p>",
-			`<img src=".assets/img.jpg" alt="an image" />`,
+			`<img src="/.assets/img.jpg" alt="an image" />`,
 			"</p>",
 		)
 		if !pattern.MatchString(content) {
