@@ -4,18 +4,17 @@ import (
 	"io"
 
 	"github.com/gomarkdown/markdown/ast"
-	"go.ufukty.com/kask/internal/builder/markdown/visitor/codefence"
 	"go.ufukty.com/kask/internal/paths"
 )
 
 // unsafe for concurrency
 type Visitor struct {
-	cf   *codefence.Renderer
+	cf   *codefenceRenderer
 	Page paths.Paths
 }
 
 func New() *Visitor {
-	return &Visitor{cf: codefence.NewRenderer()}
+	return &Visitor{cf: newCodefenceRenderer()}
 }
 
 func (v *Visitor) Prepare(page paths.Paths) {
