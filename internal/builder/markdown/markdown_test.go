@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"go.ufukty.com/kask/internal/paths"
-	"go.ufukty.com/kask/internal/rewriter"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -16,10 +15,7 @@ func matcher(tokens ...string) *regexp.Regexp {
 }
 
 func TestRewriter_ToHtml_content(t *testing.T) {
-	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: "/"})
-	rw.Bank(".assets/img.jpg", "/.assets/img.jpg")
-	rw.Bank("sibling.md", "/sibling.html")
-	rn := New("testdata", rw)
+	rn := New("testdata")
 	p, err := rn.ToHtml(paths.Paths{Src: "page.md"})
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
@@ -33,6 +29,8 @@ func TestRewriter_ToHtml_content(t *testing.T) {
 		}
 	})
 
+	fmt.Println(content)
+
 	t.Run("h1 title", func(t *testing.T) {
 		pattern := matcher(`<h1 id="a-title-for-a-markdown-doc">A title for a Markdown doc</h1>`)
 		if !pattern.MatchString(content) {
@@ -43,7 +41,7 @@ func TestRewriter_ToHtml_content(t *testing.T) {
 	t.Run("img", func(t *testing.T) {
 		pattern := matcher(
 			"<p>",
-			`<img src="/.assets/img.jpg" alt="an image" />`,
+			`<img src=".assets/img.jpg" alt="an image" />`,
 			"</p>",
 		)
 		if !pattern.MatchString(content) {
@@ -92,7 +90,7 @@ func TestRewriter_ToHtml_content(t *testing.T) {
 			"<ol>",
 			"<li>", "<p>another day</p>", "</li>",
 			"<li>", "<p>another slay</p>", "</li>",
-			"<li>", `<p><a href="/sibling.html">and a link</a></p>`, "</li>",
+			"<li>", `<p><a href="sibling.md" target="_blank">and a link</a></p>`, "</li>",
 			"</ol>",
 		)
 		if !pattern.MatchString(content) {
@@ -108,11 +106,8 @@ func printToc(n *kask.MarkdownTocNode) {
 	}
 }
 
-func ExampleRewriter_toHtml_toc() {
-	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: "/"})
-	rw.Bank(".assets/img.jpg", "/.assets/img.jpg")
-	rw.Bank("sibling.md", "/sibling.html")
-	rn := New("testdata", rw)
+func ExampleRenderer_toHtml_toc() {
+	rn := New("testdata")
 	p, err := rn.ToHtml(paths.Paths{Src: "page.md"})
 	if err != nil {
 		panic(fmt.Errorf("act, ToHtml: %w", err))

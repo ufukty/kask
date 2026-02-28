@@ -11,7 +11,6 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 	"go.ufukty.com/kask/internal/builder/markdown/visitor"
 	"go.ufukty.com/kask/internal/paths"
-	"go.ufukty.com/kask/internal/rewriter"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -21,8 +20,8 @@ type Renderer struct {
 	visitor  *visitor.Visitor
 }
 
-func New(src string, rw *rewriter.Rewriter) *Renderer {
-	v := visitor.New(rw)
+func New(src string) *Renderer {
+	v := visitor.New()
 	r := html.NewRenderer(html.RendererOptions{
 		Flags:          html.CommonFlags | html.HrefTargetBlank,
 		RenderNodeHook: v.Visit,
@@ -50,10 +49,6 @@ func (r Renderer) ToHtml(page paths.Paths) (*kask.Markdown, error) {
 	)
 	n := p.Parse(c).(*ast.Document)
 	html := markdown.Render(n, r.renderer)
-	err = r.visitor.Error()
-	if err != nil {
-		return nil, fmt.Errorf("found links to invalid target(s): %s", err)
-	}
 	toc := r.getTableOfContent(n)
 	m := &kask.Markdown{
 		Content: string(html),
