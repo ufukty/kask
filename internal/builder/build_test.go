@@ -380,3 +380,15 @@ func ExampleBuilder_correctLinks() {
 	// <a href="/page1.html"></a>
 	// <a href="/page1.html"></a>
 }
+
+func TestBuilder_docs(t *testing.T) {
+	b := newBuilder(Args{
+		Src:    "../../docs",
+		Dst:    t.TempDir(),
+		Domain: "https://kask.ufukty.com/",
+	})
+	err := b.Build()
+	if err != nil {
+		t.Errorf("act, unexpected error: %v", err)
+	}
+}
