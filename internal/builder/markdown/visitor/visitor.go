@@ -24,7 +24,9 @@ func (v *Visitor) Prepare(page paths.Paths) {
 func (v *Visitor) Visit(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
 	switch node := node.(type) {
 	case *ast.CodeBlock:
-		return v.cf.RenderNodeHook(w, node, entering)
+		if entering {
+			return v.cf.RenderNodeHook(w, node, entering)
+		}
 	}
 	return ast.GoToNext, false
 }
