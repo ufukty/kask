@@ -224,7 +224,7 @@ func newBuilder(args Args) *builder {
 	return &builder{
 		args:     args,
 		rw:       rw,
-		mr:       markdown.New(args.Src, rw),
+		mr:       markdown.New(args.Src),
 		markdown: map[string]*kask.Markdown{},
 		leaves:   map[string]*kask.Node{},
 		start:    time.Now(),
