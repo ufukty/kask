@@ -22,6 +22,7 @@ var linkMatchers = []narrowing.Matchers{
 var ErrIncorrectLinks = fmt.Errorf("found incorrect links")
 
 func (b *builder) rewriteLinksInRanges(ranges []narrowing.Range, page paths.Paths, bs []byte) ([]byte, error) {
+	slices.SortFunc(ranges, narrowing.Compare)
 	invTargets := []string{}
 	delta := 0
 	for _, r := range ranges {

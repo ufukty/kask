@@ -1,6 +1,7 @@
 package narrowing
 
 import (
+	"cmp"
 	"fmt"
 	"regexp"
 )
@@ -11,6 +12,17 @@ type Range struct {
 
 func (r Range) String() string {
 	return fmt.Sprintf("[%d:%d]", r.Start, r.End)
+}
+
+func (r Range) OnBytes(bs []byte) string {
+	return string(bs[r.Start:r.End])
+}
+
+func Compare(a, b Range) int {
+	return cmp.Or(
+		cmp.Compare(a.Start, b.Start),
+		cmp.Compare(a.End, b.End),
+	)
 }
 
 // returns each occurrence as [Range] pairs
