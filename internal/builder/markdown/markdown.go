@@ -22,7 +22,7 @@ type Renderer struct {
 func New(src string) *Renderer {
 	v := newVisitor()
 	r := html.NewRenderer(html.RendererOptions{
-		Flags:          html.CommonFlags | html.HrefTargetBlank,
+		Flags:          html.CommonFlags,
 		RenderNodeHook: v.Visit,
 	})
 	return &Renderer{
