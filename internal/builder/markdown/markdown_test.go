@@ -90,7 +90,7 @@ func TestRewriter_ToHtml_content(t *testing.T) {
 			"<ol>",
 			"<li>", "<p>another day</p>", "</li>",
 			"<li>", "<p>another slay</p>", "</li>",
-			"<li>", `<p><a href="sibling.md" target="_blank">and a link</a></p>`, "</li>",
+			"<li>", `<p><a href="sibling.md">and a link</a></p>`, "</li>",
 			"</ol>",
 		)
 		if !pattern.MatchString(content) {
