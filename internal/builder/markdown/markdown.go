@@ -9,7 +9,6 @@ import (
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
-	"go.ufukty.com/kask/internal/builder/markdown/visitor"
 	"go.ufukty.com/kask/internal/paths"
 	"go.ufukty.com/kask/pkg/kask"
 )
@@ -17,11 +16,11 @@ import (
 type Renderer struct {
 	src      string
 	renderer *html.Renderer
-	visitor  *visitor.Visitor
+	visitor  *visitor
 }
 
 func New(src string) *Renderer {
-	v := visitor.New()
+	v := newVisitor()
 	r := html.NewRenderer(html.RendererOptions{
 		Flags:          html.CommonFlags | html.HrefTargetBlank,
 		RenderNodeHook: v.Visit,

@@ -1,4 +1,4 @@
-package visitor
+package markdown
 
 import (
 	"io"
@@ -8,20 +8,20 @@ import (
 )
 
 // unsafe for concurrency
-type Visitor struct {
+type visitor struct {
 	cf   *codefenceRenderer
 	Page paths.Paths
 }
 
-func New() *Visitor {
-	return &Visitor{cf: newCodefenceRenderer()}
+func newVisitor() *visitor {
+	return &visitor{cf: newCodefenceRenderer()}
 }
 
-func (v *Visitor) Prepare(page paths.Paths) {
+func (v *visitor) Prepare(page paths.Paths) {
 	v.Page = page
 }
 
-func (v *Visitor) Visit(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
+func (v *visitor) Visit(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
 	switch node := node.(type) {
 	case *ast.CodeBlock:
 		if entering {
