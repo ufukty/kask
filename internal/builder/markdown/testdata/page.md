@@ -29,3 +29,5 @@ class lorem {}
 | Header     |
 | ---------- |
 | Cell `1/1` |
+
+[External link](https://ufukty.com)

@@ -19,8 +19,8 @@ type Renderer struct {
 	visitor  *visitor
 }
 
-func New(src string) *Renderer {
-	v := newVisitor()
+func New(src, domain string) *Renderer {
+	v := newVisitor(domain)
 	r := html.NewRenderer(html.RendererOptions{
 		Flags:          html.CommonFlags,
 		RenderNodeHook: v.Visit,

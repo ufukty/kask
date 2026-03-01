@@ -15,7 +15,7 @@ func matcher(tokens ...string) *regexp.Regexp {
 }
 
 func TestRewriter_ToHtml_content(t *testing.T) {
-	rn := New("testdata")
+	rn := New("testdata", "https://kask.ufukty.com")
 	p, err := rn.ToHtml(paths.Paths{Src: "page.md"})
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
@@ -28,8 +28,6 @@ func TestRewriter_ToHtml_content(t *testing.T) {
 			t.Error("could not find")
 		}
 	})
-
-	fmt.Println(content)
 
 	t.Run("h1 title", func(t *testing.T) {
 		pattern := matcher(`<h1 id="a-title-for-a-markdown-doc">A title for a Markdown doc</h1>`)
@@ -97,6 +95,15 @@ func TestRewriter_ToHtml_content(t *testing.T) {
 			t.Error("could not find")
 		}
 	})
+
+	t.Run("external link", func(t *testing.T) {
+		pattern := matcher(
+			`<a target="_blank" href="https://ufukty.com">External link</a>`,
+		)
+		if !pattern.MatchString(content) {
+			t.Error("could not find")
+		}
+	})
 }
 
 func printToc(n *kask.MarkdownTocNode) {
@@ -107,7 +114,7 @@ func printToc(n *kask.MarkdownTocNode) {
 }
 
 func ExampleRenderer_toHtml_toc() {
-	rn := New("testdata")
+	rn := New("testdata", "/")
 	p, err := rn.ToHtml(paths.Paths{Src: "page.md"})
 	if err != nil {
 		panic(fmt.Errorf("act, ToHtml: %w", err))
