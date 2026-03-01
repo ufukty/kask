@@ -22,9 +22,6 @@ var linkMatchers = []narrowing.Matchers{
 var ErrIncorrectLinks = fmt.Errorf("found incorrect links")
 
 func (b *builder) rewriteLinksInRanges(ranges []narrowing.Range, page paths.Paths, bs []byte) ([]byte, error) {
-	for _, r := range ranges {
-		fmt.Println(string(bs[r.Start:r.End]))
-	}
 	invTargets := []string{}
 	delta := 0
 	for _, r := range ranges {
