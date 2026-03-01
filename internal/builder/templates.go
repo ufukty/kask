@@ -2,6 +2,7 @@ package builder
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"os"
@@ -74,28 +75,22 @@ func (b *builder) prepareTemplates(d *dir2, p paths.Paths) (*template.Template, 
 }
 
 // TODO: the [builder.htmlContent] call is redundant on markdown based pages
-func (b *builder) executeTemplates(p paths.Paths, t *template.Template, c *kask.TemplateContent) error {
-	if b.args.Verbose {
-		fmt.Printf("printing %s\n", p.Dst)
-	}
+func (b *builder) executeTemplates(p paths.Paths, t *template.Template, c *kask.TemplateContent) ([]byte, error) {
 	buf := bytes.NewBuffer([]byte{})
 	if _, err := fmt.Fprintln(buf, fileheader); err != nil {
-		return fmt.Errorf("writing the autogen notice: %w", err)
+		return nil, fmt.Errorf("writing the autogen notice: %w", err)
 	}
 	if err := t.ExecuteTemplate(buf, pageTemplateName(p.Src), c); err != nil {
-		return fmt.Errorf("executing: %w", err)
+		return nil, fmt.Errorf("executing: %w", err)
 	}
-	bs, err := b.htmlContent(p, buf.Bytes())
-	if err != nil {
-		return fmt.Errorf("rewriting the links found at the page: %w", err)
-	}
-	if err = os.WriteFile(filepath.Join(b.args.Dst, p.Dst), bs, 0o666); err != nil {
-		return fmt.Errorf("creating: %w", err)
-	}
-	return nil
+
+	return buf.Bytes(), nil
 }
 
 func (b *builder) execPage(d *dir2, p paths.Paths) error {
+	if b.args.Verbose {
+		fmt.Printf("printing %s\n", p.Dst)
+	}
 	c := &kask.TemplateContent{
 		Stylesheets: d.stylesheets,
 		Node:        b.leaves[p.Url],
@@ -107,28 +102,43 @@ func (b *builder) execPage(d *dir2, p paths.Paths) error {
 	if err != nil {
 		return fmt.Errorf("prepare: %w", err)
 	}
-	err = b.executeTemplates(p, t, c)
+	bs, err := b.executeTemplates(p, t, c)
 	if err != nil {
-		return fmt.Errorf("template: %w", err)
+		return fmt.Errorf("executing: %w", err)
+	}
+	bs, err = b.htmlPostProcess(p, bs)
+	if err != nil {
+		return fmt.Errorf("post-processing rendered html: %w", err)
+	}
+	if err = os.WriteFile(filepath.Join(b.args.Dst, p.Dst), bs, 0o666); err != nil {
+		return fmt.Errorf("writing into disk: %w", err)
 	}
 	return nil
 }
 
-func (b *builder) execDir(d *dir2) error {
+func (b *builder) print(d *dir2) error {
 	err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.Dst), 0o755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
+	incorrectLinks := false
 	for _, page := range d.original.Pages {
 		p := d.paths.File(page, d.original.IsToStrip(), b.args.Provider.UrlMode())
-		if err := b.execPage(d, p); err != nil {
+		if err := b.execPage(d, p); errors.Is(err, ErrIncorrectLinks) {
+			incorrectLinks = true
+		} else if err != nil {
 			return fmt.Errorf("%q: %w", page, err)
 		}
 	}
 	for _, subdir := range d.subdirs {
-		if err := b.execDir(subdir); err != nil {
+		if err := b.print(subdir); errors.Is(err, ErrIncorrectLinks) {
+			incorrectLinks = true
+		} else if err != nil {
 			return fmt.Errorf("%q: %w", filepath.Base(subdir.paths.Src), err)
 		}
+	}
+	if incorrectLinks {
+		return ErrIncorrectLinks
 	}
 	return nil
 }

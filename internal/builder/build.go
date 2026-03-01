@@ -40,13 +40,14 @@ type Args struct {
 }
 
 type builder struct {
-	args     Args
-	rw       *rewriter.Rewriter
-	mr       *markdown.Renderer
-	markdown map[string]*kask.Markdown // src -> content
-	leaves   map[string]*kask.Node     // dst -> node
-	root3    *kask.Node                // for testing
-	start    time.Time
+	args           Args
+	rw             *rewriter.Rewriter
+	mr             *markdown.Renderer
+	markdown       map[string]*kask.Markdown // src -> content
+	leaves         map[string]*kask.Node     // dst -> node
+	root3          *kask.Node                // for testing
+	start          time.Time
+	incorrectLinks map[string][]string // linker => link
 }
 
 func has[K comparable, V any](m map[K]V, k K) bool {
@@ -206,8 +207,11 @@ func (b *builder) Build() error {
 	if err := b.renderMarkdown(root2); err != nil {
 		return fmt.Errorf("rendering markdown pages: %w", err)
 	}
-	if err := b.execDir(root2); err != nil {
-		return fmt.Errorf("executing templates: %w", err)
+	if err := b.print(root2); err == ErrIncorrectLinks {
+		b.reportIncorrectLinks()
+		return ErrIncorrectLinks
+	} else if err != nil {
+		return fmt.Errorf("printing pages: %w", err)
 	}
 	if err := b.createDeploymentConfiguration(root2); err != nil {
 		return fmt.Errorf("copying assets folders: %w", err)
@@ -222,12 +226,13 @@ func newBuilder(args Args) *builder {
 	}
 	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: args.Domain})
 	return &builder{
-		args:     args,
-		rw:       rw,
-		mr:       markdown.New(args.Src),
-		markdown: map[string]*kask.Markdown{},
-		leaves:   map[string]*kask.Node{},
-		start:    time.Now(),
+		args:           args,
+		rw:             rw,
+		mr:             markdown.New(args.Src),
+		markdown:       map[string]*kask.Markdown{},
+		leaves:         map[string]*kask.Node{},
+		start:          time.Now(),
+		incorrectLinks: map[string][]string{},
 	}
 }
 

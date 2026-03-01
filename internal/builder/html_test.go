@@ -66,7 +66,7 @@ func TestBuilder_htmlContent(t *testing.T) {
 	linker := paths.Paths{Src: "a/page.tmpl", Dst: "a/page.html", Url: "/a/page.html"}
 	for tn, tc := range tcs {
 		t.Run(tn, func(t *testing.T) {
-			got, err := b.htmlContent(linker, []byte(tc.input))
+			got, err := b.htmlPostProcess(linker, []byte(tc.input))
 			if err != nil {
 				t.Fatalf("act, unexpected error: %v", err)
 			}

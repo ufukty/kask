@@ -2,9 +2,11 @@ package builder
 
 import (
 	"fmt"
+	"maps"
 	"slices"
-	"strings"
+	"strconv"
 
+	"go.ufukty.com/gommons/pkg/tree"
 	"go.ufukty.com/kask/internal/builder/narrowing"
 	"go.ufukty.com/kask/internal/paths"
 	"go.ufukty.com/kask/internal/rewriter"
@@ -17,7 +19,12 @@ var linkMatchers = []narrowing.Matchers{
 	narrowing.MustCompile(`<img[^>]*/?>`, `srcset="\s*([^"]*)\s*"`, `([^\s]+)\s+\d+(?:\.\d+)?[wx]`), // <img srcset=
 }
 
+var ErrIncorrectLinks = fmt.Errorf("found incorrect links")
+
 func (b *builder) rewriteLinksInRanges(ranges []narrowing.Range, page paths.Paths, bs []byte) ([]byte, error) {
+	for _, r := range ranges {
+		fmt.Println(string(bs[r.Start:r.End]))
+	}
 	invTargets := []string{}
 	delta := 0
 	for _, r := range ranges {
@@ -25,7 +32,7 @@ func (b *builder) rewriteLinksInRanges(ranges []narrowing.Range, page paths.Path
 		m1 := bs[start:end]
 		n, err := b.rw.Rewrite(string(m1), page)
 		if err == rewriter.ErrInvalidTarget {
-			invTargets = append(invTargets, fmt.Sprintf("%q", string(m1)))
+			invTargets = append(invTargets, strconv.Quote(string(m1)))
 			continue
 		} else if err != nil {
 			return nil, fmt.Errorf("rewriting link %q: %w", string(m1), err)
@@ -35,7 +42,8 @@ func (b *builder) rewriteLinksInRanges(ranges []narrowing.Range, page paths.Path
 		delta += len(m2) - len(m1)
 	}
 	if len(invTargets) > 0 {
-		return nil, fmt.Errorf("found links to invalid target(s): %s", strings.Join(invTargets, ", "))
+		b.incorrectLinks[page.Src] = invTargets
+		return nil, ErrIncorrectLinks
 	}
 	return bs, nil
 }
@@ -48,6 +56,16 @@ func findLinkRanges(bs []byte) []narrowing.Range {
 	return ranges
 }
 
-func (b *builder) htmlContent(page paths.Paths, bs []byte) ([]byte, error) {
-	return b.rewriteLinksInRanges(findLinkRanges(bs), page, bs)
+func (b *builder) htmlPostProcess(page paths.Paths, bs []byte) ([]byte, error) {
+	bs, err := b.rewriteLinksInRanges(findLinkRanges(bs), page, bs)
+	if err != nil {
+		return nil, fmt.Errorf("rewriting links: %w", err)
+	}
+	return bs, nil
+}
+
+func (b *builder) reportIncorrectLinks() {
+	for _, page := range slices.Sorted(maps.Keys(b.incorrectLinks)) {
+		fmt.Println(tree.List(page, b.incorrectLinks[page]))
+	}
 }
