@@ -392,3 +392,23 @@ func TestBuilder_docs(t *testing.T) {
 		t.Errorf("act, unexpected error: %v", err)
 	}
 }
+
+func ExampleBuilder_hiddenPagesDst() {
+	b, _ := buildTestSite("testdata/hidden-pages", "/")
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Href) })
+	// Output:
+	// /
+	// /404.html
+	// /career.html
+	// /products.html
+	// /sitemap.html
+}
+
+func ExampleBuilder_hiddenPagesSitemap() {
+	b, _ := buildTestSite("testdata/hidden-pages", "/")
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
+	// Output:
+	// Index
+	// Career
+	// Products
+}
