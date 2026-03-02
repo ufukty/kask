@@ -107,6 +107,10 @@ func (b *builder) toDir2(d, p *directory.Dir, parent paths.Paths) *dir2 {
 	return d2
 }
 
+func isHidden(page string) bool {
+	return strings.HasPrefix(page, ".")
+}
+
 func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 	n := &kask.Node{
 		Title:    "",
@@ -135,7 +139,9 @@ func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 			}
 			b.rw.Bank(p.Src, p.Url)
 			b.leaves[p.Url] = c
-			n.Children = append(n.Children, c)
+			if !isHidden(page) {
+				n.Children = append(n.Children, c)
+			}
 		}
 	}
 
