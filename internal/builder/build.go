@@ -10,8 +10,8 @@ import (
 	"go.ufukty.com/kask/cmd/kask/commands/version"
 	"go.ufukty.com/kask/internal/builder/directory"
 	"go.ufukty.com/kask/internal/builder/markdown"
-	"go.ufukty.com/kask/internal/builder/paths"
-	"go.ufukty.com/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/internal/paths"
+	"go.ufukty.com/kask/internal/rewriter"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -40,13 +40,14 @@ type Args struct {
 }
 
 type builder struct {
-	args     Args
-	rw       *rewriter.Rewriter
-	assets   []string                  // src
-	markdown map[string]*kask.Markdown // src -> content
-	leaves   map[string]*kask.Node     // dst -> node
-	root3    *kask.Node                // for testing
-	start    time.Time
+	args           Args
+	rw             *rewriter.Rewriter
+	mr             *markdown.Renderer
+	markdown       map[string]*kask.Markdown // src -> content
+	leaves         map[string]*kask.Node     // dst -> node
+	root3          *kask.Node                // for testing
+	start          time.Time
+	incorrectLinks map[string][]string // linker => link
 }
 
 func has[K comparable, V any](m map[K]V, k K) bool {
@@ -106,7 +107,6 @@ func (b *builder) toDir2(d, p *directory.Dir, parent paths.Paths) *dir2 {
 	return d2
 }
 
-// TODO: domain prefix
 func (b *builder) toNode(d *dir2, parent *kask.Node) (*kask.Node, error) {
 	n := &kask.Node{
 		Title:    "",
@@ -164,7 +164,7 @@ func (b *builder) renderMarkdown(d *dir2) error {
 	for _, page := range d.original.Pages {
 		if filepath.Ext(page) == ".md" {
 			p := d.paths.File(page, d.original.IsToStrip(), b.args.Provider.UrlMode())
-			html, err := markdown.ToHtml(b.args.Src, p.Src, b.rw)
+			html, err := b.mr.ToHtml(p)
 			if err != nil {
 				return fmt.Errorf("rendering %s: %w", page, err)
 			}
@@ -190,7 +190,7 @@ func (b *builder) Build() error {
 	if err := b.checkCompetingEntries(root); err != nil {
 		return fmt.Errorf("checking competing files and folders: %w", err)
 	}
-	root2 := b.toDir2(root, nil, paths.Paths{Src: "."})
+	root2 := b.toDir2(root, nil, paths.Paths{Src: ".", Dst: ".", Url: b.args.Domain})
 	if err := b.bundleAndPropagateStylesheets(root2, []string{}); err != nil {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
@@ -201,14 +201,17 @@ func (b *builder) Build() error {
 	if err != nil {
 		return fmt.Errorf("structuring node tree: %w", err)
 	}
+	if err := b.assets(root2); err != nil {
+		return fmt.Errorf("copying assets folders: %w", err)
+	}
 	if err := b.renderMarkdown(root2); err != nil {
 		return fmt.Errorf("rendering markdown pages: %w", err)
 	}
-	if err := b.execDir(root2); err != nil {
-		return fmt.Errorf("executing templates: %w", err)
-	}
-	if err := b.copyAssetsFolders(root2); err != nil {
-		return fmt.Errorf("copying assets folders: %w", err)
+	if err := b.print(root2); err == ErrIncorrectLinks {
+		b.reportIncorrectLinks()
+		return ErrIncorrectLinks
+	} else if err != nil {
+		return fmt.Errorf("printing pages: %w", err)
 	}
 	if err := b.createDeploymentConfiguration(root2); err != nil {
 		return fmt.Errorf("copying assets folders: %w", err)
@@ -218,13 +221,18 @@ func (b *builder) Build() error {
 
 // split for testing
 func newBuilder(args Args) *builder {
+	if !strings.HasSuffix(args.Domain, "/") {
+		args.Domain += "/"
+	}
+	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: args.Domain})
 	return &builder{
-		args:     args,
-		rw:       rewriter.New(),
-		assets:   []string{},
-		markdown: map[string]*kask.Markdown{},
-		leaves:   map[string]*kask.Node{},
-		start:    time.Now(),
+		args:           args,
+		rw:             rw,
+		mr:             markdown.New(args.Src, args.Domain),
+		markdown:       map[string]*kask.Markdown{},
+		leaves:         map[string]*kask.Node{},
+		start:          time.Now(),
+		incorrectLinks: map[string][]string{},
 	}
 }
 

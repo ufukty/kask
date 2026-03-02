@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.ufukty.com/kask/internal/builder/rewriter"
+	"go.ufukty.com/kask/internal/paths"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -14,11 +14,9 @@ func matcher(tokens ...string) *regexp.Regexp {
 	return regexp.MustCompile(strings.Join(tokens, `\s*`))
 }
 
-func TestToHtml_content(t *testing.T) {
-	r := rewriter.New()
-	r.Bank(".assets/img.jpg", "/.assets/img.jpg")
-	r.Bank("sibling.md", "/sibling.html")
-	p, err := ToHtml("testdata", "page.md", r)
+func TestRewriter_ToHtml_content(t *testing.T) {
+	rn := New("testdata", "https://kask.ufukty.com")
+	p, err := rn.ToHtml(paths.Paths{Src: "page.md"})
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
 	}
@@ -90,8 +88,17 @@ func TestToHtml_content(t *testing.T) {
 			"<ol>",
 			"<li>", "<p>another day</p>", "</li>",
 			"<li>", "<p>another slay</p>", "</li>",
-			"<li>", `<p><a href="/sibling.html">and a link</a></p>`, "</li>",
+			"<li>", `<p><a href="sibling.md">and a link</a></p>`, "</li>",
 			"</ol>",
+		)
+		if !pattern.MatchString(content) {
+			t.Error("could not find")
+		}
+	})
+
+	t.Run("external link", func(t *testing.T) {
+		pattern := matcher(
+			`<a target="_blank" href="https://ufukty.com">External link</a>`,
 		)
 		if !pattern.MatchString(content) {
 			t.Error("could not find")
@@ -106,11 +113,9 @@ func printToc(n *kask.MarkdownTocNode) {
 	}
 }
 
-func ExampleToHtml_toc() {
-	r := rewriter.New()
-	r.Bank(".assets/img.jpg", "/.assets/img.jpg")
-	r.Bank("sibling.md", "/sibling.html")
-	p, err := ToHtml("testdata", "page.md", r)
+func ExampleRenderer_toHtml_toc() {
+	rn := New("testdata", "/")
+	p, err := rn.ToHtml(paths.Paths{Src: "page.md"})
 	if err != nil {
 		panic(fmt.Errorf("act, ToHtml: %w", err))
 	}

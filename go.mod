@@ -1,10 +1,11 @@
 module go.ufukty.com/kask
 
-go 1.24.2
+go 1.25.1
 
 require (
 	github.com/alecthomas/chroma v0.10.0
 	github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b
+	go.ufukty.com/gommons v0.1.1
 	golang.org/x/text v0.29.0
 	gopkg.in/yaml.v3 v3.0.1
 )
