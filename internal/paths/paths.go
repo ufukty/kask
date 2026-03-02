@@ -101,10 +101,11 @@ func (p Paths) Subdir(basename string, strip bool) Paths {
 }
 
 func (p Paths) File(basename string, strip bool, um UrlMode) Paths {
+	cleaned := strings.TrimPrefix(basename, ".")
 	return Paths{
 		Src: filepath.Join(p.Src, basename),
-		Dst: fileDst(p.Dst, basename, strip),
-		Url: fileUri(p.Url, basename, strip, um),
+		Dst: fileDst(p.Dst, cleaned, strip),
+		Url: fileUri(p.Url, cleaned, strip, um),
 	}
 }
 
