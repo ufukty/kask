@@ -69,6 +69,7 @@ var theExtractor = extractor{}
 var titler = cases.Title(language.Und, cases.NoLower)
 
 func pageTitleFromFilename(base string) string {
+	base = strings.TrimPrefix(base, ".")
 	base = strings.TrimSuffix(base, filepath.Ext(base))
 	return titler.String(base)
 }
