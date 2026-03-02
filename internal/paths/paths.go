@@ -108,6 +108,14 @@ func (p Paths) File(basename string, strip bool, um UrlMode) Paths {
 	}
 }
 
+func (p Paths) AssetDir(basename string) Paths {
+	return Paths{
+		Src: filepath.Join(p.Src, basename),
+		Dst: dirDst(p.Dst, basename, false),
+		Url: dirUri(p.Url, basename, false),
+	}
+}
+
 func (p Paths) AssetFile(basename string) Paths {
 	u, _ := url.JoinPath(p.Url, basename)
 	ss := strings.Split(u, "/")

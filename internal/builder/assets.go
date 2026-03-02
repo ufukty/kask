@@ -20,7 +20,7 @@ func (b *builder) copyAssetDir(path paths.Paths) error {
 	}
 	for _, e := range es {
 		if e.IsDir() {
-			err := b.copyAssetDir(path.Subdir(e.Name(), false))
+			err := b.copyAssetDir(path.AssetDir(e.Name()))
 			if err != nil {
 				return fmt.Errorf("%q: %w", e.Name(), err)
 			}
@@ -41,7 +41,7 @@ func (b *builder) copyAssetDir(path paths.Paths) error {
 
 func (b *builder) assets(d *dir2) error {
 	if d.original.Assets {
-		err := b.copyAssetDir(d.paths.Subdir(".assets", false))
+		err := b.copyAssetDir(d.paths.AssetDir(".assets"))
 		if err != nil {
 			return fmt.Errorf("traverse: %w", err)
 		}
