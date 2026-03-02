@@ -36,7 +36,7 @@ func ExampleInspect() {
 	}
 	printTree(root, 0)
 	// Output:
-	// Name:. (Pages:index.tmpl) (Assets:true) (Kask:false)
+	// Name:. (Pages:.404.tmpl,index.tmpl) (Assets:true) (Kask:false)
 	//     Name:career (Pages:index.tmpl) (Assets:false) (Kask:false)
 	//     Name:docs (Pages:birdseed.md,magnet.md) (Assets:false) (Kask:true)
 	//     Name:products (Pages:index.tmpl) (Assets:false) (Kask:false)
