@@ -25,7 +25,7 @@ func (b *builder) copyAssetDir(path paths.Paths) error {
 				return fmt.Errorf("%q: %w", e.Name(), err)
 			}
 		} else {
-			file := path.Asset(e.Name())
+			file := path.AssetFile(e.Name())
 			if b.args.Verbose {
 				fmt.Printf("copying asset %-30q => %-30q\n", file.Src, file.Dst)
 			}
