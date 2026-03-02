@@ -74,7 +74,7 @@ func (b *builder) prepareTemplates(d *dir2, p paths.Paths) (*template.Template, 
 	return t, nil
 }
 
-// TODO: the [builder.htmlContent] call is redundant on markdown based pages
+// TODO: the [builder.htmlPostProcess] call is redundant on markdown based pages
 func (b *builder) executeTemplates(p paths.Paths, t *template.Template, c *kask.TemplateContent) ([]byte, error) {
 	buf := bytes.NewBuffer([]byte{})
 	if _, err := fmt.Fprintln(buf, fileheader); err != nil {
