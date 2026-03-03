@@ -2,6 +2,7 @@ package builder
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -391,4 +392,33 @@ func TestBuilder_docs(t *testing.T) {
 	if err != nil {
 		t.Errorf("act, unexpected error: %v", err)
 	}
+}
+
+func printFiles(path string) {
+	fs.WalkDir(os.DirFS(path), ".", func(path string, d fs.DirEntry, err error) error {
+		if !d.IsDir() {
+			fmt.Println(path)
+		}
+		return nil
+	})
+}
+
+func ExampleBuilder_hiddenPagesDst() {
+	_, tmp := buildTestSite("testdata/hidden-pages", "/")
+	printFiles(tmp)
+	// Output:
+	// 404.html
+	// career.html
+	// index.html
+	// products.html
+	// sitemap.html
+}
+
+func ExampleBuilder_hiddenPagesSitemap() {
+	b, _ := buildTestSite("testdata/hidden-pages", "/")
+	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
+	// Output:
+	// Index
+	// Career
+	// Products
 }
