@@ -31,6 +31,22 @@ func TestStripOrdering(t *testing.T) {
 	}
 }
 
+func TestStripOrdering_preserveOnlyNumber(t *testing.T) {
+	tcs := map[string]string{
+		"404":  "404",
+		".404": ".404",
+	}
+
+	for input, expected := range tcs {
+		t.Run(input, func(t *testing.T) {
+			got := stripOrdering(input)
+			if got != expected {
+				t.Errorf("expected %q got %q", expected, got)
+			}
+		})
+	}
+}
+
 func tescape(s string) string {
 	return strings.ReplaceAll(s, "/", "\\")
 }
