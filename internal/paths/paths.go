@@ -18,7 +18,7 @@ var orderingPrefixMatcher = regexp.MustCompile(`^\d+\s*[\-.,]*\s*`)
 
 func stripOrdering(s string) string {
 	p := orderingPrefixMatcher.FindString(s)
-	if p == "" {
+	if len(p) == len(s) {
 		return s
 	}
 	return strings.TrimPrefix(s, p)
