@@ -407,8 +407,8 @@ func ExampleBuilder_hiddenPagesDst() {
 	_, tmp := buildTestSite("testdata/hidden-pages", "/")
 	printFiles(tmp)
 	// Output:
-	// career.html
 	// 404.html
+	// career.html
 	// index.html
 	// products.html
 	// sitemap.html
