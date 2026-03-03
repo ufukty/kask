@@ -129,6 +129,8 @@ func TestPaths_File(t *testing.T) {
 		"non-index file with whitespace and stripped ordering": {inputBasename: "3.pge .tmpl", inputStripped: true, expected: Paths{Src: "/a/3.pge .tmpl", Dst: "/a/pge .html", Url: "/a/pge%20.html"}},
 		"non-index file with whitespace":                       {inputBasename: "3.pge .tmpl", inputStripped: false, expected: Paths{Src: "/a/3.pge .tmpl", Dst: "/a/3.pge .html", Url: "/a/3.pge%20.html"}},
 		"non-index file":                                       {inputBasename: "3.page.tmpl", inputStripped: false, expected: Paths{Src: "/a/3.page.tmpl", Dst: "/a/3.page.html", Url: "/a/3.page.html"}},
+		"non-index file with only digits":                      {inputBasename: "404.tmpl", inputStripped: true, expected: Paths{Src: "/a/404.tmpl", Dst: "/a/404.html", Url: "/a/404.html"}},
+		"non-index hidden file with only digits":               {inputBasename: ".404.tmpl", inputStripped: true, expected: Paths{Src: "/a/.404.tmpl", Dst: "/a/404.html", Url: "/a/404.html"}},
 	}
 	for _, tn := range slices.Sorted(maps.Keys(tcs)) {
 		tc := tcs[tn]
