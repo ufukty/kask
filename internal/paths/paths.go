@@ -14,10 +14,14 @@ const (
 	UrlModeExtless                 // eg. "/", "/dir/", "/page"
 )
 
-var orderingStripper = regexp.MustCompile(`^(\d+[\-., ]*)?(.*)$`)
+var orderingPrefixMatcher = regexp.MustCompile(`^\d+\s*[\-.,]*\s*`)
 
 func stripOrdering(s string) string {
-	return orderingStripper.FindStringSubmatch(s)[2]
+	p := orderingPrefixMatcher.FindString(s)
+	if p == "" {
+		return s
+	}
+	return strings.TrimPrefix(s, p)
 }
 
 func withStripping(path string, toStrip bool) string {
@@ -50,8 +54,9 @@ func fileDst(parent, child string, strip bool) string {
 		return filepath.Join(parent, "index.html")
 	} else {
 		ext := filepath.Ext(child)
-		child = strings.TrimSuffix(child, ext) + ".html"
+		child = strings.TrimSuffix(child, ext)
 		child = withStripping(child, strip)
+		child += ".html"
 		dst := filepath.Join(parent, child)
 		return dst
 	}
