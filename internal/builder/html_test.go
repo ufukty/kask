@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -37,18 +38,19 @@ func fixture() *builder {
 		"a/b": "https://kask.ufukty.com/a/b/",
 
 		// assets
-		".assets/font.woff2":   "https://kask.ufukty.com/.assets/font.woff2",
-		"a/.assets/img.jpg":    "https://kask.ufukty.com/a/.assets/img.jpg",
-		"a/.assets/img@2x.jpg": "https://kask.ufukty.com/a/.assets/img%402x.jpg",
-		"a/.assets/img@3x.jpg": "https://kask.ufukty.com/a/.assets/img%403x.jpg",
-		"a/.assets/poster.jpg": "https://kask.ufukty.com/a/.assets/poster.jpg",
-		"a/.assets/video.mp4":  "https://kask.ufukty.com/a/.assets/video.mp4",
-		"a/.assets/og.jpg":     "https://kask.ufukty.com/a/.assets/og.jpg",
+		".assets/font.woff2":             "https://kask.ufukty.com/.assets/font.woff2",
+		"a/.assets/img.jpg":              "https://kask.ufukty.com/a/.assets/img.jpg",
+		"a/.assets/img@2x.jpg":           "https://kask.ufukty.com/a/.assets/img%402x.jpg",
+		"a/.assets/img@3x.jpg":           "https://kask.ufukty.com/a/.assets/img%403x.jpg",
+		"a/.assets/poster.jpg":           "https://kask.ufukty.com/a/.assets/poster.jpg",
+		"a/.assets/video.mp4":            "https://kask.ufukty.com/a/.assets/video.mp4",
+		"a/.assets/og.jpg":               "https://kask.ufukty.com/a/.assets/og.jpg",
+		"a/.assets/embedded-player.html": "https://kask.ufukty.com/a/.assets/embedded-player.html",
 	}
 	for s, u := range m {
 		rw.Bank(s, u)
 	}
-	return &builder{rw: rw}
+	return &builder{rw: rw, incorrectLinks: map[string][]string{}}
 }
 
 func TestBuilder_htmlPostProcess(t *testing.T) {
@@ -74,7 +76,7 @@ func TestBuilder_htmlPostProcess(t *testing.T) {
 		},
 		"link href to domain": {
 			input:    `<link rel="canonical" href="/" />`,
-			expected: `<link rel="canonical" href="https://kask.ufukty.com" />`,
+			expected: `<link rel="canonical" href="https://kask.ufukty.com/" />`,
 		},
 		"link href to asset with additional attributes": {
 			input:    `<link rel="preload" href="/.assets/font.woff2" as="font" />`,
@@ -111,7 +113,11 @@ func TestBuilder_htmlPostProcess(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			got, err := b.htmlPostProcess(linker, []byte(tc.input))
 			if err != nil {
-				t.Fatalf("act, unexpected error: %v", err)
+				if errors.Is(err, ErrIncorrectLinks) {
+					t.Errorf("act, unexpected error: %v", err)
+				} else {
+					t.Fatalf("act, unexpected error: %v", err)
+				}
 			}
 			if tc.expected != string(got) {
 				t.Errorf("assert,\nexpected: %s\ngot:      %s", tc.expected, string(got))
