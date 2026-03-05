@@ -88,7 +88,7 @@ func TestBuilder_htmlPostProcess(t *testing.T) {
 			expected: `<meta property="og:image" content="https://kask.ufukty.com/a/.assets/og.jpg" />`,
 		},
 		"meta tag for og:url": {
-			input:    `<meta property="og:url" content="." />`,
+			input:    `<meta property="og:url" content="" />`,
 			expected: `<meta property="og:url" content="https://kask.ufukty.com/a/page.html" />`,
 		},
 		"meta tag for twitter:image": {
@@ -96,7 +96,7 @@ func TestBuilder_htmlPostProcess(t *testing.T) {
 			expected: `<meta name="twitter:image" content="https://kask.ufukty.com/a/.assets/og.jpg" />`,
 		},
 		"meta tag for twitter:url": {
-			input:    `<meta name="twitter:url" content="." />`,
+			input:    `<meta name="twitter:url" content="" />`,
 			expected: `<meta name="twitter:url" content="https://kask.ufukty.com/a/page.html" />`,
 		},
 		"iframe src": {
