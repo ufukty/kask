@@ -100,8 +100,8 @@ func TestBuilder_htmlPostProcess(t *testing.T) {
 			expected: `<meta name="twitter:url" content="https://kask.ufukty.com/a/page.html" />`,
 		},
 		"iframe src": {
-			input:    `<iframe src=".assets/embeded-player.html"></iframe>`,
-			expected: `<iframe src="https://kask.ufukty.com/.assets/embedded-player.html"></iframe>`,
+			input:    `<iframe src=".assets/embedded-player.html"></iframe>`,
+			expected: `<iframe src="https://kask.ufukty.com/a/.assets/embedded-player.html"></iframe>`,
 		},
 		"video and source": {
 			input:    `<video poster=".assets/poster.jpg"><source src=".assets/video.mp4" type="video/mp4"></video>`,
