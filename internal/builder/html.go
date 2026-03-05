@@ -14,9 +14,14 @@ import (
 
 // TODO: add support for `<video>` tags
 var linkMatchers = []narrowing.Matchers{
-	narrowing.MustCompile(`<a[^>]*>[^<]*</a>`, `href="([^"]*)"`),                                    // <a href=
-	narrowing.MustCompile(`<img[^>]*/?>`, `src="([^"]*)"`),                                          // <img src=
-	narrowing.MustCompile(`<img[^>]*/?>`, `srcset="\s*([^"]*)\s*"`, `([^\s]+)\s+\d+(?:\.\d+)?[wx]`), // <img srcset=
+	narrowing.MustCompile(`<a[^>]*>[^<]*</a>`, `href="([^"]*)"`),                                    // a[href]
+	narrowing.MustCompile(`<img[^>]*/?>`, `src="([^"]*)"`),                                          // img[src]
+	narrowing.MustCompile(`<img[^>]*/?>`, `srcset="\s*([^"]*)\s*"`, `([^\s]+)\s+\d+(?:\.\d+)?[wx]`), // img[srcset]
+	narrowing.MustCompile(`<link[^>]*/?>`, `href="([^"]*)"`),                                        // link[href]
+	narrowing.MustCompile(`<meta[^>]* property="og:image"[^>]*/?>`, `content="([^"]*)"`),            // meta[property="og:image"]
+	narrowing.MustCompile(`<meta[^>]* property="og:url"[^>]*/?>`, `content="([^"]*)"`),              // meta[property="og:url"]
+	narrowing.MustCompile(`<meta[^>]* name="twitter:image"[^>]*/?>`, `content="([^"]*)"`),           // meta[name="twitter:image"]
+	narrowing.MustCompile(`<meta[^>]* name="twitter:url"[^>]*/?>`, `content="([^"]*)"`),             // meta[name="twitter:url"]
 }
 
 var ErrIncorrectLinks = fmt.Errorf("found incorrect links")
