@@ -95,8 +95,8 @@ func TestBuilder_htmlPostProcess(t *testing.T) {
 			expected: `<meta name="twitter:image" content="https://kask.ufukty.com/a/.assets/og.jpg" />`,
 		},
 		"meta tag for twitter:url": {
-			input:    `<meta name="twitter:image" content="." />`,
-			expected: `<meta name="twitter:image" content="https://kask.ufukty.com/a/page.html" />`,
+			input:    `<meta name="twitter:url" content="." />`,
+			expected: `<meta name="twitter:url" content="https://kask.ufukty.com/a/page.html" />`,
 		},
 		"iframe src": {
 			input:    `<iframe src=".assets/embeded-player.html"></iframe>`,
