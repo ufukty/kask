@@ -104,8 +104,8 @@ func TestBuilder_htmlPostProcess(t *testing.T) {
 			expected: `<iframe src="https://kask.ufukty.com/a/.assets/embedded-player.html"></iframe>`,
 		},
 		"video and source": {
-			input:    `<video poster=".assets/poster.jpg"><source src=".assets/video.mp4" type="video/mp4"></video>`,
-			expected: `<video poster="https://kask.ufukty.com/a/.assets/poster.jpg"><source src="https://kask.ufukty.com/a/.assets/video.mp4" type="video/mp4"></video>`,
+			input:    `<video poster=".assets/poster.jpg">` + "\n" + `<source src=".assets/video.mp4" type="video/mp4">` + "\n" + `</video>`,
+			expected: `<video poster="https://kask.ufukty.com/a/.assets/poster.jpg">` + "\n" + `<source src="https://kask.ufukty.com/a/.assets/video.mp4" type="video/mp4">` + "\n" + `</video>`,
 		},
 	}
 	b := fixture()
