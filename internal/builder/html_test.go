@@ -28,6 +28,7 @@ func fixture() *builder {
 	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: "https://kask.ufukty.com/"})
 	m := map[string]string{
 		// leaves
+		"a/page.tmpl":   "https://kask.ufukty.com/a/page.html",
 		"a/index.tmpl":  "https://kask.ufukty.com/a/",
 		"a/b/README.md": "https://kask.ufukty.com/a/b/",
 		"a/b/page.md":   "https://kask.ufukty.com/a/b/page.html",
