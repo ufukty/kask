@@ -24,23 +24,30 @@ func Example_patterns_validateLinkMatchers() {
 }
 
 func fixture() *builder {
-	domain := "https://kask.ufukty.com/"
-	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: "/"})
-	rw.Bank("a/b/README.md", domain+"a/b/")
-	rw.Bank("a/b/page.md", domain+"a/b/page.html")
-	rw.Bank("a/index.tmpl", domain+"a/")
-	// visitable dirs:
-	rw.Bank("a/", domain+"a/")
-	rw.Bank("a/b", domain+"a/b/")
-	// assets
-	rw.Bank("a/.assets/img.jpg", domain+"a/.assets/img.jpg")
-	rw.Bank("a/.assets/img@2x.jpg", domain+"a/.assets/img%402x.jpg")
-	rw.Bank("a/.assets/img@3x.jpg", domain+"a/.assets/img%403x.jpg")
-	return &builder{rw: rw}
+	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: "https://kask.ufukty.com/"})
+	m := map[string]string{
+		// leaves
+		"a/index.tmpl":  "https://kask.ufukty.com/a/",
+		"a/b/README.md": "https://kask.ufukty.com/a/b/",
+		"a/b/page.md":   "https://kask.ufukty.com/a/b/page.html",
+
+		// visitable dirs:
+		"a/":  "https://kask.ufukty.com/a/",
+		"a/b": "https://kask.ufukty.com/a/b/",
+
+		// assets
+		"a/.assets/img.jpg":    "https://kask.ufukty.com/a/.assets/img.jpg",
+		"a/.assets/img@2x.jpg": "https://kask.ufukty.com/a/.assets/img%402x.jpg",
+		"a/.assets/img@3x.jpg": "https://kask.ufukty.com/a/.assets/img%403x.jpg",
+		"a/.assets/poster.jpg": "https://kask.ufukty.com/a/.assets/poster.jpg",
+	}
+	for s, u := range m {
+		rw.Bank(s, u)
+	}
+	return &builder{rw: rw, incorrectLinks: map[string][]string{}} // TODO: remove til commit
 }
 
-// TODO: add asset linking. eg. <img>
-func TestBuilder_htmlContent(t *testing.T) {
+func TestBuilder_htmlPostProcess(t *testing.T) {
 	type tc struct {
 		input, expected string
 	}
@@ -71,7 +78,7 @@ func TestBuilder_htmlContent(t *testing.T) {
 				t.Fatalf("act, unexpected error: %v", err)
 			}
 			if tc.expected != string(got) {
-				t.Errorf("assert, expected:\n  %s, got:\n  %s", tc.expected, string(got))
+				t.Errorf("assert,\nexpected: %s\ngot:      %s", tc.expected, string(got))
 			}
 		})
 	}
