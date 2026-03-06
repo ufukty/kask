@@ -224,47 +224,60 @@ func ExampleBuilder_preservedOrderingBreadcrumbs() {
 }
 
 func TestBuilder_cssSplitting(t *testing.T) {
-	_, tmp := buildTestSite("testdata/css-splitting", "/")
+	_, tmp := buildTestSite("testdata/css-splitting", "https://kask.ufukty.com/")
 	fmt.Println(tmp)
 
-	t.Run("linking the scorrect stylesheets", func(t *testing.T) {
+	t.Run("links", func(t *testing.T) {
 		f, err := os.ReadFile(filepath.Join(tmp, "a/index.html"))
 		if err != nil {
 			t.Errorf("prep, read file: %v", err)
 		}
 		content := string(f)
-		if strings.Contains(content, `"/styles.css"`) {
-			t.Error("page of subsection should NOT link the root section's non-propagated styles")
-		}
-		if !strings.Contains(content, `"/styles.propagate.css"`) {
-			t.Error("page of subsection should link the root section's propagated styles")
-		}
-		if !strings.Contains(content, `"/a/styles.propagate.css"`) {
-			t.Error("page should link its section's propagated styles")
-		}
-		if !strings.Contains(content, `"/a/styles.css"`) {
-			t.Error("page should link its section's non-propagated styles")
+		t.Run("!styles.propagate.css", func(t *testing.T) {
+			if strings.Contains(content, `"https://kask.ufukty.com/styles.css"`) {
+				t.Errorf("assert, unexpected link")
+			}
+		})
+		t.Run("styles.propagate.css", func(t *testing.T) {
+			if !strings.Contains(content, `"https://kask.ufukty.com/styles.propagate.css"`) {
+				t.Errorf("assert, expected link")
+			}
+		})
+		t.Run("a\\styles.propagate.css", func(t *testing.T) {
+			if !strings.Contains(content, `"https://kask.ufukty.com/a/styles.propagate.css"`) {
+				t.Errorf("assert, expected link")
+			}
+		})
+		t.Run("a\\styles.css", func(t *testing.T) {
+			if !strings.Contains(content, `"https://kask.ufukty.com/a/styles.css"`) {
+				t.Errorf("assert, expected link")
+			}
+		})
+		if t.Failed() {
+			fmt.Println(content)
 		}
 	})
 
-	tcs := map[string]string{
-		"/styles.css":             ":root {}",
-		"/styles.propagate.css":   ":root.propagated {}",
-		"/a/styles.css":           ".a {}",
-		"/a/styles.propagate.css": ".a.propagated {}",
-	}
+	t.Run("contents", func(t *testing.T) {
+		tcs := map[string]string{
+			"/styles.css":             ":root {}",
+			"/styles.propagate.css":   ":root.propagated {}",
+			"/a/styles.css":           ".a {}",
+			"/a/styles.propagate.css": ".a.propagated {}",
+		}
 
-	for ss, expected := range tcs {
-		t.Run(fmt.Sprintf("stylesheet contents/%s", strings.ReplaceAll(ss, "/", "\\")), func(t *testing.T) {
-			f, err := os.ReadFile(filepath.Join(tmp, ss))
-			if err != nil {
-				t.Errorf("prep, read stylesheet: %v", err)
-			}
-			if !strings.Contains(string(f), "") {
-				t.Errorf("assert, not found: %q", expected)
-			}
-		})
-	}
+		for ss, expected := range tcs {
+			t.Run(strings.ReplaceAll(ss, "/", "\\"), func(t *testing.T) {
+				f, err := os.ReadFile(filepath.Join(tmp, ss))
+				if err != nil {
+					t.Errorf("prep, read stylesheet: %v", err)
+				}
+				if !strings.Contains(string(f), "") {
+					t.Errorf("assert, not found: %q", expected)
+				}
+			})
+		}
+	})
 }
 
 func ExampleBuilder_titles() {
