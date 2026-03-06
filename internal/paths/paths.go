@@ -135,3 +135,21 @@ func (p Paths) AssetFile(basename string) Paths {
 		Url: u,
 	}
 }
+
+func cssBundleName(propagated bool) string {
+	if propagated {
+		return "styles.propagate.css"
+	} else {
+		return "styles.css"
+	}
+}
+
+func (p Paths) Stylesheet(propagated bool) Paths {
+	base := cssBundleName(propagated)
+	u, _ := url.JoinPath(p.Url, base)
+	return Paths{
+		Src: filepath.Join(p.Src, base),
+		Dst: filepath.Join(p.Dst, base),
+		Url: u,
+	}
+}

@@ -39,12 +39,13 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 		if err != nil {
 			return fmt.Errorf("bundling propagated css file: %w", err)
 		}
-		dst := "/" + filepath.Join(d.paths.Dst, "styles.propagate.css")
-		if err := b.write(filepath.Join(b.args.Dst, dst), css); err != nil {
+		p := d.paths.Stylesheet(true)
+		b.rw.Bank(p.Src, p.Url)
+		if err := b.write(filepath.Join(b.args.Dst, p.Dst), css); err != nil {
 			return fmt.Errorf("writing propagated css file: %w", err)
 		}
-		d.stylesheets = append(d.stylesheets, dst)
-		toPropagate = append(toPropagate, dst)
+		d.stylesheets = append(d.stylesheets, p.Url)
+		toPropagate = append(toPropagate, p.Url)
 	}
 
 	if d.original.Kask != nil && len(d.original.Kask.Css) > 0 {
@@ -52,11 +53,12 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 		if err != nil {
 			return fmt.Errorf("bundling at-level css file: %w", err)
 		}
-		dst := "/" + filepath.Join(d.paths.Dst, "styles.css")
-		if err := b.write(filepath.Join(b.args.Dst, dst), css); err != nil {
+		p := d.paths.Stylesheet(false)
+		b.rw.Bank(p.Src, p.Url)
+		if err := b.write(filepath.Join(b.args.Dst, p.Dst), css); err != nil {
 			return fmt.Errorf("writing at-level css file: %w", err)
 		}
-		d.stylesheets = append(d.stylesheets, dst)
+		d.stylesheets = append(d.stylesheets, p.Url)
 	}
 
 	for _, subdir := range d.subdirs {

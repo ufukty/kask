@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"path/filepath"
@@ -213,7 +214,7 @@ func (b *builder) Build() error {
 	if err := b.renderMarkdown(root2); err != nil {
 		return fmt.Errorf("rendering markdown pages: %w", err)
 	}
-	if err := b.print(root2); err == ErrIncorrectLinks {
+	if err := b.print(root2); errors.Is(err, ErrIncorrectLinks) {
 		b.reportIncorrectLinks()
 		return ErrIncorrectLinks
 	} else if err != nil {
