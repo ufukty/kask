@@ -2,6 +2,8 @@
 
 set -ve
 
+printenv | sort
+
 git fetch --tags --quiet
 if test "$WORKERS_CI_BRANCH" = "main"; then
   git checkout "$(git tag --list 'v*' | sort -Vr | head -n 1)"
