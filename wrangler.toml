@@ -3,7 +3,10 @@ compatibility_date = "2026-02-16"
 preview_urls = true
 
 [build]
-command = "bash .workers/build.sh"
+command = 'CI_ENVIRONMENT="prod" bash .workers/build.sh'
+
+[env.staging.build]
+command = 'CI_ENVIRONMENT="staging" bash .workers/build.sh'
 
 [assets]
 directory = "./docs-build"
@@ -13,18 +16,12 @@ not_found_handling = "404-page"
 pattern = "kask.ufukty.com"
 custom_domain = true
 
+[env.staging]
+route = "stage.kask.ufukty.com"
+
 [observability]
 [observability.logs]
 enabled = true
 head_sampling_rate = 1
 invocation_logs = true
 persist = true
-
-[vars]
-ENVIRONMENT = "prod"
-
-[env.staging]
-route = "stage.kask.ufukty.com"
-
-[env.staging.vars]
-ENVIRONMENT = "stage"
