@@ -139,6 +139,7 @@ func TestRewrite_Rewrite_toPage(t *testing.T) {
 	d0 := paths.Paths{Src: "page.md", Dst: "page.html", Url: "/page.html"}
 	d2 := paths.Paths{Src: "a/b/page.tmpl", Dst: "a/b/page.html", Url: "/a/b/page.html"}
 	tcs := map[tc]string{
+		{linker: d0, linked: ""}:                   "/page.html",
 		{linker: d0, linked: "/page.md"}:           "/page.html",
 		{linker: d0, linked: "a/../a/b/page.tmpl"}: "/a/b/page.html",
 		{linker: d0, linked: "a/b/page.tmpl"}:      "/a/b/page.html",
