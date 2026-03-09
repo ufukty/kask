@@ -40,4 +40,5 @@ jobs:
           command: deploy
           environment: stage
           wranglerVersion: 4.71.0
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
