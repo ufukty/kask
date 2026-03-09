@@ -2,11 +2,11 @@ name = "kask"
 compatibility_date = "2026-02-16"
 preview_urls = true
 
-[build]
-command = 'CI_ENVIRONMENT="prod" bash .workers/build.sh'
+[env.prod.build]
+command = "bash .workers/build-prod.sh"
 
 [env.staging.build]
-command = 'CI_ENVIRONMENT="staging" bash .workers/build.sh'
+command = "bash .workers/build-stage.sh"
 
 [assets]
 directory = "./docs-build"

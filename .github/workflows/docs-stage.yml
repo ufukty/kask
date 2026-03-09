@@ -1,0 +1,16 @@
+name: Docs (Prod)
+
+on:
+  push: { branches: [main] }
+
+jobs:
+  Stable:
+    runs-on: ubuntu-latest
+    permissions:
+      deployments: write
+    steps:
+      - uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # 3.14.1 (latest atm)
+        with:
+          command: deploy
+          environment: prod
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
