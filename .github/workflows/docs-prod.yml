@@ -1,4 +1,4 @@
-name: Docs (Prod)
+name: Docs Prod
 
 on:
   push: { branches: [main], tags: "v*.*.*" }

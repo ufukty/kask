@@ -1,4 +1,4 @@
-name: Docs (Prod)
+name: Docs Stage
 
 on:
   push: { branches: [main] }
