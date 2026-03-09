@@ -44,7 +44,6 @@ jobs:
       - uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # 3.14.1 (latest atm)
         with:
           command: versions upload --preview-alias pr-${{ github.event.pull_request.number }}
-          environment: stage
           wranglerVersion: 4.71.0
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
