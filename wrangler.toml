@@ -10,7 +10,7 @@ not_found_handling = "404-page"
 pattern = "kask.ufukty.com"
 custom_domain = true
 
-[env.staging]
+[env.stage]
 route = "stage.kask.ufukty.com"
 
 [observability]
