@@ -15,4 +15,4 @@ jobs:
       - run: make install
       - run: ~/bin/kask build -in docs -out docs-build -domain "https://kask.ufukty.com" -v -cfw
       - uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # 3.14.1 (latest atm)
-        with: { command: deploy, environment: prod, apiToken: "${{ secrets.CLOUDFLARE_API_TOKEN }}" }
+        with: { command: deploy, apiToken: "${{ secrets.CLOUDFLARE_API_TOKEN }}" }
