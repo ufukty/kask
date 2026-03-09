@@ -2,12 +2,6 @@ name = "kask"
 compatibility_date = "2026-02-16"
 preview_urls = true
 
-[env.prod.build]
-command = "bash .workers/build-prod.sh"
-
-[env.staging.build]
-command = "bash .workers/build-stage.sh"
-
 [assets]
 directory = "./docs-build"
 not_found_handling = "404-page"
