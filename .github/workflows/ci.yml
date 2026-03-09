@@ -43,7 +43,11 @@ jobs:
           -cfw
       - uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # 3.14.1 (latest atm)
         with:
-          command: versions upload --preview-alias pr-${{ github.event.pull_request.number }}
+          command: >
+            versions upload 
+            --preview-alias pr-${{ github.event.pull_request.number }}
+            --message "PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
+            --tag "GitHub Actions CI"
           wranglerVersion: 4.71.0
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
