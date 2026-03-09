@@ -1,5 +1,6 @@
 name = "kask"
 compatibility_date = "2026-02-16"
+preview_urls = true
 
 [assets]
 directory = "./docs-build"
@@ -8,10 +9,6 @@ not_found_handling = "404-page"
 [[routes]]
 pattern = "kask.ufukty.com"
 custom_domain = true
-
-[env.stage]
-route = "stage.kask.ufukty.com"
-preview_urls = true
 
 [observability]
 [observability.logs]
