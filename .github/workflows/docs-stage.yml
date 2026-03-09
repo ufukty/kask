@@ -1,7 +1,8 @@
 name: Docs Stage
 
 on:
-  push: { branches: [main] }
+  push:
+  pull_request:
 
 jobs:
   Stable:
