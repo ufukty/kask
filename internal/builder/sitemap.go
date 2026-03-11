@@ -4,6 +4,8 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
 	"go.ufukty.com/kask/pkg/kask"
 )
@@ -36,9 +38,8 @@ func writeSitemap(dst io.Writer, root *kask.Node) error {
 			urls = append(urls, Url{Loc: n.Href})
 		}
 	}
-	_, err := dst.Write([]byte(xml.Header))
-	if err != nil {
-		return fmt.Errorf("writing xml header: %w", err)
+	if _, err := dst.Write([]byte(xml.Header)); err != nil {
+		return fmt.Errorf("header: %w", err)
 	}
 	e := xml.NewEncoder(dst)
 	e.Indent("", "  ")
@@ -46,9 +47,53 @@ func writeSitemap(dst io.Writer, root *kask.Node) error {
 		Xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9",
 		URLs:  urls,
 	}
-	err = e.Encode(urlset)
-	if err != nil {
-		return fmt.Errorf("encoding: %w", err)
+	if err := e.Encode(urlset); err != nil {
+		return fmt.Errorf("body: %w", err)
 	}
+	return nil
+}
+
+func createSitemap(dst string, root *kask.Node) error {
+	s, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("opening: %w", err)
+	}
+	defer s.Close()
+	if err = writeSitemap(s, root); err != nil {
+		return fmt.Errorf("writing: %w", err)
+	}
+	return nil
+}
+
+func writeRobots(dst io.Writer, sitemap string) error {
+	if _, err := fmt.Fprintf(dst, "sitemap: %s\n", sitemap); err != nil {
+		return fmt.Errorf("sitemap: %w", err)
+	}
+	return nil
+}
+
+func createRobotsFile(dst, sitemap string) error {
+	r, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("opening: %w", err)
+	}
+	defer r.Close()
+	if err = writeRobots(r, sitemap); err != nil {
+		return fmt.Errorf("contents: %w", err)
+	}
+	return nil
+}
+
+func (b *builder) sitemap() error {
+	sitemap := filepath.Join(b.args.Dst, "sitemap.xml")
+	if err := createSitemap(sitemap, b.root3); err != nil {
+		return fmt.Errorf("sitemap: %w", err)
+	}
+
+	robots := filepath.Join(b.args.Dst, "robots.txt")
+	if err := createRobotsFile(robots, sitemap); err != nil {
+		return fmt.Errorf("robots: %w", err)
+	}
+
 	return nil
 }
