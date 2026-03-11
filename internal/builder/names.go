@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -16,8 +17,8 @@ import (
 
 type extractor struct{}
 
-func (e extractor) FromWeb(path string) (string, error) {
-	tmpl, err := template.New("").ParseFiles(path)
+func (e extractor) FromWeb(src fs.FS, path string) (string, error) {
+	tmpl, err := template.New("").ParseFS(src, path)
 	if err != nil {
 		return "", fmt.Errorf("parse: %w", err)
 	}
@@ -33,7 +34,7 @@ func (e extractor) FromWeb(path string) (string, error) {
 
 var regexpMarkdown = regexp.MustCompile(`(?m)^#\s+(.+)$`)
 
-func (e extractor) FromMarkdown(path string) (string, error) {
+func (e extractor) FromMarkdown(src fs.FS, path string) (string, error) {
 	f, err := os.ReadFile(path)
 	if err != nil {
 		return "", fmt.Errorf("reading file: %w", err)
@@ -45,16 +46,16 @@ func (e extractor) FromMarkdown(path string) (string, error) {
 	return ms[1], nil
 }
 
-func (e extractor) FromFile(path string) (string, error) {
+func (e extractor) FromFile(src fs.FS, path string) (string, error) {
 	switch ext := filepath.Ext(path); ext {
 	case ".tmpl":
-		p, err := e.FromWeb(path)
+		p, err := e.FromWeb(src, path)
 		if err != nil {
 			return "", fmt.Errorf("markdown: %w", err)
 		}
 		return p, nil
 	case ".md":
-		p, err := e.FromMarkdown(path)
+		p, err := e.FromMarkdown(src, path)
 		if err != nil {
 			return "", fmt.Errorf("web: %w", err)
 		}
@@ -74,8 +75,8 @@ func pageTitleFromFilename(base string) string {
 	return titler.String(base)
 }
 
-func pageTitle(src string, p paths.Paths) (string, error) {
-	title, err := theExtractor.FromFile(filepath.Join(src, p.Src))
+func pageTitle(src fs.FS, p paths.Paths) (string, error) {
+	title, err := theExtractor.FromFile(src, p.Src)
 	if err != nil {
 		return "", fmt.Errorf("extracting from file: %w", err)
 	}
