@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -250,5 +251,13 @@ type Args struct {
 }
 
 func Build(args Args) error {
-	return newBuilder(args).Build()
+	bArgs := builderArgs{
+		Src:      os.DirFS(args.Src),
+		Dst:      os.DirFS(args.Dst),
+		Domain:   args.Domain,
+		Dev:      args.Dev,
+		Verbose:  args.Verbose,
+		Provider: args.Provider,
+	}
+	return newBuilder(bArgs).Build()
 }
