@@ -8,14 +8,14 @@ import (
 	"go.ufukty.com/kask/pkg/kask"
 )
 
-type URL struct {
+type Url struct {
 	Loc string `xml:"loc"`
 }
 
-type URLSet struct {
+type UrlSet struct {
 	XMLName xml.Name `xml:"urlset"`
 	Xmlns   string   `xml:"xmlns,attr"`
-	URLs    []URL    `xml:"url"`
+	URLs    []Url    `xml:"url"`
 }
 
 func subtree(n *kask.Node) []*kask.Node {
@@ -30,10 +30,10 @@ func subtree(n *kask.Node) []*kask.Node {
 }
 
 func writeSitemap(dst io.Writer, root *kask.Node) error {
-	urls := []URL{}
+	urls := []Url{}
 	for _, n := range subtree(root) {
 		if n.Href != "" {
-			urls = append(urls, URL{Loc: n.Href})
+			urls = append(urls, Url{Loc: n.Href})
 		}
 	}
 	_, err := dst.Write([]byte(xml.Header))
@@ -42,7 +42,7 @@ func writeSitemap(dst io.Writer, root *kask.Node) error {
 	}
 	e := xml.NewEncoder(dst)
 	e.Indent("", "  ")
-	urlset := URLSet{
+	urlset := UrlSet{
 		Xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9",
 		URLs:  urls,
 	}
