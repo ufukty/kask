@@ -40,13 +40,13 @@ func writeSitemap(dst io.Writer, root *kask.Node) error {
 	if err != nil {
 		return fmt.Errorf("writing xml header: %w", err)
 	}
-	encoder := xml.NewEncoder(dst)
-	encoder.Indent("", "  ")
+	e := xml.NewEncoder(dst)
+	e.Indent("", "  ")
 	urlset := URLSet{
 		Xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9",
 		URLs:  urls,
 	}
-	err = encoder.Encode(urlset)
+	err = e.Encode(urlset)
 	if err != nil {
 		return fmt.Errorf("encoding: %w", err)
 	}
