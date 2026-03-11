@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"path/filepath"
 	"strings"
 	"time"
@@ -29,8 +30,8 @@ func (p Provider) UrlMode() paths.UrlMode {
 	return paths.UrlModeDefault
 }
 
-type Args struct {
-	Src, Dst string
+type builderArgs struct {
+	Src, Dst fs.FS
 	Domain   string
 	Dev      bool // suffixes css bundles with unique ids to bypass browser caching
 	Verbose  bool
@@ -38,7 +39,7 @@ type Args struct {
 }
 
 type builder struct {
-	args           Args
+	args           builderArgs
 	rw             *rewriter.Rewriter
 	mr             *markdown.Renderer
 	markdown       map[string]*kask.Markdown // src -> content
@@ -224,7 +225,7 @@ func (b *builder) Build() error {
 }
 
 // split for testing
-func newBuilder(args Args) *builder {
+func newBuilder(args builderArgs) *builder {
 	if !strings.HasSuffix(args.Domain, "/") {
 		args.Domain += "/"
 	}
@@ -238,6 +239,14 @@ func newBuilder(args Args) *builder {
 		start:          time.Now(),
 		incorrectLinks: map[string][]string{},
 	}
+}
+
+type Args struct {
+	Src, Dst string
+	Domain   string
+	Dev      bool // suffixes css bundles with unique ids to bypass browser caching
+	Verbose  bool
+	Provider Provider
 }
 
 func Build(args Args) error {

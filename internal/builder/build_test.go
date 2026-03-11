@@ -38,7 +38,7 @@ func buildTestSite(path, domain string) (*builder, string) {
 	if err != nil {
 		panic(fmt.Errorf("buildTestSite: os.MkdirTemp: %w", err))
 	}
-	b := newBuilder(Args{Src: path, Dst: tmp, Domain: domain, Dev: true, Verbose: false})
+	b := newBuilder(builderArgs{Src: path, Dst: tmp, Domain: domain, Dev: true, Verbose: false})
 	err = b.Build()
 	if err != nil {
 		panic(fmt.Errorf("buildTestSite: b.Build: %w", err))
@@ -107,7 +107,7 @@ func TestBuilder_propagated(t *testing.T) {
 			}
 			fmt.Println("temp folder:", tmp)
 
-			a := Args{
+			a := builderArgs{
 				Src:     filepath.Join("testdata/propagated", tc),
 				Dst:     tmp,
 				Dev:     true,
@@ -339,7 +339,7 @@ func ExampleBuilder_workersConfigurationFile() {
 	if err != nil {
 		panic(fmt.Errorf("prep, os.MkdirTemp: %w", err))
 	}
-	err = Build(Args{Src: "testdata/workers", Dst: tmp, Provider: ProviderCloudflareWorkers})
+	err = Build(builderArgs{Src: "testdata/workers", Dst: tmp, Provider: ProviderCloudflareWorkers})
 	if err != nil {
 		panic(fmt.Errorf("Build: %w", err))
 	}
@@ -396,7 +396,7 @@ func ExampleBuilder_correctLinks() {
 }
 
 func TestBuilder_docs(t *testing.T) {
-	b := newBuilder(Args{
+	b := newBuilder(builderArgs{
 		Src:    "../../docs",
 		Dst:    t.TempDir(),
 		Domain: "https://kask.ufukty.com/",
