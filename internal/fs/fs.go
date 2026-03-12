@@ -7,8 +7,9 @@ import (
 )
 
 // Supplementary to [fs.FS]
-// Needed for testability
-type Writable interface {
+// Additions are needed for testing the builder
+type FS interface {
+	fs.ReadDirFS
 	MkdirAll(path string) error
 	WriteFile(path string, data []byte) error
 }
@@ -17,11 +18,7 @@ type Real struct {
 	root string
 }
 
-var (
-	_ Writable     = (*Real)(nil)
-	_ fs.FS        = (*Real)(nil)
-	_ fs.ReadDirFS = (*Real)(nil)
-)
+var _ FS = (*Real)(nil)
 
 func NewReal(root string) Real {
 	return Real{root: root}
