@@ -9,6 +9,7 @@ import (
 // Supplementary to [fs.FS]
 // Additions are needed for testing the builder
 type FS interface {
+	fs.ReadFileFS
 	fs.ReadDirFS
 	MkdirAll(path string) error
 	WriteFile(path string, data []byte) error
@@ -34,6 +35,10 @@ func (r Real) WriteFile(name string, data []byte) error {
 
 func (r Real) Open(name string) (fs.File, error) {
 	return os.Open(filepath.Join(r.root, name))
+}
+
+func (r Real) ReadFile(name string) ([]byte, error) {
+	return os.ReadFile(filepath.Join(r.root, name))
 }
 
 func (r Real) ReadDir(name string) ([]os.DirEntry, error) {
