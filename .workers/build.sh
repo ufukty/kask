@@ -9,5 +9,7 @@ if test "$WORKERS_CI_BRANCH" = "main"; then
 fi
 
 go install ./cmd/kask
-PATH="$(go env GOPATH)/bin:${PATH}"
+go env
+echo "$PATH" | sed 's/:/\n/g' | sort
+PATH="$(go env GOBIN):$(go env GOPATH)/bin:${PATH}"
 kask build -in docs -out docs-build -domain "https://kask.ufukty.com" -v -cfw
