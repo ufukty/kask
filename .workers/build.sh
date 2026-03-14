@@ -9,4 +9,4 @@ if test "$WORKERS_CI_BRANCH" = "main"; then
 fi
 
 go install ./cmd/kask
-~/bin/kask build -in docs -out docs-build -domain "https://kask.ufukty.com" -v -cfw
+kask build -in docs -out docs-build -domain "https://kask.ufukty.com" -v -cfw
