@@ -253,7 +253,7 @@ type Args struct {
 func Build(args Args) error {
 	bArgs := builderArgs{
 		Src:      os.DirFS(args.Src),
-		Dst:      os.DirFS(args.Dst),
+		Dst:      writable.NewReal(args.Dst),
 		Domain:   args.Domain,
 		Dev:      args.Dev,
 		Verbose:  args.Verbose,
