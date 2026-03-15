@@ -1,4 +1,4 @@
-package main
+package kask
 
 import (
 	"fmt"
@@ -37,12 +37,4 @@ func Main() error {
 	}
 
 	return nil
-}
-
-func main() {
-	err := Main()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
 }
