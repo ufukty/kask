@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"go.ufukty.com/kask/internal/writable"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -38,7 +39,13 @@ func buildTestSite(path, domain string) (*builder, string) {
 	if err != nil {
 		panic(fmt.Errorf("buildTestSite: os.MkdirTemp: %w", err))
 	}
-	b := newBuilder(builderArgs{Src: path, Dst: tmp, Domain: domain, Dev: true, Verbose: false})
+	b := newBuilder(builderArgs{
+		Src:     writable.NewReal(path), // TODO: use on-memory FS
+		Dst:     writable.NewReal(tmp),  // TODO: use on-memory FS
+		Domain:  domain,
+		Dev:     true,
+		Verbose: false,
+	})
 	err = b.Build()
 	if err != nil {
 		panic(fmt.Errorf("buildTestSite: b.Build: %w", err))
@@ -107,7 +114,7 @@ func TestBuilder_propagated(t *testing.T) {
 			}
 			fmt.Println("temp folder:", tmp)
 
-			a := builderArgs{
+			a := Args{
 				Src:     filepath.Join("testdata/propagated", tc),
 				Dst:     tmp,
 				Dev:     true,
@@ -339,7 +346,7 @@ func ExampleBuilder_workersConfigurationFile() {
 	if err != nil {
 		panic(fmt.Errorf("prep, os.MkdirTemp: %w", err))
 	}
-	err = Build(builderArgs{Src: "testdata/workers", Dst: tmp, Provider: ProviderCloudflareWorkers})
+	err = Build(Args{Src: "testdata/workers", Dst: tmp, Provider: ProviderCloudflareWorkers})
 	if err != nil {
 		panic(fmt.Errorf("Build: %w", err))
 	}
@@ -397,8 +404,8 @@ func ExampleBuilder_correctLinks() {
 
 func TestBuilder_docs(t *testing.T) {
 	b := newBuilder(builderArgs{
-		Src:    "../../docs",
-		Dst:    t.TempDir(),
+		Src:    writable.NewReal("../../docs"), // TODO: use on-memory FS
+		Dst:    writable.NewReal(t.TempDir()),  // TODO: use on-memory FS
 		Domain: "https://kask.ufukty.com/",
 	})
 	err := b.Build()
