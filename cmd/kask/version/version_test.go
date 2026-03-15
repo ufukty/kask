@@ -3,10 +3,12 @@ package version
 import (
 	"fmt"
 	"testing"
+
+	"go.ufukty.com/kask/internal/version"
 )
 
 func TestDigBuildInfo(t *testing.T) {
-	v, err := DigBuildInfo()
+	v, err := version.OfBuild()
 	if err != nil {
 		t.Errorf("act, unexpected error: %v", err)
 	}
