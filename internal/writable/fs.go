@@ -10,8 +10,8 @@ import (
 type FS interface {
 	fs.ReadFileFS
 	fs.ReadDirFS
-	Create(name string) (*os.File, error)
-	Stat(name string) (os.FileInfo, error)
+	Create(name string) (fs.File, error)
+	Stat(name string) (fs.FileInfo, error)
 	MkdirAll(path string) error
 	WriteFile(path string, data []byte) error
 }
@@ -38,7 +38,7 @@ func (r Real) ReadDir(name string) ([]os.DirEntry, error) {
 	return os.ReadDir(filepath.Join(r.root, name))
 }
 
-func (r Real) Create(name string) (*os.File, error) {
+func (r Real) Create(name string) (fs.File, error) {
 	return os.Create(name)
 }
 
