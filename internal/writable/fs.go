@@ -1,4 +1,4 @@
-package wfs
+package writable
 
 import (
 	"io/fs"
@@ -7,7 +7,7 @@ import (
 )
 
 // Writable [fs.FS] for unit testing.
-type WFS interface {
+type FS interface {
 	fs.ReadFileFS
 	fs.ReadDirFS
 	Create(name string) (*os.File, error)
@@ -20,7 +20,7 @@ type Real struct {
 	root string
 }
 
-var _ WFS = (*Real)(nil)
+var _ FS = (*Real)(nil)
 
 func NewReal(root string) Real {
 	return Real{root: root}

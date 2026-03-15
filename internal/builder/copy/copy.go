@@ -5,10 +5,10 @@ import (
 	"io"
 	"io/fs"
 
-	"go.ufukty.com/kask/internal/wfs"
+	"go.ufukty.com/kask/internal/writable"
 )
 
-func File(dstFs wfs.WFS, dst string, srcFs wfs.WFS, src string) error {
+func File(dstFs writable.FS, dst string, srcFs writable.FS, src string) error {
 	srcfile, err := srcFs.Open(src)
 	if err != nil {
 		return fmt.Errorf("open: %w", err)
@@ -26,7 +26,7 @@ func File(dstFs wfs.WFS, dst string, srcFs wfs.WFS, src string) error {
 	return nil
 }
 
-func Dir(dstFs wfs.WFS, dst string, srcFs wfs.WFS, src string) error {
+func Dir(dstFs writable.FS, dst string, srcFs writable.FS, src string) error {
 	fi, err := srcFs.Stat(src)
 	if err != nil {
 		return fmt.Errorf("stat: %w", err)

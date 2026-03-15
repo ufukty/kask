@@ -11,9 +11,9 @@ import (
 
 	"go.ufukty.com/kask/internal/builder/directory"
 	"go.ufukty.com/kask/internal/builder/markdown"
-	"go.ufukty.com/kask/internal/fs"
 	"go.ufukty.com/kask/internal/paths"
 	"go.ufukty.com/kask/internal/rewriter"
+	"go.ufukty.com/kask/internal/writable"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -32,7 +32,7 @@ func (p Provider) UrlMode() paths.UrlMode {
 }
 
 type builderArgs struct {
-	Src, Dst fs.FS
+	Src, Dst writable.FS
 	Domain   string
 	Dev      bool // suffixes css bundles with unique ids to bypass browser caching
 	Verbose  bool
