@@ -13,12 +13,12 @@ import (
 )
 
 type Renderer struct {
-	src      fs.FS
+	src      fs.ReadFileFS
 	renderer *html.Renderer
 	visitor  *visitor
 }
 
-func New(src fs.FS, domain string) *Renderer {
+func New(src fs.ReadFileFS, domain string) *Renderer {
 	v := newVisitor(domain)
 	r := html.NewRenderer(html.RendererOptions{
 		Flags:          html.CommonFlags,
@@ -32,7 +32,7 @@ func New(src fs.FS, domain string) *Renderer {
 }
 
 func (r Renderer) ToHtml(page paths.Paths) (*kask.Markdown, error) {
-	c, err := fs.ReadFile(r.src, page.Src)
+	c, err := r.src.ReadFile(page.Src)
 	if err != nil {
 		return nil, fmt.Errorf("os.ReadFile: %w", err)
 	}
