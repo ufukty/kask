@@ -8,7 +8,7 @@ import (
 	"go.ufukty.com/kask/internal/wfs"
 )
 
-func CopyFile(dstFs wfs.WFS, dst string, srcFs wfs.WFS, src string) error {
+func File(dstFs wfs.WFS, dst string, srcFs wfs.WFS, src string) error {
 	srcfile, err := srcFs.Open(src)
 	if err != nil {
 		return fmt.Errorf("open: %w", err)
@@ -26,7 +26,7 @@ func CopyFile(dstFs wfs.WFS, dst string, srcFs wfs.WFS, src string) error {
 	return nil
 }
 
-func CopyDir(dstFs wfs.WFS, dst string, srcFs wfs.WFS, src string) error {
+func Dir(dstFs wfs.WFS, dst string, srcFs wfs.WFS, src string) error {
 	fi, err := srcFs.Stat(src)
 	if err != nil {
 		return fmt.Errorf("stat: %w", err)
@@ -43,7 +43,7 @@ func CopyDir(dstFs wfs.WFS, dst string, srcFs wfs.WFS, src string) error {
 				return fmt.Errorf("mkdir: %w", err)
 			}
 		} else {
-			if err := CopyFile(dstFs, dst, srcFs, path); err != nil {
+			if err := File(dstFs, dst, srcFs, path); err != nil {
 				return fmt.Errorf("file: %w", err)
 			}
 		}
