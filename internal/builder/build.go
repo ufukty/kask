@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"go.ufukty.com/kask/internal/builder/markdown"
 	"go.ufukty.com/kask/internal/paths"
 	"go.ufukty.com/kask/internal/rewriter"
+	"go.ufukty.com/kask/internal/writable"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -29,8 +31,8 @@ func (p Provider) UrlMode() paths.UrlMode {
 	return paths.UrlModeDefault
 }
 
-type Args struct {
-	Src, Dst string
+type builderArgs struct {
+	Src, Dst writable.FS
 	Domain   string
 	Dev      bool // suffixes css bundles with unique ids to bypass browser caching
 	Verbose  bool
@@ -38,7 +40,7 @@ type Args struct {
 }
 
 type builder struct {
-	args           Args
+	args           builderArgs
 	rw             *rewriter.Rewriter
 	mr             *markdown.Renderer
 	markdown       map[string]*kask.Markdown // src -> content
@@ -224,7 +226,7 @@ func (b *builder) Build() error {
 }
 
 // split for testing
-func newBuilder(args Args) *builder {
+func newBuilder(args builderArgs) *builder {
 	if !strings.HasSuffix(args.Domain, "/") {
 		args.Domain += "/"
 	}
@@ -240,6 +242,22 @@ func newBuilder(args Args) *builder {
 	}
 }
 
+type Args struct {
+	Src, Dst string
+	Domain   string
+	Dev      bool // suffixes css bundles with unique ids to bypass browser caching
+	Verbose  bool
+	Provider Provider
+}
+
 func Build(args Args) error {
-	return newBuilder(args).Build()
+	bArgs := builderArgs{
+		Src:      os.DirFS(args.Src),
+		Dst:      os.DirFS(args.Dst),
+		Domain:   args.Domain,
+		Dev:      args.Dev,
+		Verbose:  args.Verbose,
+		Provider: args.Provider,
+	}
+	return newBuilder(bArgs).Build()
 }
