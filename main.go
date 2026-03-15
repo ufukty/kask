@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"go.ufukty.com/kask/cmd/kask"
+	"go.ufukty.com/kask/internal/cmd"
 )
 
 func main() {
-	err := kask.Main()
+	err := cmd.Dispatch()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

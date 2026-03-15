@@ -1,4 +1,4 @@
-package kask
+package cmd
 
 import (
 	"fmt"
@@ -7,11 +7,11 @@ import (
 	"slices"
 	"strings"
 
-	"go.ufukty.com/kask/cmd/kask/build"
-	"go.ufukty.com/kask/cmd/kask/version"
+	"go.ufukty.com/kask/internal/cmd/build"
+	"go.ufukty.com/kask/internal/cmd/version"
 )
 
-func Main() error {
+func Dispatch() error {
 	cmdmap := map[string]func() error{
 		"build":   build.Run,
 		"version": version.Run,
