@@ -2,7 +2,7 @@ package directory
 
 import (
 	"fmt"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"strings"
 )
@@ -24,12 +24,17 @@ func (d *Dir) subtree() int {
 	return c
 }
 
-func inspect(root, path string) (*Dir, error) {
+type ReadFS interface {
+	fs.ReadDirFS
+	fs.ReadFileFS
+}
+
+func inspect(fs ReadFS, path string) (*Dir, error) {
 	d := &Dir{
 		Name:    filepath.Base(path),
 		Subdirs: []*Dir{},
 	}
-	entries, err := os.ReadDir(filepath.Join(root, path))
+	entries, err := fs.ReadDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("listing directory entries: %w", err)
 	}
@@ -40,12 +45,12 @@ func inspect(root, path string) (*Dir, error) {
 		case !isDir && (strings.HasSuffix(name, ".tmpl") || strings.HasSuffix(name, ".md")):
 			d.Pages = append(d.Pages, name)
 		case !isDir && name == ".kask.yml":
-			d.Meta, err = readMeta(filepath.Join(root, path, name))
+			d.Meta, err = readMeta(fs, filepath.Join(path, name))
 			if err != nil {
 				return nil, fmt.Errorf("reading meta file %q: %w", filepath.Join(path, name), err)
 			}
 		case isDir && name == ".kask":
-			d.Kask, err = inspectKaskFolder(filepath.Join(root, path))
+			d.Kask, err = inspectKaskFolder(fs, path)
 			if err != nil {
 				return nil, fmt.Errorf("inspecting kask folder: %w", err)
 			}
@@ -56,7 +61,7 @@ func inspect(root, path string) (*Dir, error) {
 		}
 	}
 	for _, subdir := range subdirs {
-		sub, err := inspect(root, subdir)
+		sub, err := inspect(fs, filepath.Join(path, subdir))
 		if err != nil {
 			return nil, fmt.Errorf("inspecting %s: %w", path, err)
 		}
@@ -67,8 +72,8 @@ func inspect(root, path string) (*Dir, error) {
 	return d, nil
 }
 
-func Inspect(path string) (*Dir, error) {
-	root, err := inspect(path, ".")
+func Inspect(fs ReadFS) (*Dir, error) {
+	root, err := inspect(fs, ".")
 	if err != nil {
 		return nil, fmt.Errorf("inspect: %w", err)
 	}

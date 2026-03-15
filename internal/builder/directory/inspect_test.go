@@ -3,6 +3,8 @@ package directory
 import (
 	"fmt"
 	"strings"
+
+	"go.ufukty.com/kask/internal/writable"
 )
 
 func spaces(depth int) string {
@@ -30,7 +32,7 @@ func printTree(d *Dir, depth int) {
 }
 
 func ExampleInspect() {
-	root, err := Inspect("testdata/acme")
+	root, err := Inspect(writable.NewReal("testdata/acme"))
 	if err != nil {
 		panic(fmt.Errorf("act: %w", err))
 	}

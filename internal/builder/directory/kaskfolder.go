@@ -46,8 +46,8 @@ type Kask struct {
 	Page string
 }
 
-func inspectKaskFolder(dir string) (*Kask, error) {
-	entries, err := os.ReadDir(filepath.Join(dir, ".kask"))
+func inspectKaskFolder(fs ReadFS, dir string) (*Kask, error) {
+	entries, err := fs.ReadDir(filepath.Join(dir, ".kask"))
 	if err != nil {
 		return nil, fmt.Errorf("listing directory: %w", err)
 	}
