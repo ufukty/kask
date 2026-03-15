@@ -3,61 +3,54 @@ package copy
 import (
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
+	"io/fs"
+
+	"go.ufukty.com/kask/internal/wfs"
 )
 
-func File(dst, src string) error {
-	srcfile, err := os.Open(src)
+func CopyFile(dstFs wfs.WFS, dst string, srcFs wfs.WFS, src string) error {
+	srcfile, err := srcFs.Open(src)
 	if err != nil {
-		return fmt.Errorf("os.Open: %w", err)
+		return fmt.Errorf("open: %w", err)
 	}
 	defer srcfile.Close()
-
-	dstfile, err := os.Create(dst)
+	dstfile, err := dstFs.Create(dst)
 	if err != nil {
-		return fmt.Errorf("os.Create: %w", err)
+		return fmt.Errorf("create: %w", err)
 	}
 	defer dstfile.Close()
-
 	_, err = io.Copy(dstfile, srcfile)
 	if err != nil {
-		return fmt.Errorf("io.Copy: %w", err)
+		return fmt.Errorf("copy: %w", err)
 	}
-	s, err := os.Stat(src)
-	if err != nil {
-		return fmt.Errorf("os.Stat: %w", err)
-	}
-	return os.Chmod(dst, s.Mode())
+	return nil
 }
 
-func Dir(dst, src string) error {
-	s, err := os.Stat(src)
+func CopyDir(dstFs wfs.WFS, dst string, srcFs wfs.WFS, src string) error {
+	fi, err := srcFs.Stat(src)
 	if err != nil {
-		return fmt.Errorf("os.Stat: %w", err)
+		return fmt.Errorf("stat: %w", err)
 	}
-	if !s.IsDir() {
-		return fmt.Errorf("source is not a directory")
+	if !fi.IsDir() {
+		return fmt.Errorf("not a directory: %s", src)
 	}
-
-	err = os.MkdirAll(dst, s.Mode())
-	if err != nil {
-		return fmt.Errorf("os.MkdirAll: %w", err)
-	}
-	err = filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+	err = fs.WalkDir(srcFs, src, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return fmt.Errorf("filepath.Walk: %w", err)
+			return fmt.Errorf("internal: %w", err)
 		}
-		relPath, err := filepath.Rel(src, path)
-		if err != nil {
-			return fmt.Errorf("filepath.Rel: %w", err)
+		if d.IsDir() {
+			if err := dstFs.MkdirAll(path); err != nil {
+				return fmt.Errorf("mkdir: %w", err)
+			}
+		} else {
+			if err := CopyFile(dstFs, dst, srcFs, path); err != nil {
+				return fmt.Errorf("file: %w", err)
+			}
 		}
-		targetPath := filepath.Join(dst, relPath)
-		if info.IsDir() {
-			return os.MkdirAll(targetPath, info.Mode())
-		}
-		return File(targetPath, path)
+		return nil
 	})
-
-	return fmt.Errorf("return File: %w", err)
+	if err != nil {
+		return fmt.Errorf("walk: %w", err)
+	}
+	return nil
 }
