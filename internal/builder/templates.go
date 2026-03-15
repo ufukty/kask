@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.ufukty.com/kask/cmd/kask/commands/version"
+	"go.ufukty.com/kask/cmd/kask/version"
 	"go.ufukty.com/kask/internal/paths"
 	"go.ufukty.com/kask/pkg/kask"
 )
