@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -252,7 +251,7 @@ type Args struct {
 
 func Build(args Args) error {
 	bArgs := builderArgs{
-		Src:      os.DirFS(args.Src),
+		Src:      writable.NewReal(args.Src),
 		Dst:      writable.NewReal(args.Dst),
 		Domain:   args.Domain,
 		Dev:      args.Dev,
