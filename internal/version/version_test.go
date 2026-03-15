@@ -1,17 +1,15 @@
 package version
 
 import (
-	"fmt"
 	"testing"
 )
 
-func TestDigBuildInfo(t *testing.T) {
-	v, err := DigBuildInfo()
+func TestOfBuild(t *testing.T) {
+	v, err := OfBuild()
 	if err != nil {
 		t.Errorf("act, unexpected error: %v", err)
 	}
-	if v == "" {
+	if v != "(devel)" {
 		t.Errorf("assert, unexpected empty value")
 	}
-	fmt.Println(v)
 }

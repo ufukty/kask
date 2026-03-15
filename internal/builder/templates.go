@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.ufukty.com/kask/cmd/kask/commands/version"
 	"go.ufukty.com/kask/internal/paths"
+	"go.ufukty.com/kask/internal/version"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -77,7 +77,7 @@ func (b *builder) prepareTemplates(d *dir2, p paths.Paths) (*template.Template, 
 }
 
 func versionHeader(w io.Writer) error {
-	v, err := version.DigBuildInfo()
+	v, err := version.OfBuild()
 	if err != nil {
 		return fmt.Errorf("digging build info: %w", err)
 	}
