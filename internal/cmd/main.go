@@ -12,28 +12,28 @@ import (
 )
 
 func Dispatch() error {
-	cmdmap := map[string]func() error{
+	commands := map[string]func() error{
 		"build":   build.Run,
 		"version": version.Run,
 	}
 
 	if len(os.Args) < 2 {
 		return fmt.Errorf("usage:\n\tkask [ %s ]",
-			strings.Join(slices.Collect(maps.Keys(cmdmap)), " | "),
+			strings.Join(slices.Collect(maps.Keys(commands)), " | "),
 		)
 	}
 
-	command := os.Args[1]
+	pick := os.Args[1]
 
-	runner, ok := cmdmap[command]
+	command, ok := commands[pick]
 	if !ok {
-		return fmt.Errorf("command not found: %s", command)
+		return fmt.Errorf("command not found: %s", pick)
 	}
 
 	os.Args = os.Args[1:]
-	err := runner()
+	err := command()
 	if err != nil {
-		return fmt.Errorf("%s: %w", command, err)
+		return fmt.Errorf("%s: %w", pick, err)
 	}
 
 	return nil
