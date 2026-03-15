@@ -1,16 +1,22 @@
 package writable
 
 import (
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 )
 
+type File interface {
+	io.Writer
+	fs.File
+}
+
 // Writable [fs.FS] for unit testing.
 type FS interface {
 	fs.ReadFileFS
 	fs.ReadDirFS
-	Create(name string) (fs.File, error)
+	Create(name string) (File, error)
 	Stat(name string) (fs.FileInfo, error)
 	MkdirAll(path string) error
 	WriteFile(path string, data []byte) error
@@ -38,7 +44,7 @@ func (r Real) ReadDir(name string) ([]os.DirEntry, error) {
 	return os.ReadDir(filepath.Join(r.root, name))
 }
 
-func (r Real) Create(name string) (fs.File, error) {
+func (r Real) Create(name string) (File, error) {
 	return os.Create(name)
 }
 
