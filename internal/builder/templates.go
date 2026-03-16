@@ -30,7 +30,7 @@ func newTemplateSet() *template.Template {
 func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) error {
 	var err error
 	if d.original.Kask != nil && d.original.Kask.Propagate != nil && len(d.original.Kask.Propagate.Tmpl) > 0 {
-		toPropagate, err = toPropagate.ParseFiles(d.original.Kask.Propagate.Tmpl...)
+		toPropagate, err = toPropagate.ParseFS(b.args.Src, d.original.Kask.Propagate.Tmpl...)
 		if err != nil {
 			return fmt.Errorf("parsing to-propagate template files: %w", err)
 		}
@@ -40,7 +40,7 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 		return fmt.Errorf("cloning propagated: %w", err)
 	}
 	if d.original.Kask != nil && len(d.original.Kask.Tmpl) > 0 {
-		atLevel, err = atLevel.ParseFiles(d.original.Kask.Tmpl...)
+		atLevel, err = atLevel.ParseFS(b.args.Src, d.original.Kask.Tmpl...)
 		if err != nil {
 			return fmt.Errorf("parsing at-level template files: %w", err)
 		}
