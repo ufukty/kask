@@ -29,7 +29,7 @@ func EachNamedResult(t *testing.T, expected map[string]string, got []string) {
 		t.Errorf("assert lengths: expected %d, got %d", len(expected), len(got))
 	}
 	for tn, expected := range expected {
-		t.Run(tn, func(t *testing.T) {
+		t.Run(tescape(tn), func(t *testing.T) {
 			if !slices.Contains(got, expected) {
 				t.Errorf("assert, expected item: %s", expected)
 			}
@@ -58,7 +58,7 @@ func EachNamedResultInFile(t *testing.T, expected map[string]string, fs fs.ReadF
 	}
 	s := string(c)
 	for tn, expected := range expected {
-		t.Run(tn, func(t *testing.T) {
+		t.Run(tescape(tn), func(t *testing.T) {
 			if !strings.Contains(s, expected) {
 				t.Errorf("assert, expected item: %s", expected)
 			}
