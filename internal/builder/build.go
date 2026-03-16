@@ -200,7 +200,7 @@ func (b *builder) Build() error {
 		return fmt.Errorf("bundling stylesheets: %w", err)
 	}
 	if err := b.propagateTemplates(root2, newTemplateSet()); err != nil {
-		return fmt.Errorf("bundling stylesheets: %w", err)
+		return fmt.Errorf("propagating templates: %w", err)
 	}
 	b.root3, err = b.toNode(root2, nil)
 	if err != nil {
