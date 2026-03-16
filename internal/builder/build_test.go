@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"go.ufukty.com/kask/internal/builder/assert"
-	"go.ufukty.com/kask/internal/disk"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -360,12 +359,14 @@ func TestBuilder_linkCanonicalization(t *testing.T) {
 }
 
 func TestBuilder_docs(t *testing.T) {
-	b := newBuilder(builderArgs{
-		Src:    disk.NewReal("../../docs"), // TODO: use on-memory FS
-		Dst:    disk.NewReal(t.TempDir()),  // TODO: use on-memory FS
-		Domain: "https://kask.ufukty.com/",
+	err := Build(Args{
+		Src:      "../../docs", // TODO: use on-memory FS
+		Dst:      t.TempDir(),  // TODO: use on-memory FS
+		Domain:   "https://kask.ufukty.com/",
+		Dev:      false,
+		Verbose:  false,
+		Provider: "",
 	})
-	err := b.Build()
 	if err != nil {
 		t.Errorf("act, unexpected error: %v", err)
 	}
