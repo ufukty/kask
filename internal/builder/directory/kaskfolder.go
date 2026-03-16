@@ -2,9 +2,10 @@ package directory
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
+
+	"go.ufukty.com/kask/internal/disk"
 )
 
 // ready-to-use propagate folder content
@@ -14,8 +15,8 @@ type propagate struct {
 	Page string
 }
 
-func inspectPropagateDir(dir string) (*propagate, error) {
-	entries, err := os.ReadDir(filepath.Join(dir, ".kask/propagate"))
+func inspectPropagateDir(fs disk.ReadFS, dir string) (*propagate, error) {
+	entries, err := fs.ReadDir(filepath.Join(dir, ".kask/propagate"))
 	if err != nil {
 		return nil, fmt.Errorf("listing directory: %w", err)
 	}
@@ -46,7 +47,7 @@ type Kask struct {
 	Page string
 }
 
-func inspectKaskFolder(fs ReadFS, dir string) (*Kask, error) {
+func inspectKaskFolder(fs disk.ReadFS, dir string) (*Kask, error) {
 	entries, err := fs.ReadDir(filepath.Join(dir, ".kask"))
 	if err != nil {
 		return nil, fmt.Errorf("listing directory: %w", err)
@@ -64,7 +65,7 @@ func inspectKaskFolder(fs ReadFS, dir string) (*Kask, error) {
 			kask.Tmpl = append(kask.Tmpl, filepath.Join(dir, ".kask", name))
 
 		case isDir && name == "propagate":
-			kask.Propagate, err = inspectPropagateDir(dir)
+			kask.Propagate, err = inspectPropagateDir(fs, dir)
 			if err != nil {
 				return nil, fmt.Errorf("propagate folder: %w", err)
 			}

@@ -2,9 +2,10 @@ package directory
 
 import (
 	"fmt"
-	"io/fs"
 	"path/filepath"
 	"strings"
+
+	"go.ufukty.com/kask/internal/disk"
 )
 
 type Dir struct {
@@ -24,12 +25,7 @@ func (d *Dir) subtree() int {
 	return c
 }
 
-type ReadFS interface {
-	fs.ReadDirFS
-	fs.ReadFileFS
-}
-
-func inspect(fs ReadFS, path string) (*Dir, error) {
+func inspect(fs disk.ReadFS, path string) (*Dir, error) {
 	d := &Dir{
 		Name:    filepath.Base(path),
 		Subdirs: []*Dir{},
@@ -72,7 +68,7 @@ func inspect(fs ReadFS, path string) (*Dir, error) {
 	return d, nil
 }
 
-func Inspect(fs ReadFS) (*Dir, error) {
+func Inspect(fs disk.ReadFS) (*Dir, error) {
 	root, err := inspect(fs, ".")
 	if err != nil {
 		return nil, fmt.Errorf("inspect: %w", err)
