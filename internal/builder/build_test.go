@@ -393,15 +393,17 @@ func TestBuilder_docs(t *testing.T) {
 	}
 }
 
-func ExampleBuilder_hiddenPagesDst() {
+func TestBuilder_hiddenPagesDst(t *testing.T) {
 	_, tmp := buildTestSite("testdata/hidden-pages", "/")
-	printFiles(tmp)
-	// Output:
-	// 404.html
-	// career.html
-	// index.html
-	// products.html
-	// sitemap.html
+	got := files(tmp)
+	expected := []string{
+		"404.html",
+		"career.html",
+		"index.html",
+		"products.html",
+		"sitemap.html",
+	}
+	assert.EachResult(t, expected, got)
 }
 
 func TestBuilder_hiddenPagesSitemap(t *testing.T) {

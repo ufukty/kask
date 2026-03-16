@@ -94,13 +94,15 @@ func assertfile(t *testing.T, tmp, path string) {
 	})
 }
 
-func printFiles(path string) {
+func files(path string) []string {
+	ss := []string{}
 	fs.WalkDir(os.DirFS(path), ".", func(path string, d fs.DirEntry, err error) error {
 		if !d.IsDir() {
-			fmt.Println(path)
+			ss = append(ss, path)
 		}
 		return nil
 	})
+	return ss
 }
 
 var anchor = regexp.MustCompile(`<a[^>]*>[^<]*</a>`)
