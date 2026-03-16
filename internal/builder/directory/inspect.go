@@ -53,7 +53,7 @@ func inspect(fs disk.ReadFS, path string) (*Dir, error) {
 		case isDir && name == ".assets":
 			d.Assets = true
 		case isDir:
-			subdirs = append(subdirs, filepath.Join(path, name))
+			subdirs = append(subdirs, name)
 		}
 	}
 	for _, subdir := range subdirs {
