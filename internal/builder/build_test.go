@@ -276,7 +276,6 @@ func ExampleBuilder_titles() {
 func TestBuilder_metaTitle(t *testing.T) {
 	b, _ := buildTestSite("testdata/meta-title", "/")
 	got := titles(b.root3)
-	// Output:
 	expected := []string{
 		"My Beautiful Site",
 		"Page1",
