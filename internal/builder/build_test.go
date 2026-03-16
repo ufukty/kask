@@ -330,14 +330,25 @@ func TestBuilder_tmplLinkReplacements(t *testing.T) {
 	}
 }
 
-func ExampleBuilder_mdLinkReplacements() {
+func TestBuilder_mdLinkReplacements(t *testing.T) {
+	expected := []string{
+		`<a href="/a/b/#Title">subdir direct</a>`,
+		`<a href="/a/b/#Title">subdir absolute</a>`,
+		`<a href="/a/b/#Title">subdir redundancies</a>`,
+		`<a href="/a/tmpl.html#Title">sibling</a>`,
+	}
 	_, dst := buildTestSite("testdata/link-replacements", "/")
-	fmt.Println(strings.Join(anchor.FindAllString(readFile(filepath.Join(dst, "a/md.html")), -1), "\n"))
-	// Output:
-	// <a href="/a/b/#Title">subdir direct</a>
-	// <a href="/a/b/#Title">subdir absolute</a>
-	// <a href="/a/b/#Title">subdir redundancies</a>
-	// <a href="/a/tmpl.html#Title">sibling</a>
+	got := findAnchorTags(filepath.Join(dst, "a/md.html"))
+	if len(expected) != len(got) {
+		t.Errorf("assert lengths: expected %d results, got %d", len(expected), len(got))
+	}
+	for _, expected := range expected {
+		t.Run(tescape(expected), func(t *testing.T) {
+			if !slices.Contains(got, expected) {
+				t.Errorf("assert, expected item: %s", expected)
+			}
+		})
+	}
 }
 
 func ExampleBuilder_correctLinks() {
