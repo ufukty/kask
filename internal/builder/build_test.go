@@ -2,10 +2,8 @@ package builder
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -268,15 +266,6 @@ func ExampleBuilder_metaTitle() {
 	// Page
 }
 
-func assertfile(t *testing.T, tmp, path string) {
-	t.Run(strings.ReplaceAll(path, "/", "\\"), func(t *testing.T) {
-		if !check(tmp, path) {
-			t.Log(tmp)
-			t.Errorf("assert, file not found: %s", path)
-		}
-	})
-}
-
 func TestBuilder_assets(t *testing.T) {
 	_, tmp := buildTestSite("testdata/assets", "/")
 	tcs := []string{".assets/sample.txt", "section/.assets/subsample.txt"}
@@ -318,8 +307,6 @@ func ExampleBuilder_workersConfigurationFile() {
 	// /section/.assets/*
 	//   Cache-Control: public, max-age=14400, must-revalidate
 }
-
-var anchor = regexp.MustCompile(`<a[^>]*>[^<]*</a>`)
 
 func ExampleBuilder_tmplLinkReplacements() {
 	_, dst := buildTestSite("testdata/link-replacements", "/")
@@ -364,15 +351,6 @@ func TestBuilder_docs(t *testing.T) {
 	if err != nil {
 		t.Errorf("act, unexpected error: %v", err)
 	}
-}
-
-func printFiles(path string) {
-	fs.WalkDir(os.DirFS(path), ".", func(path string, d fs.DirEntry, err error) error {
-		if !d.IsDir() {
-			fmt.Println(path)
-		}
-		return nil
-	})
 }
 
 func ExampleBuilder_hiddenPagesDst() {

@@ -2,9 +2,13 @@ package builder
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
+	"strings"
+	"testing"
 
 	"go.ufukty.com/kask/internal/disk"
 	"go.ufukty.com/kask/internal/paths"
@@ -58,6 +62,26 @@ func readFile(path string) string {
 	}
 	return string(c)
 }
+
+func assertfile(t *testing.T, tmp, path string) {
+	t.Run(strings.ReplaceAll(path, "/", "\\"), func(t *testing.T) {
+		if !check(tmp, path) {
+			t.Log(tmp)
+			t.Errorf("assert, file not found: %s", path)
+		}
+	})
+}
+
+func printFiles(path string) {
+	fs.WalkDir(os.DirFS(path), ".", func(path string, d fs.DirEntry, err error) error {
+		if !d.IsDir() {
+			fmt.Println(path)
+		}
+		return nil
+	})
+}
+
+var anchor = regexp.MustCompile(`<a[^>]*>[^<]*</a>`)
 
 func fixture() *builder {
 	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: "https://kask.ufukty.com/"})
