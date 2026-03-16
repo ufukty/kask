@@ -69,11 +69,7 @@ func inspect(fs disk.ReadFS, path string) (*Dir, error) {
 }
 
 func Inspect(fs disk.ReadFS) (*Dir, error) {
-	root, err := inspect(fs, ".")
-	if err != nil {
-		return nil, fmt.Errorf("inspect: %w", err)
-	}
-	return root, nil
+	return inspect(fs, ".")
 }
 
 func (d *Dir) IsToStrip() bool {
