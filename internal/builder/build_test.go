@@ -333,8 +333,8 @@ func TestBuilder_mdLinkReplacements(t *testing.T) {
 	assert.EachResult(t, expected, got)
 }
 
-func TestBuilder_correctLinks(t *testing.T) {
-	_, dst := buildTestSite("testdata/correct-links", "/")
+func TestBuilder_linkCanonicalization(t *testing.T) {
+	_, dst := buildTestSite("testdata/canonicalization", "/")
 
 	t.Run("Markdown based page", func(t *testing.T) {
 		expected := []string{
