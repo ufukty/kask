@@ -16,14 +16,6 @@ import (
 	"go.ufukty.com/kask/pkg/kask"
 )
 
-func tescape(s string) string {
-	return strings.ReplaceAll(s, "/", "\\")
-}
-
-func testname(parent, child string) string {
-	return fmt.Sprintf("%s=>%s", tescape(parent), tescape(child))
-}
-
 func check(tmp, path string) bool {
 	_, err := os.Stat(filepath.Join(tmp, path))
 	return err == nil
