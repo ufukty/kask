@@ -13,14 +13,9 @@ import (
 )
 
 func TestBuilder_renderWebPages(t *testing.T) {
+	expected := "<h1>Title</h1>"
 	_, tmp := buildTestSite("testdata/web", "/")
-	f, err := os.ReadFile(filepath.Join(tmp, "index.html"))
-	if err != nil {
-		t.Errorf("prep, read file: %v", err)
-	}
-	if !strings.Contains(string(f), "<h1>Title</h1>") {
-		t.Error("expected markdown content not found.")
-	}
+	assert.ResultInFile(t, expected, disk.NewReal(tmp), "index.html")
 }
 
 func TestBuilder_versionStamp(t *testing.T) {
