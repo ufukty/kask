@@ -12,7 +12,7 @@ import (
 
 func TestBuilder_renderWebPages(t *testing.T) {
 	expected := "<h1>Title</h1>"
-	_, tmp := buildTestSite("testdata/web", "/")
+	_, tmp := buildTestSite(t, "testdata/web", "/")
 	assert.ResultInFile(t, expected, disk.NewReal(tmp), "index.html")
 }
 
@@ -30,7 +30,7 @@ func TestBuilder_versionStamp(t *testing.T) {
 }
 
 func TestBuilder_renderMarkdownPages(t *testing.T) {
-	_, tmp := buildTestSite("testdata/markdown-content", "/")
+	_, tmp := buildTestSite(t, "testdata/markdown-content", "/")
 	f, err := disk.NewReal(tmp).ReadFile("index.html")
 	if err != nil {
 		t.Errorf("prep, read file: %v", err)
@@ -41,7 +41,7 @@ func TestBuilder_renderMarkdownPages(t *testing.T) {
 }
 
 func TestBuilder_renderMarkdownToc(t *testing.T) {
-	_, tmp := buildTestSite("testdata/markdown-toc", "/")
+	_, tmp := buildTestSite(t, "testdata/markdown-toc", "/")
 	expected := map[string]string{
 		"H1 Lorem":       `<a data-level="1" href="/#h1-lorem">H1 Lorem</a>`,
 		"H2 Ipsum":       `<a data-level="2" href="/#h2-ipsum">H2 Ipsum</a>`,
@@ -55,7 +55,7 @@ func TestBuilder_renderMarkdownToc(t *testing.T) {
 }
 
 func TestBuilder_recursiveTemplating(t *testing.T) {
-	_, tmp := buildTestSite("testdata/recursive-templating", "/")
+	_, tmp := buildTestSite(t, "testdata/recursive-templating", "/")
 	f, err := disk.NewReal(tmp).ReadFile("a/b/c/page.html")
 	if err != nil {
 		t.Errorf("prep, read file: %v", err)
@@ -86,7 +86,7 @@ func TestBuilder_propagated(t *testing.T) {
 }
 
 func TestBuilder_strippedOrderingHrefs(t *testing.T) {
-	b, _ := buildTestSite("testdata/stripped-ordering", "/")
+	b, _ := buildTestSite(t, "testdata/stripped-ordering", "/")
 	got := hrefs(b.root3)
 	expected := []string{
 		"/",
@@ -100,7 +100,7 @@ func TestBuilder_strippedOrderingHrefs(t *testing.T) {
 }
 
 func TestBuilder_strippedOrderingHrefsWithDomain(t *testing.T) {
-	b, _ := buildTestSite("testdata/stripped-ordering", "https://kask.ufukty.com/")
+	b, _ := buildTestSite(t, "testdata/stripped-ordering", "https://kask.ufukty.com/")
 	got := hrefs(b.root3)
 	expected := map[string]string{
 		"/":             "https://kask.ufukty.com/",
@@ -114,7 +114,7 @@ func TestBuilder_strippedOrderingHrefsWithDomain(t *testing.T) {
 }
 
 func TestBuilder_strippedOrderingTitles(t *testing.T) {
-	b, _ := buildTestSite("testdata/stripped-ordering", "/")
+	b, _ := buildTestSite(t, "testdata/stripped-ordering", "/")
 	got := titles(b.root3)
 	expected := []string{
 		"Website Title",
@@ -128,7 +128,7 @@ func TestBuilder_strippedOrderingTitles(t *testing.T) {
 }
 
 func TestBuilder_strippedOrderingBreadcrumbs(t *testing.T) {
-	b, _ := buildTestSite("testdata/stripped-ordering", "/")
+	b, _ := buildTestSite(t, "testdata/stripped-ordering", "/")
 	got := breadcrumbs(b.root3)
 	expected := []string{
 		"Website Title",
@@ -142,7 +142,7 @@ func TestBuilder_strippedOrderingBreadcrumbs(t *testing.T) {
 }
 
 func TestBuilder_preservedOrderingHrefs(t *testing.T) {
-	b, _ := buildTestSite("testdata/preserved-ordering", "/")
+	b, _ := buildTestSite(t, "testdata/preserved-ordering", "/")
 	got := hrefs(b.root3)
 	expected := []string{
 		"/",
@@ -156,7 +156,7 @@ func TestBuilder_preservedOrderingHrefs(t *testing.T) {
 }
 
 func TestBuilder_preservedOrderingHrefsWithDomain(t *testing.T) {
-	b, _ := buildTestSite("testdata/preserved-ordering", "https://kask.ufukty.com/")
+	b, _ := buildTestSite(t, "testdata/preserved-ordering", "https://kask.ufukty.com/")
 	got := hrefs(b.root3)
 	expected := map[string]string{
 		"/":               "https://kask.ufukty.com/",
@@ -170,7 +170,7 @@ func TestBuilder_preservedOrderingHrefsWithDomain(t *testing.T) {
 }
 
 func TestBuilder_preservedOrderingTitles(t *testing.T) {
-	b, _ := buildTestSite("testdata/preserved-ordering", "/")
+	b, _ := buildTestSite(t, "testdata/preserved-ordering", "/")
 	got := titles(b.root3)
 	expected := []string{
 		"Website Title",
@@ -184,7 +184,7 @@ func TestBuilder_preservedOrderingTitles(t *testing.T) {
 }
 
 func TestBuilder_preservedOrderingBreadcrumbs(t *testing.T) {
-	b, _ := buildTestSite("testdata/preserved-ordering", "/")
+	b, _ := buildTestSite(t, "testdata/preserved-ordering", "/")
 	got := breadcrumbs(b.root3)
 	expected := []string{
 		"Website Title",
@@ -198,7 +198,7 @@ func TestBuilder_preservedOrderingBreadcrumbs(t *testing.T) {
 }
 
 func TestBuilder_cssSplitting(t *testing.T) {
-	_, tmp := buildTestSite("testdata/css-splitting", "https://kask.ufukty.com/")
+	_, tmp := buildTestSite(t, "testdata/css-splitting", "https://kask.ufukty.com/")
 	fmt.Println(tmp)
 
 	t.Run("links", func(t *testing.T) {
@@ -255,7 +255,7 @@ func TestBuilder_cssSplitting(t *testing.T) {
 }
 
 func TestBuilder_titles(t *testing.T) {
-	b, _ := buildTestSite("testdata/titles", "/")
+	b, _ := buildTestSite(t, "testdata/titles", "/")
 	got := titles(b.root3)
 	expected := []string{
 		".",
@@ -268,7 +268,7 @@ func TestBuilder_titles(t *testing.T) {
 }
 
 func TestBuilder_metaTitle(t *testing.T) {
-	b, _ := buildTestSite("testdata/meta-title", "/")
+	b, _ := buildTestSite(t, "testdata/meta-title", "/")
 	got := titles(b.root3)
 	expected := []string{
 		"My Beautiful Site",
@@ -280,7 +280,7 @@ func TestBuilder_metaTitle(t *testing.T) {
 }
 
 func TestBuilder_assets(t *testing.T) {
-	_, tmp := buildTestSite("testdata/assets", "/")
+	_, tmp := buildTestSite(t, "testdata/assets", "/")
 	tcs := []string{".assets/sample.txt", "section/.assets/subsample.txt"}
 	for _, tc := range tcs {
 		assertfile(t, tmp, tc)
@@ -288,7 +288,7 @@ func TestBuilder_assets(t *testing.T) {
 }
 
 func TestBuilder_assetLinking(t *testing.T) {
-	_, tmp := buildTestSite("testdata/asset-linking", "https://kask.ufukty.com/")
+	_, tmp := buildTestSite(t, "testdata/asset-linking", "https://kask.ufukty.com/")
 
 	t.Run("Markdown based page", func(t *testing.T) {
 		expected := `<p><img src="https://kask.ufukty.com/.assets/img%402.jpg" alt="" /></p>`
@@ -325,7 +325,7 @@ func TestBuilder_workersConfigurationFile(t *testing.T) {
 }
 
 func TestBuilder_tmplLinkReplacements(t *testing.T) {
-	_, dst := buildTestSite("testdata/link-replacements", "/")
+	_, dst := buildTestSite(t, "testdata/link-replacements", "/")
 
 	t.Run("Markdown based pages", func(t *testing.T) {
 		expected := []string{
@@ -357,7 +357,7 @@ func TestBuilder_tmplLinkReplacements(t *testing.T) {
 }
 
 func TestBuilder_linkCanonicalization(t *testing.T) {
-	_, dst := buildTestSite("testdata/canonicalization", "/")
+	_, dst := buildTestSite(t, "testdata/canonicalization", "/")
 
 	t.Run("Markdown based page", func(t *testing.T) {
 		expected := []string{
@@ -401,7 +401,7 @@ func TestBuilder_docs(t *testing.T) {
 }
 
 func TestBuilder_hiddenPagesDst(t *testing.T) {
-	_, tmp := buildTestSite("testdata/hidden-pages", "/")
+	_, tmp := buildTestSite(t, "testdata/hidden-pages", "/")
 	got := files(tmp)
 	expected := []string{
 		"404.html",
@@ -414,7 +414,7 @@ func TestBuilder_hiddenPagesDst(t *testing.T) {
 }
 
 func TestBuilder_hiddenPagesSitemap(t *testing.T) {
-	b, _ := buildTestSite("testdata/hidden-pages", "/")
+	b, _ := buildTestSite(t, "testdata/hidden-pages", "/")
 	got := titles(b.root3)
 	expected := []string{
 		"Index",

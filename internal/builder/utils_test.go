@@ -3,7 +3,6 @@ package builder
 import (
 	"fmt"
 	"io/fs"
-	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -53,21 +52,17 @@ func breadcrumbs(root *kask.Node) []string {
 	return bs
 }
 
-func buildTestSite(path, domain string) (*builder, string) {
-	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
-	if err != nil {
-		panic(fmt.Errorf("buildTestSite: os.MkdirTemp: %w", err))
-	}
+func buildTestSite(t *testing.T, src, domain string) (*builder, string) {
+	tmp := t.TempDir()
 	b := newBuilder(builderArgs{
-		Src:     disk.NewReal(path), // TODO: use on-memory FS
-		Dst:     disk.NewReal(tmp),  // TODO: use on-memory FS
+		Src:     disk.NewReal(src), // TODO: use on-memory FS
+		Dst:     disk.NewReal(tmp), // TODO: use on-memory FS
 		Domain:  domain,
 		Dev:     true,
 		Verbose: false,
 	})
-	err = b.Build()
-	if err != nil {
-		panic(fmt.Errorf("buildTestSite: b.Build: %w", err))
+	if err := b.Build(); err != nil {
+		t.Fatalf("prep, builder.Build: %v", err)
 	}
 	return b, tmp
 }
