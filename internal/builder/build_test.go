@@ -310,7 +310,7 @@ func ExampleBuilder_workersConfigurationFile() {
 
 func ExampleBuilder_tmplLinkReplacements() {
 	_, dst := buildTestSite("testdata/link-replacements", "/")
-	fmt.Println(strings.Join(anchor.FindAllString(readFile(filepath.Join(dst, "a/tmpl.html")), -1), "\n"))
+	fmt.Println(strings.Join(findAnchorTags(filepath.Join(dst, "a/tmpl.html")), "\n"))
 	// Output:
 	// <a href="/a/b/#Title">subdir direct</a>
 	// <a href="/a/b/#Title">subdir absolute</a>

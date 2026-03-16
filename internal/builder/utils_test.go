@@ -83,6 +83,10 @@ func printFiles(path string) {
 
 var anchor = regexp.MustCompile(`<a[^>]*>[^<]*</a>`)
 
+func findAnchorTags(path string) []string {
+	return anchor.FindAllString(readFile(path), -1)
+}
+
 func fixture() *builder {
 	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: "https://kask.ufukty.com/"})
 	m := map[string]string{
