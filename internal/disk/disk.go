@@ -1,4 +1,4 @@
-package writable
+package disk
 
 import (
 	"io"
@@ -7,26 +7,35 @@ import (
 	"path/filepath"
 )
 
+type ReadFS interface {
+	fs.ReadFileFS
+	fs.ReadDirFS
+	fs.GlobFS
+	fs.StatFS
+}
+
 type File interface {
 	io.Writer
 	fs.File
 }
 
 // Writable [fs.FS] for unit testing.
-type FS interface {
-	fs.ReadFileFS
-	fs.ReadDirFS
+type WriteFS interface {
 	Create(name string) (File, error)
-	Stat(name string) (fs.FileInfo, error)
 	MkdirAll(path string) error
 	WriteFile(path string, data []byte) error
+}
+
+type ReadWriteFS interface {
+	ReadFS
+	WriteFS
 }
 
 type Real struct {
 	root string
 }
 
-var _ FS = (*Real)(nil)
+var _ ReadWriteFS = (*Real)(nil)
 
 func NewReal(root string) Real {
 	return Real{root: root}
@@ -42,6 +51,10 @@ func (r Real) ReadFile(name string) ([]byte, error) {
 
 func (r Real) ReadDir(name string) ([]os.DirEntry, error) {
 	return os.ReadDir(filepath.Join(r.root, name))
+}
+
+func (r Real) Glob(pattern string) ([]string, error) {
+	return fs.Glob(r, pattern)
 }
 
 func (r Real) Create(name string) (File, error) {
