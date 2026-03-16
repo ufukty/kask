@@ -24,10 +24,24 @@ func EachResult(t *testing.T, expected, got []string) {
 	}
 }
 
+func ResultInFile(t *testing.T, expected string, fs fs.ReadFileFS, path string) {
+	c, err := fs.ReadFile(path)
+	if err != nil {
+		t.Fatalf("assert prep, reading file: %v", err)
+	}
+	s := string(c)
+	if !strings.Contains(s, expected) {
+		t.Errorf("assert, expected item: %s", expected)
+	}
+	if t.Failed() {
+		t.Logf("got:\n\n%s", s)
+	}
+}
+
 func EachNamedResultInFile(t *testing.T, expected map[string]string, fs fs.ReadFileFS, path string) {
 	c, err := fs.ReadFile(path)
 	if err != nil {
-		t.Fatalf("reading file: %v", err)
+		t.Fatalf("assert prep, reading file: %v", err)
 	}
 	s := string(c)
 	for tn, expected := range expected {
