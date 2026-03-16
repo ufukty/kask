@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 
+	"go.ufukty.com/kask/internal/builder/assert"
 	"go.ufukty.com/kask/internal/disk"
 	"go.ufukty.com/kask/pkg/kask"
 )
@@ -318,16 +318,7 @@ func TestBuilder_tmplLinkReplacements(t *testing.T) {
 	}
 	_, dst := buildTestSite("testdata/link-replacements", "/")
 	got := findAnchorTags(filepath.Join(dst, "a/tmpl.html"))
-	if len(expected) != len(got) {
-		t.Errorf("assert lengths: expected %d results, got %d", len(expected), len(got))
-	}
-	for _, expected := range expected {
-		t.Run(tescape(expected), func(t *testing.T) {
-			if !slices.Contains(got, expected) {
-				t.Errorf("assert, expected item: %s", expected)
-			}
-		})
-	}
+	assert.EachResult(t, expected, got)
 }
 
 func TestBuilder_mdLinkReplacements(t *testing.T) {
@@ -339,16 +330,7 @@ func TestBuilder_mdLinkReplacements(t *testing.T) {
 	}
 	_, dst := buildTestSite("testdata/link-replacements", "/")
 	got := findAnchorTags(filepath.Join(dst, "a/md.html"))
-	if len(expected) != len(got) {
-		t.Errorf("assert lengths: expected %d results, got %d", len(expected), len(got))
-	}
-	for _, expected := range expected {
-		t.Run(tescape(expected), func(t *testing.T) {
-			if !slices.Contains(got, expected) {
-				t.Errorf("assert, expected item: %s", expected)
-			}
-		})
-	}
+	assert.EachResult(t, expected, got)
 }
 
 func ExampleBuilder_correctLinks() {
