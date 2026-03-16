@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
+
+	"go.ufukty.com/kask/internal/disk"
 )
 
-func appendfile(dst io.Writer, src string) error {
-	in, err := os.Open(src)
+func appendfile(dst io.Writer, srcFs disk.ReadFS, src string) error {
+	in, err := srcFs.Open(src)
 	if err != nil {
 		return fmt.Errorf("os.Open: %w", err)
 	}
@@ -24,10 +25,10 @@ func appendfile(dst io.Writer, src string) error {
 	return nil
 }
 
-func Files(files []string) (string, error) {
+func Files(src disk.ReadFS, files []string) (string, error) {
 	dst := bytes.NewBuffer([]byte{})
 	for _, path := range files {
-		if err := appendfile(dst, path); err != nil {
+		if err := appendfile(dst, src, path); err != nil {
 			return "", fmt.Errorf("appending %s: %s", path, err)
 		}
 	}
