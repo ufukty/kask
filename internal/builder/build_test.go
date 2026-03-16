@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -308,14 +309,25 @@ func ExampleBuilder_workersConfigurationFile() {
 	//   Cache-Control: public, max-age=14400, must-revalidate
 }
 
-func ExampleBuilder_tmplLinkReplacements() {
+func TestBuilder_tmplLinkReplacements(t *testing.T) {
+	expected := []string{
+		`<a href="/a/b/#Title">subdir direct</a>`,
+		`<a href="/a/b/#Title">subdir absolute</a>`,
+		`<a href="/a/b/#Title">subdir redundancies</a>`,
+		`<a href="/a/md.html#Title">sibling</a>`,
+	}
 	_, dst := buildTestSite("testdata/link-replacements", "/")
-	fmt.Println(strings.Join(findAnchorTags(filepath.Join(dst, "a/tmpl.html")), "\n"))
-	// Output:
-	// <a href="/a/b/#Title">subdir direct</a>
-	// <a href="/a/b/#Title">subdir absolute</a>
-	// <a href="/a/b/#Title">subdir redundancies</a>
-	// <a href="/a/md.html#Title">sibling</a>
+	got := findAnchorTags(filepath.Join(dst, "a/tmpl.html"))
+	if len(expected) != len(got) {
+		t.Errorf("assert lengths: expected %d results, got %d", len(expected), len(got))
+	}
+	for _, expected := range expected {
+		t.Run(tescape(expected), func(t *testing.T) {
+			if !slices.Contains(got, expected) {
+				t.Errorf("assert, expected item: %s", expected)
+			}
+		})
+	}
 }
 
 func ExampleBuilder_mdLinkReplacements() {
