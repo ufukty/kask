@@ -59,7 +59,7 @@ func inspect(fs disk.ReadFS, path string) (*Dir, error) {
 	for _, subdir := range subdirs {
 		sub, err := inspect(fs, filepath.Join(path, subdir))
 		if err != nil {
-			return nil, fmt.Errorf("inspecting %s: %w", path, err)
+			return nil, fmt.Errorf("%q: %w", path, err)
 		}
 		if sub.subtree() > 0 {
 			d.Subdirs = append(d.Subdirs, sub)
