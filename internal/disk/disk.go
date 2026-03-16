@@ -10,7 +10,6 @@ import (
 type ReadFS interface {
 	fs.ReadFileFS
 	fs.ReadDirFS
-	fs.GlobFS
 	fs.StatFS
 }
 
@@ -51,10 +50,6 @@ func (r Real) ReadFile(name string) ([]byte, error) {
 
 func (r Real) ReadDir(name string) ([]os.DirEntry, error) {
 	return os.ReadDir(filepath.Join(r.root, name))
-}
-
-func (r Real) Glob(pattern string) ([]string, error) {
-	return fs.Glob(r, pattern)
 }
 
 func (r Real) Create(name string) (File, error) {
