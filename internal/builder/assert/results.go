@@ -24,6 +24,19 @@ func EachResult(t *testing.T, expected, got []string) {
 	}
 }
 
+func EachNamedResult(t *testing.T, expected map[string]string, got []string) {
+	if len(expected) != len(got) {
+		t.Errorf("assert lengths: expected %d, got %d", len(expected), len(got))
+	}
+	for tn, expected := range expected {
+		t.Run(tn, func(t *testing.T) {
+			if !slices.Contains(got, expected) {
+				t.Errorf("assert, expected item: %s", expected)
+			}
+		})
+	}
+}
+
 func ResultInFile(t *testing.T, expected string, fs fs.ReadFileFS, path string) {
 	c, err := fs.ReadFile(path)
 	if err != nil {

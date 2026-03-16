@@ -29,11 +29,35 @@ func check(tmp, path string) bool {
 	return err == nil
 }
 
-func dfs(n []*kask.Node, f func([]*kask.Node)) {
+func dfsWithAncestry(n []*kask.Node, f func([]*kask.Node)) {
 	f(n)
 	for _, c := range n[len(n)-1].Children {
-		dfs(append(slices.Clone(n), c), f)
+		dfsWithAncestry(append(slices.Clone(n), c), f)
 	}
+}
+
+func dfs(n *kask.Node) []*kask.Node {
+	cs := []*kask.Node{n}
+	for _, c := range n.Children {
+		cs = append(cs, dfs(c)...)
+	}
+	return cs
+}
+
+func hrefs(root *kask.Node) []string {
+	ss := []string{}
+	for _, n := range dfs(root) {
+		ss = append(ss, n.Href)
+	}
+	return ss
+}
+
+func titles(root *kask.Node) []string {
+	ss := []string{}
+	for _, n := range dfs(root) {
+		ss = append(ss, n.Title)
+	}
+	return ss
 }
 
 func each(ns []*kask.Node, f func(*kask.Node) string) []string {

@@ -91,45 +91,51 @@ func TestBuilder_propagated(t *testing.T) {
 	}
 }
 
-func ExampleBuilder_strippedOrderingHrefs() {
+func TestBuilder_strippedOrderingHrefs(t *testing.T) {
 	b, _ := buildTestSite("testdata/stripped-ordering", "/")
-	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Href) })
-	// Output:
-	// /
-	// /career.html
-	// /docs.html
-	// /products.html
-	// /about/
-	// /contact/
+	got := hrefs(b.root3)
+	expected := []string{
+		"/",
+		"/career.html",
+		"/docs.html",
+		"/products.html",
+		"/about/",
+		"/contact/",
+	}
+	assert.EachResult(t, expected, got)
 }
 
-func ExampleBuilder_strippedOrderingHrefsWithDomain() {
+func TestBuilder_strippedOrderingHrefsWithDomain(t *testing.T) {
 	b, _ := buildTestSite("testdata/stripped-ordering", "https://kask.ufukty.com/")
-	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Href) })
-	// Output:
-	// https://kask.ufukty.com/
-	// https://kask.ufukty.com/career.html
-	// https://kask.ufukty.com/docs.html
-	// https://kask.ufukty.com/products.html
-	// https://kask.ufukty.com/about/
-	// https://kask.ufukty.com/contact/
+	got := hrefs(b.root3)
+	expected := map[string]string{
+		"/":             "https://kask.ufukty.com/",
+		"career.html":   "https://kask.ufukty.com/career.html",
+		"docs.html":     "https://kask.ufukty.com/docs.html",
+		"products.html": "https://kask.ufukty.com/products.html",
+		"about/":        "https://kask.ufukty.com/about/",
+		"contact/":      "https://kask.ufukty.com/contact/",
+	}
+	assert.EachNamedResult(t, expected, got)
 }
 
-func ExampleBuilder_strippedOrderingTitles() {
+func TestBuilder_strippedOrderingTitles(t *testing.T) {
 	b, _ := buildTestSite("testdata/stripped-ordering", "/")
-	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
-	// Output:
-	// Website Title
-	// Career Title
-	// Docs Title
-	// Products Title
-	// About Title
-	// Contact Title
+	got := titles(b.root3)
+	expected := []string{
+		"Website Title",
+		"Career Title",
+		"Docs Title",
+		"Products Title",
+		"About Title",
+		"Contact Title",
+	}
+	assert.EachResult(t, expected, got)
 }
 
 func ExampleBuilder_strippedOrderingBreadcrumbs() {
 	b, _ := buildTestSite("testdata/stripped-ordering", "/")
-	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) {
+	dfsWithAncestry([]*kask.Node{b.root3}, func(n []*kask.Node) {
 		bs := each(n, func(n *kask.Node) string { return n.Title })
 		fmt.Println(strings.Join(bs, " / "))
 	})
@@ -142,45 +148,51 @@ func ExampleBuilder_strippedOrderingBreadcrumbs() {
 	// Website Title / Contact Title
 }
 
-func ExampleBuilder_preservedOrderingHrefs() {
+func TestBuilder_preservedOrderingHrefs(t *testing.T) {
 	b, _ := buildTestSite("testdata/preserved-ordering", "/")
-	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Href) })
-	// Output:
-	// /
-	// /1.career.html
-	// /2.docs.html
-	// /3.products.html
-	// /1.about/
-	// /2.contact/
+	got := hrefs(b.root3)
+	expected := []string{
+		"/",
+		"/1.career.html",
+		"/2.docs.html",
+		"/3.products.html",
+		"/1.about/",
+		"/2.contact/",
+	}
+	assert.EachResult(t, expected, got)
 }
 
-func ExampleBuilder_preservedOrderingHrefsWithDomain() {
+func TestBuilder_preservedOrderingHrefsWithDomain(t *testing.T) {
 	b, _ := buildTestSite("testdata/preserved-ordering", "https://kask.ufukty.com/")
-	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Href) })
-	// Output:
-	// https://kask.ufukty.com/
-	// https://kask.ufukty.com/1.career.html
-	// https://kask.ufukty.com/2.docs.html
-	// https://kask.ufukty.com/3.products.html
-	// https://kask.ufukty.com/1.about/
-	// https://kask.ufukty.com/2.contact/
+	got := hrefs(b.root3)
+	expected := map[string]string{
+		"/":               "https://kask.ufukty.com/",
+		"1.career.html":   "https://kask.ufukty.com/1.career.html",
+		"2.docs.html":     "https://kask.ufukty.com/2.docs.html",
+		"3.products.html": "https://kask.ufukty.com/3.products.html",
+		"1.about/":        "https://kask.ufukty.com/1.about/",
+		"2.contact/":      "https://kask.ufukty.com/2.contact/",
+	}
+	assert.EachNamedResult(t, expected, got)
 }
 
-func ExampleBuilder_preservedOrderingTitles() {
+func TestBuilder_preservedOrderingTitles(t *testing.T) {
 	b, _ := buildTestSite("testdata/preserved-ordering", "/")
-	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
-	// Output:
-	// Website Title
-	// Career Title
-	// Docs Title
-	// Products Title
-	// About Title
-	// Contact Title
+	got := titles(b.root3)
+	expected := []string{
+		"Website Title",
+		"Career Title",
+		"Docs Title",
+		"Products Title",
+		"About Title",
+		"Contact Title",
+	}
+	assert.EachResult(t, expected, got)
 }
 
 func ExampleBuilder_preservedOrderingBreadcrumbs() {
 	b, _ := buildTestSite("testdata/preserved-ordering", "/")
-	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) {
+	dfsWithAncestry([]*kask.Node{b.root3}, func(n []*kask.Node) {
 		bs := each(n, func(n *kask.Node) string { return n.Title })
 		fmt.Println(strings.Join(bs, " / "))
 	})
@@ -252,7 +264,7 @@ func TestBuilder_cssSplitting(t *testing.T) {
 
 func ExampleBuilder_titles() {
 	b, _ := buildTestSite("testdata/titles", "/")
-	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
+	dfsWithAncestry([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// .
 	// An Anonymous Markdown Page
@@ -263,7 +275,7 @@ func ExampleBuilder_titles() {
 
 func ExampleBuilder_metaTitle() {
 	b, _ := buildTestSite("testdata/meta-title", "/")
-	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
+	dfsWithAncestry([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// My Beautiful Site
 	// Page
@@ -395,7 +407,7 @@ func ExampleBuilder_hiddenPagesDst() {
 
 func ExampleBuilder_hiddenPagesSitemap() {
 	b, _ := buildTestSite("testdata/hidden-pages", "/")
-	dfs([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
+	dfsWithAncestry([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
 	// Output:
 	// Index
 	// Career
