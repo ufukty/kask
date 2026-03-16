@@ -273,14 +273,17 @@ func ExampleBuilder_titles() {
 	// A beautiful tmpl file with title tag
 }
 
-func ExampleBuilder_metaTitle() {
+func TestBuilder_metaTitle(t *testing.T) {
 	b, _ := buildTestSite("testdata/meta-title", "/")
-	dfsWithAncestry([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
+	got := titles(b.root3)
 	// Output:
-	// My Beautiful Site
-	// Page
-	// My Beautiful Section
-	// Page
+	expected := []string{
+		"My Beautiful Site",
+		"Page1",
+		"My Beautiful Section",
+		"Page2",
+	}
+	assert.EachResult(t, expected, got)
 }
 
 func TestBuilder_assets(t *testing.T) {
