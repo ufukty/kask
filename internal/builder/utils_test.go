@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"strings"
 	"testing"
 
@@ -19,13 +18,6 @@ import (
 func check(tmp, path string) bool {
 	_, err := os.Stat(filepath.Join(tmp, path))
 	return err == nil
-}
-
-func dfsWithAncestry(n []*kask.Node, f func([]*kask.Node)) {
-	f(n)
-	for _, c := range n[len(n)-1].Children {
-		dfsWithAncestry(append(slices.Clone(n), c), f)
-	}
 }
 
 func dfs(n *kask.Node) []*kask.Node {
@@ -52,12 +44,14 @@ func titles(root *kask.Node) []string {
 	return ss
 }
 
-func each(ns []*kask.Node, f func(*kask.Node) string) []string {
-	ss := make([]string, 0, len(ns))
-	for _, n := range ns {
-		ss = append(ss, f(n))
+func breadcrumbs(root *kask.Node) []string {
+	bs := []string{root.Title}
+	for _, c := range root.Children {
+		for _, b := range breadcrumbs(c) {
+			bs = append(bs, fmt.Sprintf("%s / %s", root.Title, b))
+		}
 	}
-	return ss
+	return bs
 }
 
 func buildTestSite(path, domain string) (*builder, string) {

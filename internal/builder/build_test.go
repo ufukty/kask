@@ -9,7 +9,6 @@ import (
 
 	"go.ufukty.com/kask/internal/builder/assert"
 	"go.ufukty.com/kask/internal/disk"
-	"go.ufukty.com/kask/pkg/kask"
 )
 
 func TestBuilder_renderWebPages(t *testing.T) {
@@ -133,19 +132,18 @@ func TestBuilder_strippedOrderingTitles(t *testing.T) {
 	assert.EachResult(t, expected, got)
 }
 
-func ExampleBuilder_strippedOrderingBreadcrumbs() {
+func TestBuilder_strippedOrderingBreadcrumbs(t *testing.T) {
 	b, _ := buildTestSite("testdata/stripped-ordering", "/")
-	dfsWithAncestry([]*kask.Node{b.root3}, func(n []*kask.Node) {
-		bs := each(n, func(n *kask.Node) string { return n.Title })
-		fmt.Println(strings.Join(bs, " / "))
-	})
-	// Output:
-	// Website Title
-	// Website Title / Career Title
-	// Website Title / Docs Title
-	// Website Title / Products Title
-	// Website Title / About Title
-	// Website Title / Contact Title
+	got := breadcrumbs(b.root3)
+	expected := []string{
+		"Website Title",
+		"Website Title / Career Title",
+		"Website Title / Docs Title",
+		"Website Title / Products Title",
+		"Website Title / About Title",
+		"Website Title / Contact Title",
+	}
+	assert.EachResult(t, expected, got)
 }
 
 func TestBuilder_preservedOrderingHrefs(t *testing.T) {
@@ -190,19 +188,18 @@ func TestBuilder_preservedOrderingTitles(t *testing.T) {
 	assert.EachResult(t, expected, got)
 }
 
-func ExampleBuilder_preservedOrderingBreadcrumbs() {
+func TestBuilder_preservedOrderingBreadcrumbs(t *testing.T) {
 	b, _ := buildTestSite("testdata/preserved-ordering", "/")
-	dfsWithAncestry([]*kask.Node{b.root3}, func(n []*kask.Node) {
-		bs := each(n, func(n *kask.Node) string { return n.Title })
-		fmt.Println(strings.Join(bs, " / "))
-	})
-	// Output:
-	// Website Title
-	// Website Title / Career Title
-	// Website Title / Docs Title
-	// Website Title / Products Title
-	// Website Title / About Title
-	// Website Title / Contact Title
+	got := breadcrumbs(b.root3)
+	expected := []string{
+		"Website Title",
+		"Website Title / Career Title",
+		"Website Title / Docs Title",
+		"Website Title / Products Title",
+		"Website Title / About Title",
+		"Website Title / Contact Title",
+	}
+	assert.EachResult(t, expected, got)
 }
 
 func TestBuilder_cssSplitting(t *testing.T) {
