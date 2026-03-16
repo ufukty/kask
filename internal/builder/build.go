@@ -10,9 +10,9 @@ import (
 
 	"go.ufukty.com/kask/internal/builder/directory"
 	"go.ufukty.com/kask/internal/builder/markdown"
+	"go.ufukty.com/kask/internal/disk"
 	"go.ufukty.com/kask/internal/paths"
 	"go.ufukty.com/kask/internal/rewriter"
-	"go.ufukty.com/kask/internal/writable"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -31,7 +31,8 @@ func (p Provider) UrlMode() paths.UrlMode {
 }
 
 type builderArgs struct {
-	Src, Dst writable.FS
+	Src      disk.ReadFS
+	Dst      disk.WriteFS
 	Domain   string
 	Dev      bool // suffixes css bundles with unique ids to bypass browser caching
 	Verbose  bool
@@ -251,8 +252,8 @@ type Args struct {
 
 func Build(args Args) error {
 	bArgs := builderArgs{
-		Src:      writable.NewReal(args.Src),
-		Dst:      writable.NewReal(args.Dst),
+		Src:      disk.NewReal(args.Src),
+		Dst:      disk.NewReal(args.Dst),
 		Domain:   args.Domain,
 		Dev:      args.Dev,
 		Verbose:  args.Verbose,
