@@ -53,11 +53,11 @@ func (r Real) ReadDir(name string) ([]os.DirEntry, error) {
 }
 
 func (r Real) Create(name string) (File, error) {
-	return os.Create(name)
+	return os.Create(filepath.Join(r.root, name))
 }
 
 func (r Real) Stat(name string) (os.FileInfo, error) {
-	return os.Stat(name)
+	return os.Stat(filepath.Join(r.root, name))
 }
 
 func (r Real) MkdirAll(path string) error {
