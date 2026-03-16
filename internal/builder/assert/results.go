@@ -22,6 +22,9 @@ func EachResult(t *testing.T, expected, got []string) {
 			}
 		})
 	}
+	if t.Failed() {
+		t.Logf("got:\n\n%s", strings.Join(got, "\n"))
+	}
 }
 
 func EachNamedResult(t *testing.T, expected map[string]string, got []string) {
@@ -34,6 +37,9 @@ func EachNamedResult(t *testing.T, expected map[string]string, got []string) {
 				t.Errorf("assert, expected item: %s", expected)
 			}
 		})
+	}
+	if t.Failed() {
+		t.Logf("got:\n\n%s", strings.Join(got, "\n"))
 	}
 }
 
