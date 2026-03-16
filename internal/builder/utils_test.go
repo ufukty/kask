@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -15,8 +14,8 @@ import (
 	"go.ufukty.com/kask/pkg/kask"
 )
 
-func check(tmp, path string) bool {
-	_, err := os.Stat(filepath.Join(tmp, path))
+func check(tmp fs.StatFS, path string) bool {
+	_, err := tmp.Stat(path)
 	return err == nil
 }
 
@@ -77,17 +76,9 @@ func lines(ls ...string) string {
 	return strings.Join(ls, "\n")
 }
 
-func readFile(path string) string {
-	c, err := os.ReadFile(path)
-	if err != nil {
-		panic(fmt.Errorf("os.ReadFile: %w", err))
-	}
-	return string(c)
-}
-
 func assertfile(t *testing.T, tmp, path string) {
 	t.Run(strings.ReplaceAll(path, "/", "\\"), func(t *testing.T) {
-		if !check(tmp, path) {
+		if !check(disk.NewReal(tmp), path) {
 			t.Log(tmp)
 			t.Errorf("assert, file not found: %s", path)
 		}
@@ -96,7 +87,7 @@ func assertfile(t *testing.T, tmp, path string) {
 
 func files(path string) []string {
 	ss := []string{}
-	fs.WalkDir(os.DirFS(path), ".", func(path string, d fs.DirEntry, err error) error {
+	fs.WalkDir(disk.NewReal(path), ".", func(path string, d fs.DirEntry, err error) error {
 		if !d.IsDir() {
 			ss = append(ss, path)
 		}
@@ -107,8 +98,12 @@ func files(path string) []string {
 
 var anchor = regexp.MustCompile(`<a[^>]*>[^<]*</a>`)
 
-func findAnchorTags(path string) []string {
-	return anchor.FindAllString(readFile(path), -1)
+func findAnchorTags(fs disk.ReadFS, path string) ([]string, error) {
+	f, err := fs.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("reading: %w", err)
+	}
+	return anchor.FindAllString(string(f), -1), nil
 }
 
 func fixture() *builder {

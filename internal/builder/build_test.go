@@ -2,7 +2,6 @@ package builder
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -32,7 +31,7 @@ func TestBuilder_versionStamp(t *testing.T) {
 
 func TestBuilder_renderMarkdownPages(t *testing.T) {
 	_, tmp := buildTestSite("testdata/markdown-content", "/")
-	f, err := os.ReadFile(filepath.Join(tmp, "index.html"))
+	f, err := disk.NewReal(tmp).ReadFile("index.html")
 	if err != nil {
 		t.Errorf("prep, read file: %v", err)
 	}
@@ -57,7 +56,7 @@ func TestBuilder_renderMarkdownToc(t *testing.T) {
 
 func TestBuilder_recursiveTemplating(t *testing.T) {
 	_, tmp := buildTestSite("testdata/recursive-templating", "/")
-	f, err := os.ReadFile(filepath.Join(tmp, "a/b/c/page.html"))
+	f, err := disk.NewReal(tmp).ReadFile("a/b/c/page.html")
 	if err != nil {
 		t.Errorf("prep, read file: %v", err)
 	}
@@ -70,19 +69,15 @@ func TestBuilder_propagated(t *testing.T) {
 	tcs := []string{"web", "mixed", "markdown"}
 	for _, tc := range tcs {
 		t.Run(tc, func(t *testing.T) {
-			tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-build-*")
-			if err != nil {
-				t.Errorf("os.MkdirTemp: %v", err)
-			}
+			tmp := t.TempDir()
 			fmt.Println("temp folder:", tmp)
-
 			a := Args{
 				Src:     filepath.Join("testdata/propagated", tc),
 				Dst:     tmp,
 				Dev:     true,
 				Verbose: true,
 			}
-			err = Build(a)
+			err := Build(a)
 			if err != nil {
 				t.Errorf("act, unexpected error: %v", err)
 			}
@@ -207,7 +202,7 @@ func TestBuilder_cssSplitting(t *testing.T) {
 	fmt.Println(tmp)
 
 	t.Run("links", func(t *testing.T) {
-		f, err := os.ReadFile(filepath.Join(tmp, "a/index.html"))
+		f, err := disk.NewReal(tmp).ReadFile("a/index.html")
 		if err != nil {
 			t.Errorf("prep, read file: %v", err)
 		}
@@ -247,7 +242,7 @@ func TestBuilder_cssSplitting(t *testing.T) {
 
 		for ss, expected := range tcs {
 			t.Run(strings.ReplaceAll(ss, "/", "\\"), func(t *testing.T) {
-				f, err := os.ReadFile(filepath.Join(tmp, ss))
+				f, err := disk.NewReal(tmp).ReadFile(ss)
 				if err != nil {
 					t.Errorf("prep, read stylesheet: %v", err)
 				}
@@ -339,7 +334,10 @@ func TestBuilder_tmplLinkReplacements(t *testing.T) {
 			`<a href="/a/b/#Title">subdir redundancies</a>`,
 			`<a href="/a/tmpl.html#Title">sibling</a>`,
 		}
-		got := findAnchorTags(filepath.Join(dst, "a/md.html"))
+		got, err := findAnchorTags(disk.NewReal(dst), "a/md.html")
+		if err != nil {
+			t.Errorf("find anchor tags: %v", err)
+		}
 		assert.EachResult(t, expected, got)
 	})
 
@@ -350,7 +348,10 @@ func TestBuilder_tmplLinkReplacements(t *testing.T) {
 			`<a href="/a/b/#Title">subdir redundancies</a>`,
 			`<a href="/a/md.html#Title">sibling</a>`,
 		}
-		got := findAnchorTags(filepath.Join(dst, "a/tmpl.html"))
+		got, err := findAnchorTags(disk.NewReal(dst), "a/tmpl.html")
+		if err != nil {
+			t.Errorf("find anchor tags: %v", err)
+		}
 		assert.EachResult(t, expected, got)
 	})
 }
@@ -364,7 +365,10 @@ func TestBuilder_linkCanonicalization(t *testing.T) {
 			`<a href="/page2.html"></a>`,
 			`<a href="/page2.html"></a>`,
 		}
-		got := findAnchorTags(filepath.Join(dst, "page1.html"))
+		got, err := findAnchorTags(disk.NewReal(dst), "page1.html")
+		if err != nil {
+			t.Errorf("find anchor tags: %v", err)
+		}
 		assert.EachResult(t, expected, got)
 	})
 
@@ -374,7 +378,10 @@ func TestBuilder_linkCanonicalization(t *testing.T) {
 			`<a href="/page1.html"></a>`,
 			`<a href="/page1.html"></a>`,
 		}
-		got := findAnchorTags(filepath.Join(dst, "page2.html"))
+		got, err := findAnchorTags(disk.NewReal(dst), "page2.html")
+		if err != nil {
+			t.Errorf("find anchor tags: %v", err)
+		}
 		assert.EachResult(t, expected, got)
 	})
 }
