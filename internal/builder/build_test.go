@@ -330,7 +330,6 @@ func TestBuilder_tmplLinkReplacements(t *testing.T) {
 			`<a href="/a/b/#Title">subdir redundancies</a>`,
 			`<a href="/a/md.html#Title">sibling</a>`,
 		}
-
 		got := findAnchorTags(filepath.Join(dst, "a/tmpl.html"))
 		assert.EachResult(t, expected, got)
 	})
