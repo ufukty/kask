@@ -25,7 +25,7 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 	d.stylesheets = slices.Clone(toPropagate)
 
 	if d.original.Kask != nil && d.original.Kask.Propagate != nil && len(d.original.Kask.Propagate.Css) > 0 {
-		css, err := bundle.Files(d.original.Kask.Propagate.Css)
+		css, err := bundle.Files(b.args.Src, d.original.Kask.Propagate.Css)
 		if err != nil {
 			return fmt.Errorf("bundling propagated css file: %w", err)
 		}
@@ -39,7 +39,7 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 	}
 
 	if d.original.Kask != nil && len(d.original.Kask.Css) > 0 {
-		css, err := bundle.Files(d.original.Kask.Css)
+		css, err := bundle.Files(b.args.Src, d.original.Kask.Css)
 		if err != nil {
 			return fmt.Errorf("bundling at-level css file: %w", err)
 		}
