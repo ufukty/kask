@@ -12,7 +12,7 @@ func (b *builder) copyAssetDir(path paths.Paths) error {
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
-	es, err := b.args.Dst.ReadDir(path.Src)
+	es, err := b.args.Src.ReadDir(path.Src)
 	if err != nil {
 		return fmt.Errorf("listing: %w", err)
 	}
