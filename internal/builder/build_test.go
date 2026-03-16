@@ -407,11 +407,13 @@ func ExampleBuilder_hiddenPagesDst() {
 	// sitemap.html
 }
 
-func ExampleBuilder_hiddenPagesSitemap() {
+func TestBuilder_hiddenPagesSitemap(t *testing.T) {
 	b, _ := buildTestSite("testdata/hidden-pages", "/")
-	dfsWithAncestry([]*kask.Node{b.root3}, func(n []*kask.Node) { fmt.Println(n[len(n)-1].Title) })
-	// Output:
-	// Index
-	// Career
-	// Products
+	got := titles(b.root3)
+	expected := []string{
+		"Index",
+		"Career",
+		"Products",
+	}
+	assert.EachResult(t, expected, got)
 }
