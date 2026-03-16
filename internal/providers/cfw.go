@@ -6,7 +6,7 @@ import (
 	"io"
 	"text/template"
 
-	"go.ufukty.com/kask/internal/writable"
+	"go.ufukty.com/kask/internal/disk"
 )
 
 type cloudflareWorkersConfiguration struct {
@@ -30,7 +30,7 @@ func cloudflareWorkers(w io.Writer, assetDirs []string) error {
 	return nil
 }
 
-func CloudflareWorkers(dst writable.FS, assetDirs []string, verbose bool) error {
+func CloudflareWorkers(dst disk.WriteFS, assetDirs []string, verbose bool) error {
 	if verbose {
 		fmt.Printf("creating %s\n", dst)
 	}
