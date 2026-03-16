@@ -310,27 +310,30 @@ func ExampleBuilder_workersConfigurationFile() {
 }
 
 func TestBuilder_tmplLinkReplacements(t *testing.T) {
-	expected := []string{
-		`<a href="/a/b/#Title">subdir direct</a>`,
-		`<a href="/a/b/#Title">subdir absolute</a>`,
-		`<a href="/a/b/#Title">subdir redundancies</a>`,
-		`<a href="/a/md.html#Title">sibling</a>`,
-	}
 	_, dst := buildTestSite("testdata/link-replacements", "/")
-	got := findAnchorTags(filepath.Join(dst, "a/tmpl.html"))
-	assert.EachResult(t, expected, got)
-}
 
-func TestBuilder_mdLinkReplacements(t *testing.T) {
-	expected := []string{
-		`<a href="/a/b/#Title">subdir direct</a>`,
-		`<a href="/a/b/#Title">subdir absolute</a>`,
-		`<a href="/a/b/#Title">subdir redundancies</a>`,
-		`<a href="/a/tmpl.html#Title">sibling</a>`,
-	}
-	_, dst := buildTestSite("testdata/link-replacements", "/")
-	got := findAnchorTags(filepath.Join(dst, "a/md.html"))
-	assert.EachResult(t, expected, got)
+	t.Run("Html based page", func(t *testing.T) {
+		expected := []string{
+			`<a href="/a/b/#Title">subdir direct</a>`,
+			`<a href="/a/b/#Title">subdir absolute</a>`,
+			`<a href="/a/b/#Title">subdir redundancies</a>`,
+			`<a href="/a/md.html#Title">sibling</a>`,
+		}
+
+		got := findAnchorTags(filepath.Join(dst, "a/tmpl.html"))
+		assert.EachResult(t, expected, got)
+	})
+
+	t.Run("Markdown based pages", func(t *testing.T) {
+		expected := []string{
+			`<a href="/a/b/#Title">subdir direct</a>`,
+			`<a href="/a/b/#Title">subdir absolute</a>`,
+			`<a href="/a/b/#Title">subdir redundancies</a>`,
+			`<a href="/a/tmpl.html#Title">sibling</a>`,
+		}
+		got := findAnchorTags(filepath.Join(dst, "a/md.html"))
+		assert.EachResult(t, expected, got)
+	})
 }
 
 func TestBuilder_linkCanonicalization(t *testing.T) {
