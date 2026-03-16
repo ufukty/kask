@@ -63,6 +63,10 @@ func buildTestSite(path, domain string) (*builder, string) {
 	return b, tmp
 }
 
+func lines(ls ...string) string {
+	return strings.Join(ls, "\n")
+}
+
 func readFile(path string) string {
 	c, err := os.ReadFile(path)
 	if err != nil {

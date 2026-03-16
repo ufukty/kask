@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"go.ufukty.com/kask/internal/builder/assert"
+	"go.ufukty.com/kask/internal/disk"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -290,22 +291,27 @@ func ExampleBuilder_assetLinkingInTemplateBasedPage() {
 	// <img src="https://kask.ufukty.com/.assets/img%402.jpg">
 }
 
-func ExampleBuilder_workersConfigurationFile() {
-	tmp, err := os.MkdirTemp(os.TempDir(), "kask-test-*")
-	if err != nil {
-		panic(fmt.Errorf("prep, os.MkdirTemp: %w", err))
+func TestBuilder_workersConfigurationFile(t *testing.T) {
+	tmp := t.TempDir()
+	args := Args{
+		Src:      "testdata/workers",
+		Dst:      tmp,
+		Provider: ProviderCloudflareWorkers,
 	}
-	err = Build(Args{Src: "testdata/workers", Dst: tmp, Provider: ProviderCloudflareWorkers})
-	if err != nil {
-		panic(fmt.Errorf("Build: %w", err))
+	if err := Build(args); err != nil {
+		t.Fatalf("Build: %v", err)
 	}
-	fmt.Println(readFile(filepath.Join(tmp, "_headers")))
-	// Output:
-	// /.assets/*
-	//   Cache-Control: public, max-age=14400, must-revalidate
-	//
-	// /section/.assets/*
-	//   Cache-Control: public, max-age=14400, must-revalidate
+	expected := map[string]string{
+		"Top level asset dir": lines(
+			"/.assets/*",
+			"  Cache-Control: public, max-age=14400, must-revalidate",
+		),
+		"Second level asset dir": lines(
+			"/section/.assets/*",
+			"  Cache-Control: public, max-age=14400, must-revalidate",
+		),
+	}
+	assert.EachNamedResultInFile(t, expected, disk.NewReal(tmp), "_headers")
 }
 
 func TestBuilder_tmplLinkReplacements(t *testing.T) {
