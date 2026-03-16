@@ -333,17 +333,28 @@ func TestBuilder_mdLinkReplacements(t *testing.T) {
 	assert.EachResult(t, expected, got)
 }
 
-func ExampleBuilder_correctLinks() {
+func TestBuilder_correctLinks(t *testing.T) {
 	_, dst := buildTestSite("testdata/correct-links", "/")
-	fmt.Println(strings.Join(anchor.FindAllString(readFile(filepath.Join(dst, "page1.html")), -1), "\n"))
-	fmt.Println(strings.Join(anchor.FindAllString(readFile(filepath.Join(dst, "page2.html")), -1), "\n"))
-	// Output:
-	// <a href="/page2.html"></a>
-	// <a href="/page2.html"></a>
-	// <a href="/page2.html"></a>
-	// <a href="/page1.html"></a>
-	// <a href="/page1.html"></a>
-	// <a href="/page1.html"></a>
+
+	t.Run("Markdown based page", func(t *testing.T) {
+		expected := []string{
+			`<a href="/page2.html"></a>`,
+			`<a href="/page2.html"></a>`,
+			`<a href="/page2.html"></a>`,
+		}
+		got := findAnchorTags(filepath.Join(dst, "page1.html"))
+		assert.EachResult(t, expected, got)
+	})
+
+	t.Run("Html based page", func(t *testing.T) {
+		expected := []string{
+			`<a href="/page1.html"></a>`,
+			`<a href="/page1.html"></a>`,
+			`<a href="/page1.html"></a>`,
+		}
+		got := findAnchorTags(filepath.Join(dst, "page2.html"))
+		assert.EachResult(t, expected, got)
+	})
 }
 
 func TestBuilder_docs(t *testing.T) {
