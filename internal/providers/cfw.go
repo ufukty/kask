@@ -4,21 +4,10 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"text/template"
-)
 
-func writer(dst string, verbose bool) (io.WriteCloser, error) {
-	if verbose {
-		fmt.Printf("creating %s\n", dst)
-	}
-	f, err := os.Create(dst)
-	if err != nil {
-		return nil, fmt.Errorf("create file: %w", err)
-	}
-	return f, nil
-}
+	"go.ufukty.com/kask/internal/disk"
+)
 
 type cloudflareWorkersConfiguration struct {
 	AssetDirs []string
@@ -41,10 +30,13 @@ func cloudflareWorkers(w io.Writer, assetDirs []string) error {
 	return nil
 }
 
-func CloudflareWorkers(dst string, assetDirs []string, verbose bool) error {
-	wc, err := writer(filepath.Join(dst, "_headers"), verbose)
+func CloudflareWorkers(dst disk.WriteFS, assetDirs []string, verbose bool) error {
+	if verbose {
+		fmt.Printf("creating %s\n", dst)
+	}
+	wc, err := dst.Create("_headers")
 	if err != nil {
-		return fmt.Errorf("creating writer: %w", err)
+		return fmt.Errorf("create: %w", err)
 	}
 	defer wc.Close()
 	return cloudflareWorkers(wc, assetDirs)

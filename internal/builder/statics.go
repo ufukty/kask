@@ -2,11 +2,8 @@ package builder
 
 import (
 	"fmt"
-	"io"
-	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"go.ufukty.com/kask/internal/builder/bundle"
 )
@@ -15,18 +12,11 @@ func (b *builder) write(dst, content string) error {
 	if b.args.Verbose {
 		fmt.Println("writing", dst)
 	}
-	err := os.MkdirAll(filepath.Dir(dst), 0o755)
-	if err != nil {
+	if err := b.args.Dst.MkdirAll(filepath.Dir(dst)); err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
-	f, err := os.Create(dst)
-	if err != nil {
-		return fmt.Errorf("creating: %w", err)
-	}
-	defer f.Close()
-	_, err = io.Copy(f, strings.NewReader(content))
-	if err != nil {
-		return fmt.Errorf("copying: %w", err)
+	if err := b.args.Dst.WriteFile(dst, []byte(content)); err != nil {
+		return fmt.Errorf("writing: %w", err)
 	}
 	return nil
 }
@@ -35,13 +25,13 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 	d.stylesheets = slices.Clone(toPropagate)
 
 	if d.original.Kask != nil && d.original.Kask.Propagate != nil && len(d.original.Kask.Propagate.Css) > 0 {
-		css, err := bundle.Files(d.original.Kask.Propagate.Css)
+		css, err := bundle.Files(b.args.Src, d.original.Kask.Propagate.Css)
 		if err != nil {
 			return fmt.Errorf("bundling propagated css file: %w", err)
 		}
 		p := d.paths.Stylesheet(true)
 		b.rw.Bank(p.Src, p.Url)
-		if err := b.write(filepath.Join(b.args.Dst, p.Dst), css); err != nil {
+		if err := b.write(p.Dst, css); err != nil {
 			return fmt.Errorf("writing propagated css file: %w", err)
 		}
 		d.stylesheets = append(d.stylesheets, p.Url)
@@ -49,13 +39,13 @@ func (b *builder) bundleAndPropagateStylesheets(d *dir2, toPropagate []string) e
 	}
 
 	if d.original.Kask != nil && len(d.original.Kask.Css) > 0 {
-		css, err := bundle.Files(d.original.Kask.Css)
+		css, err := bundle.Files(b.args.Src, d.original.Kask.Css)
 		if err != nil {
 			return fmt.Errorf("bundling at-level css file: %w", err)
 		}
 		p := d.paths.Stylesheet(false)
 		b.rw.Bank(p.Src, p.Url)
-		if err := b.write(filepath.Join(b.args.Dst, p.Dst), css); err != nil {
+		if err := b.write(p.Dst, css); err != nil {
 			return fmt.Errorf("writing at-level css file: %w", err)
 		}
 		d.stylesheets = append(d.stylesheets, p.Url)

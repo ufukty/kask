@@ -2,7 +2,7 @@ package directory
 
 import (
 	"fmt"
-	"os"
+	"io/fs"
 
 	"gopkg.in/yaml.v3"
 )
@@ -12,8 +12,8 @@ type Meta struct {
 	PreserveOrdering bool   `yaml:"preserve-ordering"`
 }
 
-func readMeta(path string) (*Meta, error) {
-	fh, err := os.Open(path)
+func readMeta(fs fs.ReadFileFS, path string) (*Meta, error) {
+	fh, err := fs.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("open: %w", err)
 	}

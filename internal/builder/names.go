@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"regexp"
 	"strings"
 
+	"go.ufukty.com/kask/internal/disk"
 	"go.ufukty.com/kask/internal/paths"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -16,8 +17,8 @@ import (
 
 type extractor struct{}
 
-func (e extractor) FromWeb(path string) (string, error) {
-	tmpl, err := template.New("").ParseFiles(path)
+func (e extractor) FromWeb(src fs.FS, path string) (string, error) {
+	tmpl, err := template.New("").ParseFS(src, path)
 	if err != nil {
 		return "", fmt.Errorf("parse: %w", err)
 	}
@@ -33,8 +34,8 @@ func (e extractor) FromWeb(path string) (string, error) {
 
 var regexpMarkdown = regexp.MustCompile(`(?m)^#\s+(.+)$`)
 
-func (e extractor) FromMarkdown(path string) (string, error) {
-	f, err := os.ReadFile(path)
+func (e extractor) FromMarkdown(src fs.ReadFileFS, path string) (string, error) {
+	f, err := src.ReadFile(path)
 	if err != nil {
 		return "", fmt.Errorf("reading file: %w", err)
 	}
@@ -45,16 +46,16 @@ func (e extractor) FromMarkdown(path string) (string, error) {
 	return ms[1], nil
 }
 
-func (e extractor) FromFile(path string) (string, error) {
+func (e extractor) FromFile(src disk.ReadFS, path string) (string, error) {
 	switch ext := filepath.Ext(path); ext {
 	case ".tmpl":
-		p, err := e.FromWeb(path)
+		p, err := e.FromWeb(src, path)
 		if err != nil {
 			return "", fmt.Errorf("markdown: %w", err)
 		}
 		return p, nil
 	case ".md":
-		p, err := e.FromMarkdown(path)
+		p, err := e.FromMarkdown(src, path)
 		if err != nil {
 			return "", fmt.Errorf("web: %w", err)
 		}
@@ -74,8 +75,8 @@ func pageTitleFromFilename(base string) string {
 	return titler.String(base)
 }
 
-func pageTitle(src string, p paths.Paths) (string, error) {
-	title, err := theExtractor.FromFile(filepath.Join(src, p.Src))
+func pageTitle(srcFs disk.ReadFS, p paths.Paths) (string, error) {
+	title, err := theExtractor.FromFile(srcFs, p.Src)
 	if err != nil {
 		return "", fmt.Errorf("extracting from file: %w", err)
 	}

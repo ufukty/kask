@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"go.ufukty.com/kask/internal/disk"
 	"go.ufukty.com/kask/pkg/kask"
 )
 
@@ -38,7 +39,13 @@ func buildTestSite(path, domain string) (*builder, string) {
 	if err != nil {
 		panic(fmt.Errorf("buildTestSite: os.MkdirTemp: %w", err))
 	}
-	b := newBuilder(Args{Src: path, Dst: tmp, Domain: domain, Dev: true, Verbose: false})
+	b := newBuilder(builderArgs{
+		Src:     disk.NewReal(path), // TODO: use on-memory FS
+		Dst:     disk.NewReal(tmp),  // TODO: use on-memory FS
+		Domain:  domain,
+		Dev:     true,
+		Verbose: false,
+	})
 	err = b.Build()
 	if err != nil {
 		panic(fmt.Errorf("buildTestSite: b.Build: %w", err))
@@ -396,9 +403,9 @@ func ExampleBuilder_correctLinks() {
 }
 
 func TestBuilder_docs(t *testing.T) {
-	b := newBuilder(Args{
-		Src:    "../../docs",
-		Dst:    t.TempDir(),
+	b := newBuilder(builderArgs{
+		Src:    disk.NewReal("../../docs"), // TODO: use on-memory FS
+		Dst:    disk.NewReal(t.TempDir()),  // TODO: use on-memory FS
 		Domain: "https://kask.ufukty.com/",
 	})
 	err := b.Build()

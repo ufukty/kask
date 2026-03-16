@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"go.ufukty.com/kask/internal/disk"
 	"go.ufukty.com/kask/internal/paths"
 	"go.ufukty.com/kask/pkg/kask"
 )
@@ -15,7 +16,7 @@ func matcher(tokens ...string) *regexp.Regexp {
 }
 
 func TestRewriter_ToHtml_content(t *testing.T) {
-	rn := New("testdata", "https://kask.ufukty.com")
+	rn := New(disk.NewReal("testdata"), "https://kask.ufukty.com")
 	p, err := rn.ToHtml(paths.Paths{Src: "page.md"})
 	if err != nil {
 		t.Fatal(fmt.Errorf("act, ToHtml: %w", err))
@@ -114,7 +115,7 @@ func printToc(n *kask.MarkdownTocNode) {
 }
 
 func ExampleRenderer_toHtml_toc() {
-	rn := New("testdata", "/")
+	rn := New(disk.NewReal("testdata"), "/")
 	p, err := rn.ToHtml(paths.Paths{Src: "page.md"})
 	if err != nil {
 		panic(fmt.Errorf("act, ToHtml: %w", err))

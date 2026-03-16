@@ -2,9 +2,10 @@ package directory
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
+
+	"go.ufukty.com/kask/internal/disk"
 )
 
 type Dir struct {
@@ -24,12 +25,12 @@ func (d *Dir) subtree() int {
 	return c
 }
 
-func inspect(root, path string) (*Dir, error) {
+func inspect(fs disk.ReadFS, path string) (*Dir, error) {
 	d := &Dir{
 		Name:    filepath.Base(path),
 		Subdirs: []*Dir{},
 	}
-	entries, err := os.ReadDir(filepath.Join(root, path))
+	entries, err := fs.ReadDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("listing directory entries: %w", err)
 	}
@@ -40,25 +41,25 @@ func inspect(root, path string) (*Dir, error) {
 		case !isDir && (strings.HasSuffix(name, ".tmpl") || strings.HasSuffix(name, ".md")):
 			d.Pages = append(d.Pages, name)
 		case !isDir && name == ".kask.yml":
-			d.Meta, err = readMeta(filepath.Join(root, path, name))
+			d.Meta, err = readMeta(fs, filepath.Join(path, name))
 			if err != nil {
 				return nil, fmt.Errorf("reading meta file %q: %w", filepath.Join(path, name), err)
 			}
 		case isDir && name == ".kask":
-			d.Kask, err = inspectKaskFolder(filepath.Join(root, path))
+			d.Kask, err = inspectKaskFolder(fs, path)
 			if err != nil {
 				return nil, fmt.Errorf("inspecting kask folder: %w", err)
 			}
 		case isDir && name == ".assets":
 			d.Assets = true
 		case isDir:
-			subdirs = append(subdirs, filepath.Join(path, name))
+			subdirs = append(subdirs, name)
 		}
 	}
 	for _, subdir := range subdirs {
-		sub, err := inspect(root, subdir)
+		sub, err := inspect(fs, filepath.Join(path, subdir))
 		if err != nil {
-			return nil, fmt.Errorf("inspecting %s: %w", path, err)
+			return nil, fmt.Errorf("%q: %w", path, err)
 		}
 		if sub.subtree() > 0 {
 			d.Subdirs = append(d.Subdirs, sub)
@@ -67,12 +68,8 @@ func inspect(root, path string) (*Dir, error) {
 	return d, nil
 }
 
-func Inspect(path string) (*Dir, error) {
-	root, err := inspect(path, ".")
-	if err != nil {
-		return nil, fmt.Errorf("inspect: %w", err)
-	}
-	return root, nil
+func Inspect(fs disk.ReadFS) (*Dir, error) {
+	return inspect(fs, ".")
 }
 
 func (d *Dir) IsToStrip() bool {

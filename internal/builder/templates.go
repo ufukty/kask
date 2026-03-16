@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"os"
 	"path/filepath"
 
 	"go.ufukty.com/kask/internal/paths"
@@ -31,7 +30,7 @@ func newTemplateSet() *template.Template {
 func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) error {
 	var err error
 	if d.original.Kask != nil && d.original.Kask.Propagate != nil && len(d.original.Kask.Propagate.Tmpl) > 0 {
-		toPropagate, err = toPropagate.ParseFiles(d.original.Kask.Propagate.Tmpl...)
+		toPropagate, err = toPropagate.ParseFS(b.args.Src, d.original.Kask.Propagate.Tmpl...)
 		if err != nil {
 			return fmt.Errorf("parsing to-propagate template files: %w", err)
 		}
@@ -41,7 +40,7 @@ func (b *builder) propagateTemplates(d *dir2, toPropagate *template.Template) er
 		return fmt.Errorf("cloning propagated: %w", err)
 	}
 	if d.original.Kask != nil && len(d.original.Kask.Tmpl) > 0 {
-		atLevel, err = atLevel.ParseFiles(d.original.Kask.Tmpl...)
+		atLevel, err = atLevel.ParseFS(b.args.Src, d.original.Kask.Tmpl...)
 		if err != nil {
 			return fmt.Errorf("parsing at-level template files: %w", err)
 		}
@@ -68,7 +67,7 @@ func (b *builder) prepareTemplates(d *dir2, p paths.Paths) (*template.Template, 
 		return nil, fmt.Errorf("clone: %w", err)
 	}
 	if filepath.Ext(p.Src) == ".tmpl" {
-		t, err = t.ParseFiles(filepath.Join(b.args.Src, p.Src))
+		t, err = t.ParseFS(b.args.Src, p.Src)
 		if err != nil {
 			return nil, fmt.Errorf("parsing itself: %w", err)
 		}
@@ -123,15 +122,14 @@ func (b *builder) execPage(d *dir2, p paths.Paths) error {
 	if err != nil {
 		return fmt.Errorf("post-processing rendered html: %w", err)
 	}
-	if err = os.WriteFile(filepath.Join(b.args.Dst, p.Dst), bs, 0o666); err != nil {
+	if err = b.args.Dst.WriteFile(p.Dst, bs); err != nil {
 		return fmt.Errorf("writing into disk: %w", err)
 	}
 	return nil
 }
 
 func (b *builder) print(d *dir2) error {
-	err := os.MkdirAll(filepath.Join(b.args.Dst, d.paths.Dst), 0o755)
-	if err != nil {
+	if err := b.args.Dst.MkdirAll(d.paths.Dst); err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
 	incorrectLinks := false

@@ -3,6 +3,8 @@ package builder
 import (
 	"path/filepath"
 	"testing"
+
+	"go.ufukty.com/kask/internal/disk"
 )
 
 func TestTitleFromFilename(t *testing.T) {
@@ -22,12 +24,12 @@ func TestTitleFromFilename(t *testing.T) {
 
 func Test_extractor_FromFile(t *testing.T) {
 	tcs := map[string]string{
-		"testdata/extractors/page.tmpl": "Page title",
-		"testdata/extractors/page.md":   "Page title",
+		"page.tmpl": "Page title",
+		"page.md":   "Page title",
 	}
 	for path, expected := range tcs {
 		t.Run(filepath.Ext(path), func(t *testing.T) {
-			got, err := theExtractor.FromFile(path)
+			got, err := theExtractor.FromFile(disk.NewReal("testdata/extractors"), path)
 			if err != nil {
 				t.Fatalf("act, unexpected error: %v", err)
 			}

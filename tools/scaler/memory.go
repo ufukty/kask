@@ -10,7 +10,8 @@ import (
 	"runtime"
 
 	"go.ufukty.com/kask/internal/builder"
-	"go.ufukty.com/kask/internal/builder/copy"
+	"go.ufukty.com/kask/internal/disk"
+	"go.ufukty.com/kask/internal/writable/copy"
 )
 
 func mkTempDir() (string, error) {
@@ -35,14 +36,17 @@ type allocations struct {
 
 func prepare(tmp, docssite string, step int) error {
 	if step == 0 {
-		err := copy.Dir(tmp, docssite)
+		err := copy.Dir(disk.NewReal(tmp), ".", disk.NewReal(docssite), ".")
 		if err != nil {
 			return fmt.Errorf("initial copying of docs contents: %w", err)
 		}
 		return nil
 	} else {
 		for j := range int(math.Pow(1.6, float64(step))) {
-			err := copy.Dir(filepath.Join(tmp, fmt.Sprintf("new-section-%d-%d", step, j)), docssite)
+			err := copy.Dir(
+				disk.NewReal("tmp"), fmt.Sprintf("new-section-%d-%d", step, j),
+				disk.NewReal(docssite), ".",
+			)
 			if err != nil {
 				return fmt.Errorf("copying the docs site: %w", err)
 			}

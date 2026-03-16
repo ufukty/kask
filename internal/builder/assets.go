@@ -2,19 +2,17 @@ package builder
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
-	"go.ufukty.com/kask/internal/builder/copy"
 	"go.ufukty.com/kask/internal/paths"
+	"go.ufukty.com/kask/internal/writable/copy"
 )
 
 func (b *builder) copyAssetDir(path paths.Paths) error {
-	err := os.MkdirAll(filepath.Join(b.args.Dst, path.Dst), 0o755)
+	err := b.args.Dst.MkdirAll(path.Dst)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
-	es, err := os.ReadDir(filepath.Join(b.args.Src, path.Src))
+	es, err := b.args.Src.ReadDir(path.Src)
 	if err != nil {
 		return fmt.Errorf("listing: %w", err)
 	}
@@ -30,7 +28,7 @@ func (b *builder) copyAssetDir(path paths.Paths) error {
 				fmt.Printf("copying asset %-30q => %-30q\n", file.Src, file.Dst)
 			}
 			b.rw.Bank(file.Src, file.Url)
-			err := copy.File(filepath.Join(b.args.Dst, file.Dst), filepath.Join(b.args.Src, file.Src))
+			err := copy.File(b.args.Dst, file.Dst, b.args.Src, file.Src)
 			if err != nil {
 				return fmt.Errorf("copying file %q: %w", e.Name(), err)
 			}
