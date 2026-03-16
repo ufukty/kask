@@ -1,6 +1,7 @@
 package assert
 
 import (
+	"io/fs"
 	"slices"
 	"strings"
 	"testing"
@@ -20,5 +21,23 @@ func EachResult(t *testing.T, expected, got []string) {
 				t.Errorf("assert, expected item: %s", expected)
 			}
 		})
+	}
+}
+
+func EachNamedResultInFile(t *testing.T, expected map[string]string, fs fs.ReadFileFS, path string) {
+	c, err := fs.ReadFile(path)
+	if err != nil {
+		t.Fatalf("reading file: %v", err)
+	}
+	s := string(c)
+	for tn, expected := range expected {
+		t.Run(tn, func(t *testing.T) {
+			if !strings.Contains(s, expected) {
+				t.Errorf("assert, expected item: %s", expected)
+			}
+		})
+	}
+	if t.Failed() {
+		t.Logf("got:\n\n%s", s)
 	}
 }
