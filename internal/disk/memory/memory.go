@@ -13,10 +13,11 @@ var (
 	_ disk.WriteFS   = (*Dir)(nil)
 )
 
+// TODO: write after close?
 type File []byte
 
-func (f File) Write(p []byte) (n int, err error) {
-	f = append(f, p...)
+func (f *File) Write(p []byte) (n int, err error) {
+	*f = append(*f, p...)
 	return len(p), nil
 }
 
@@ -26,14 +27,14 @@ func (f File) Close() error {
 
 type Dir map[string]any
 
-func (r Dir) Create(path string) (io.WriteCloser, error) {
+func (r *Dir) Create(path string) (io.WriteCloser, error) {
 	if path == "" {
 		return nil, fmt.Errorf("file name can't be empty")
 	}
 	ss := strings.Split(path, "/")
 	p := r
 	for i, s := range ss[:len(ss)-1] {
-		n, ok := p[s]
+		n, ok := (*p)[s]
 		if !ok {
 			return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, i))
 		}
@@ -41,21 +42,21 @@ func (r Dir) Create(path string) (io.WriteCloser, error) {
 		if !ok {
 			return nil, fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
 		}
-		p = d
+		p = &d
 	}
 	name := ss[len(ss)-1]
 	if name == "" {
 		return nil, fmt.Errorf("unexpected empty name")
 	}
-	if _, ok := p[name]; ok {
+	if _, ok := (*p)[name]; ok {
 		return nil, fmt.Errorf("target already exists: %s", highlight(ss, len(ss)-1))
 	}
 	f := File{}
-	p[name] = f
-	return f, nil
+	(*p)[name] = f
+	return &f, nil
 }
 
-func (r Dir) MkdirAll(path string) error {
+func (r *Dir) MkdirAll(path string) error {
 	if path == "" {
 		return fmt.Errorf("file name can't be empty")
 	}
@@ -65,23 +66,23 @@ func (r Dir) MkdirAll(path string) error {
 		if s == "" {
 			return fmt.Errorf("unexpected empty name")
 		}
-		n, ok := p[s]
+		n, ok := (*p)[s]
 		if !ok {
 			c := Dir{}
-			p[s] = c
-			p = c
+			(*p)[s] = c
+			p = &c
 			continue
 		}
 		d, ok := n.(Dir)
 		if !ok {
 			return fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
 		}
-		p = d
+		p = &d
 	}
 	return nil
 }
 
-func (r Dir) WriteFile(name string, data []byte) error {
+func (r *Dir) WriteFile(name string, data []byte) error {
 	f, err := r.Create(name)
 	if err != nil {
 		return fmt.Errorf("creating: %w", err)
