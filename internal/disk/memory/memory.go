@@ -1,85 +1,74 @@
 package memory
 
 import (
-	"io/fs"
-	"os"
-	"time"
+	"fmt"
+	"io"
+	"strings"
 
 	"go.ufukty.com/kask/internal/disk"
 )
 
-type fileInfo struct {
-	name    string
-	size    int64
-	mode    uint32
-	modTime time.Time
-	isDir   bool
-	sys     any
+var (
+	_ io.WriteCloser = (*File)(nil)
+	_ disk.WriteFS   = (*Dir)(nil)
+)
+
+type File []byte
+
+func (f File) Write(p []byte) (n int, err error) {
+	f = append(f, p...)
+	return len(p), nil
 }
 
-func (fi fileInfo) Name() string       { return fi.name }
-func (fi fileInfo) Size() int64        { return fi.size }
-func (fi fileInfo) Mode() fs.FileMode  { return fs.FileMode(fi.mode) }
-func (fi fileInfo) ModTime() time.Time { return fi.modTime }
-func (fi fileInfo) IsDir() bool        { return fi.isDir }
-func (fi fileInfo) Sys() any           { return fi.sys }
-
-type File struct {
-	info    fileInfo
-	content []byte
+func (f File) Close() error {
+	return nil
 }
 
-var _ disk.ReadWriteFile = (*File)(nil)
+type Dir map[string]any
 
-func newFile(name string) *File {
-	return &File{
-		content: []byte{},
-		info:    fileInfo{name: name},
+func (r Dir) lastParent(ss []string) (Dir, error) {
+	p := r
+	for i, s := range ss[:max(0, len(ss)-1)] {
+		n, ok := p[s]
+		if !ok {
+			return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, i))
+		}
+		d, ok := n.(Dir)
+		if !ok {
+			return nil, fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
+		}
+		p = d
 	}
+	return p, nil
 }
 
-func (f File) Stat() (fs.FileInfo, error) {
-	return f.info, nil
-}
-
-func (f File) Read([]byte) (int, error)
-
-func (f File) Close() error
-
-func (f File) Write(p []byte) (n int, err error)
-
-type Dir struct {
-	files map[string]File
-}
-
-var _ disk.ReadWriteFS = (*Dir)(nil)
-
-func New() *Dir {
-	return &Dir{
-		files: map[string]File{},
+func (r Dir) Create(path string) (io.WriteCloser, error) {
+	if path == "" {
+		return nil, fmt.Errorf("file name can't be empty")
 	}
-}
-
-func has[K comparable, V any](m map[K]V, k K) bool {
-	_, ok := m[k]
-	return ok
-}
-
-func (r Dir) Open(name string) (fs.File, error) {
-	if !has(r.files, name) {
-		return nil, os.ErrNotExist
+	ss := strings.Split(path, "/")
+	p, err := r.lastParent(strings.Split(path, "/"))
+	if err != nil {
+		return nil, err
 	}
-	return r.files[name], nil
+	name := ss[len(ss)-1]
+	if _, ok := p[name]; ok {
+		return nil, fmt.Errorf("target already exists: %s", highlight(ss, len(ss)-1))
+	}
+	f := File{}
+	p[name] = f
+	return f, nil
 }
 
-func (r Dir) ReadFile(name string) ([]byte, error)
+func (r Dir) MkdirAll(path string) error {
+	return nil
+}
 
-func (r Dir) ReadDir(name string) ([]os.DirEntry, error)
-
-func (r Dir) Create(name string) (disk.ReadWriteFile, error)
-
-func (r Dir) Stat(name string) (os.FileInfo, error)
-
-func (r Dir) MkdirAll(path string) error
-
-func (r Dir) WriteFile(name string, data []byte) error
+func (r Dir) WriteFile(name string, data []byte) error {
+	f, err := r.Create(name)
+	if err != nil {
+		return fmt.Errorf("creating: %w", err)
+	}
+	f.Write(data)
+	return nil
+}
