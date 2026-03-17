@@ -11,7 +11,7 @@ import (
 
 	"go.ufukty.com/kask/internal/builder"
 	"go.ufukty.com/kask/internal/disk"
-	"go.ufukty.com/kask/internal/writable/copy"
+	"go.ufukty.com/kask/internal/disk/copy"
 )
 
 func mkTempDir() (string, error) {
