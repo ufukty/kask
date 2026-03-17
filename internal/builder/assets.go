@@ -3,8 +3,8 @@ package builder
 import (
 	"fmt"
 
+	"go.ufukty.com/kask/internal/disk/copy"
 	"go.ufukty.com/kask/internal/paths"
-	"go.ufukty.com/kask/internal/writable/copy"
 )
 
 func (b *builder) copyAssetDir(path paths.Paths) error {

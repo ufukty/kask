@@ -1,3 +1,0 @@
-[](page2.html)
-[](/page2.html)
-[](./page2.html)

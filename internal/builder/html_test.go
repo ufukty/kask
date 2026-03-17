@@ -2,56 +2,28 @@ package builder
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
+	"go.ufukty.com/kask/internal/assert"
 	"go.ufukty.com/kask/internal/paths"
-	"go.ufukty.com/kask/internal/rewriter"
 )
 
-func Example_patterns_validateLinkMatchers() {
-	example := []byte(`<a href="anchor-target">Lorem ipsum dolor sit amet.</a><img src="img-source" srcset="img-source-set-2x 2x, img-source-set-3x 3x, img-source-set-wide 1000w">`)
+func TestPatterns_validateLinkMatchers(t *testing.T) {
+	input := []byte(`<a href="anchor-target">Lorem ipsum dolor sit amet.</a><img src="img-source" srcset="img-source-set-2x 2x, img-source-set-3x 3x, img-source-set-wide 1000w">`)
+	got := []string{}
 	for _, lm := range linkMatchers {
-		for _, m := range lm.FindAll(example) {
-			fmt.Println(string(example[m.Start:m.End]))
+		for _, m := range lm.FindAll(input) {
+			got = append(got, string(input[m.Start:m.End]))
 		}
 	}
-	// Output:
-	// anchor-target
-	// img-source
-	// img-source-set-2x
-	// img-source-set-3x
-	// img-source-set-wide
-}
-
-func fixture() *builder {
-	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: "https://kask.ufukty.com/"})
-	m := map[string]string{
-		// leaves
-		"a/page.tmpl":   "https://kask.ufukty.com/a/page.html",
-		"a/index.tmpl":  "https://kask.ufukty.com/a/",
-		"a/b/README.md": "https://kask.ufukty.com/a/b/",
-		"a/b/page.md":   "https://kask.ufukty.com/a/b/page.html",
-
-		// visitable dirs:
-		".":   "https://kask.ufukty.com/",
-		"a/":  "https://kask.ufukty.com/a/",
-		"a/b": "https://kask.ufukty.com/a/b/",
-
-		// assets
-		".assets/font.woff2":             "https://kask.ufukty.com/.assets/font.woff2",
-		"a/.assets/img.jpg":              "https://kask.ufukty.com/a/.assets/img.jpg",
-		"a/.assets/img@2x.jpg":           "https://kask.ufukty.com/a/.assets/img%402x.jpg",
-		"a/.assets/img@3x.jpg":           "https://kask.ufukty.com/a/.assets/img%403x.jpg",
-		"a/.assets/poster.jpg":           "https://kask.ufukty.com/a/.assets/poster.jpg",
-		"a/.assets/video.mp4":            "https://kask.ufukty.com/a/.assets/video.mp4",
-		"a/.assets/og.jpg":               "https://kask.ufukty.com/a/.assets/og.jpg",
-		"a/.assets/embedded-player.html": "https://kask.ufukty.com/a/.assets/embedded-player.html",
+	expected := []string{
+		"anchor-target",
+		"img-source",
+		"img-source-set-2x",
+		"img-source-set-3x",
+		"img-source-set-wide",
 	}
-	for s, u := range m {
-		rw.Bank(s, u)
-	}
-	return &builder{rw: rw, incorrectLinks: map[string][]string{}}
+	assert.EachResult(t, expected, got)
 }
 
 func TestBuilder_htmlPostProcess(t *testing.T) {
