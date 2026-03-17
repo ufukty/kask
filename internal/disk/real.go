@@ -32,7 +32,7 @@ func (r Real) Create(name string) (ReadWriteFile, error) {
 	return os.Create(filepath.Join(r.root, name))
 }
 
-func (r Real) Stat(name string) (os.FileInfo, error) {
+func (r Real) Stat(name string) (fs.FileInfo, error) {
 	return os.Stat(filepath.Join(r.root, name))
 }
 
