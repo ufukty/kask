@@ -1,3 +1,3 @@
-[](page2.html)
-[](/page2.html)
-[](./page2.html)
+[](targets/relative.html)
+[](/targets/absolute.html)
+[](./targets/relative-redundant.html)

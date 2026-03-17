@@ -360,29 +360,29 @@ func TestBuilder_linkCanonicalization(t *testing.T) {
 	_, dst := buildTestSite(t, "testdata/canonicalization", "/")
 
 	t.Run("Markdown based page", func(t *testing.T) {
-		expected := []string{
-			`<a href="/page2.html"></a>`,
-			`<a href="/page2.html"></a>`,
-			`<a href="/page2.html"></a>`,
+		expected := map[string]string{
+			"absolute":           `<a href="/targets/absolute.html"></a>`,
+			"relative":           `<a href="/targets/relative.html"></a>`,
+			"relative-redundant": `<a href="/targets/relative-redundant.html"></a>`,
 		}
 		got, err := findAnchorTags(disk.NewReal(dst), "page1.html")
 		if err != nil {
 			t.Errorf("find anchor tags: %v", err)
 		}
-		assert.EachResult(t, expected, got)
+		assert.EachNamedResult(t, expected, got)
 	})
 
 	t.Run("Html based page", func(t *testing.T) {
-		expected := []string{
-			`<a href="/page1.html"></a>`,
-			`<a href="/page1.html"></a>`,
-			`<a href="/page1.html"></a>`,
+		expected := map[string]string{
+			"absolute":           `<a href="/targets/absolute.html"></a>`,
+			"relative":           `<a href="/targets/relative.html"></a>`,
+			"relative-redundant": `<a href="/targets/relative-redundant.html"></a>`,
 		}
 		got, err := findAnchorTags(disk.NewReal(dst), "page2.html")
 		if err != nil {
 			t.Errorf("find anchor tags: %v", err)
 		}
-		assert.EachResult(t, expected, got)
+		assert.EachNamedResult(t, expected, got)
 	})
 }
 
