@@ -11,19 +11,9 @@ type ReadFS interface {
 	fs.StatFS
 }
 
-type ReadWriteFile interface {
-	io.Writer
-	fs.File
-}
-
 // Writable [fs.FS] for unit testing.
 type WriteFS interface {
-	Create(name string) (ReadWriteFile, error)
+	Create(name string) (io.WriteCloser, error)
 	MkdirAll(path string) error
 	WriteFile(path string, data []byte) error
-}
-
-type ReadWriteFS interface {
-	ReadFS
-	WriteFS
 }

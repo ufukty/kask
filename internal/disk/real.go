@@ -1,6 +1,7 @@
 package disk
 
 import (
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -10,7 +11,10 @@ type Real struct {
 	root string
 }
 
-var _ ReadWriteFS = (*Real)(nil)
+var (
+	_ ReadFS  = (*Real)(nil)
+	_ WriteFS = (*Real)(nil)
+)
 
 func NewReal(root string) Real {
 	return Real{root: root}
@@ -28,7 +32,7 @@ func (r Real) ReadDir(name string) ([]fs.DirEntry, error) {
 	return os.ReadDir(filepath.Join(r.root, name))
 }
 
-func (r Real) Create(name string) (ReadWriteFile, error) {
+func (r Real) Create(name string) (io.WriteCloser, error) {
 	return os.Create(filepath.Join(r.root, name))
 }
 
