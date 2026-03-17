@@ -53,6 +53,24 @@ func (r Dir) Create(path string) (io.WriteCloser, error) {
 }
 
 func (r Dir) MkdirAll(path string) error {
+	if path == "" {
+		return fmt.Errorf("file name can't be empty")
+	}
+	ss := strings.Split(path, "/")
+	p := r
+	for i, s := range ss[:max(0, len(ss)-1)] {
+		n, ok := p[s]
+		if !ok {
+			c := Dir{}
+			p[s] = c
+			p = c
+		}
+		d, ok := n.(Dir)
+		if !ok {
+			return fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
+		}
+		p = d
+	}
 	return nil
 }
 
