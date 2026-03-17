@@ -37,7 +37,17 @@ func New() *Dir {
 	}
 }
 
-func (r Dir) Open(name string) (fs.File, error)
+func has[K comparable, V any](m map[K]V, k K) bool {
+	_, ok := m[k]
+	return ok
+}
+
+func (r Dir) Open(name string) (fs.File, error) {
+	if !has(r.files, name) {
+		return nil, os.ErrNotExist
+	}
+	return r.files[name], nil
+}
 
 func (r Dir) ReadFile(name string) ([]byte, error)
 
