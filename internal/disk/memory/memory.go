@@ -61,7 +61,7 @@ func (r Dir) MkdirAll(path string) error {
 	}
 	ss := strings.Split(path, "/")
 	p := r
-	for i, s := range ss[:max(0, len(ss)-1)] {
+	for i, s := range ss {
 		if s == "" {
 			return fmt.Errorf("unexpected empty name")
 		}
