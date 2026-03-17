@@ -25,17 +25,26 @@ func (d Dir) String() string {
 	return tree.List(".", d.strings())
 }
 
-func find(d Dir) []string {
-	ss := []string{""}
-	for name, s := range d {
-		switch s := s.(type) {
-		case Dir:
-			for _, c := range find(s) {
-				ss = append(ss, filepath.Join(name, c))
+// use dot for path
+func walkDir(root any, path string, v func(string, any) bool) bool {
+	if !v(path, root) {
+		return false
+	}
+	if d, ok := root.(Dir); ok {
+		for name, sub := range d {
+			if !walkDir(sub, filepath.Join(path, name), v) {
+				return false
 			}
-		case File:
-			ss = append(ss, name)
 		}
 	}
+	return true
+}
+
+func find(d Dir) []string {
+	ss := []string{}
+	walkDir(d, ".", func(s string, a any) bool {
+		ss = append(ss, s)
+		return true
+	})
 	return ss
 }
