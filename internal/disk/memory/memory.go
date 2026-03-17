@@ -11,7 +11,7 @@ type File struct {
 	content []byte
 }
 
-var _ disk.File = (*File)(nil)
+var _ disk.ReadWriteFile = (*File)(nil)
 
 func newFile() *File {
 	return &File{content: []byte{}}
@@ -41,7 +41,7 @@ func (r Dir) ReadFile(name string) ([]byte, error)
 
 func (r Dir) ReadDir(name string) ([]os.DirEntry, error)
 
-func (r Dir) Create(name string) (disk.File, error)
+func (r Dir) Create(name string) (disk.ReadWriteFile, error)
 
 func (r Dir) Stat(name string) (os.FileInfo, error)
 

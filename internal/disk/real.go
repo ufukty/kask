@@ -28,7 +28,7 @@ func (r Real) ReadDir(name string) ([]os.DirEntry, error) {
 	return os.ReadDir(filepath.Join(r.root, name))
 }
 
-func (r Real) Create(name string) (File, error) {
+func (r Real) Create(name string) (ReadWriteFile, error) {
 	return os.Create(filepath.Join(r.root, name))
 }
 
