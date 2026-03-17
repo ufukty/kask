@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.ufukty.com/kask/internal/builder/assert"
+	"go.ufukty.com/kask/internal/assert"
 	"go.ufukty.com/kask/internal/disk"
 )
 
