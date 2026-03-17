@@ -31,8 +31,10 @@ type Dir struct {
 
 var _ disk.ReadWriteFS = (*Dir)(nil)
 
-func newDir() *Dir {
-	return &Dir{}
+func New() *Dir {
+	return &Dir{
+		files: map[string]File{},
+	}
 }
 
 func (r Dir) Open(name string) (fs.File, error)
