@@ -24,7 +24,7 @@ func (r Real) ReadFile(name string) ([]byte, error) {
 	return os.ReadFile(filepath.Join(r.root, name))
 }
 
-func (r Real) ReadDir(name string) ([]os.DirEntry, error) {
+func (r Real) ReadDir(name string) ([]fs.DirEntry, error) {
 	return os.ReadDir(filepath.Join(r.root, name))
 }
 
