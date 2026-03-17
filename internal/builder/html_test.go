@@ -2,25 +2,28 @@ package builder
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
+	"go.ufukty.com/kask/internal/assert"
 	"go.ufukty.com/kask/internal/paths"
 )
 
-func Example_patterns_validateLinkMatchers() {
-	example := []byte(`<a href="anchor-target">Lorem ipsum dolor sit amet.</a><img src="img-source" srcset="img-source-set-2x 2x, img-source-set-3x 3x, img-source-set-wide 1000w">`)
+func TestPatterns_validateLinkMatchers(t *testing.T) {
+	input := []byte(`<a href="anchor-target">Lorem ipsum dolor sit amet.</a><img src="img-source" srcset="img-source-set-2x 2x, img-source-set-3x 3x, img-source-set-wide 1000w">`)
+	got := []string{}
 	for _, lm := range linkMatchers {
-		for _, m := range lm.FindAll(example) {
-			fmt.Println(string(example[m.Start:m.End]))
+		for _, m := range lm.FindAll(input) {
+			got = append(got, string(input[m.Start:m.End]))
 		}
 	}
-	// Output:
-	// anchor-target
-	// img-source
-	// img-source-set-2x
-	// img-source-set-3x
-	// img-source-set-wide
+	expected := []string{
+		"anchor-target",
+		"img-source",
+		"img-source-set-2x",
+		"img-source-set-3x",
+		"img-source-set-wide",
+	}
+	assert.EachResult(t, expected, got)
 }
 
 func TestBuilder_htmlPostProcess(t *testing.T) {
