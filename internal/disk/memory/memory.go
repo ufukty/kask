@@ -64,6 +64,7 @@ func (r Dir) MkdirAll(path string) error {
 			c := Dir{}
 			p[s] = c
 			p = c
+			continue
 		}
 		d, ok := n.(Dir)
 		if !ok {
