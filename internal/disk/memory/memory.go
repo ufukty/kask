@@ -17,13 +17,13 @@ func newFile() *File {
 	return &File{content: []byte{}}
 }
 
-func (fom File) Stat() (fs.FileInfo, error)
+func (f File) Stat() (fs.FileInfo, error)
 
-func (fom File) Read([]byte) (int, error)
+func (f File) Read([]byte) (int, error)
 
-func (fom File) Close() error
+func (f File) Close() error
 
-func (fom File) Write(p []byte) (n int, err error)
+func (f File) Write(p []byte) (n int, err error)
 
 type Dir struct {
 	files map[string]File
