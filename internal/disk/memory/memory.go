@@ -3,21 +3,44 @@ package memory
 import (
 	"io/fs"
 	"os"
+	"time"
 
 	"go.ufukty.com/kask/internal/disk"
 )
 
+type fileInfo struct {
+	name    string
+	size    int64
+	mode    uint32
+	modTime time.Time
+	isDir   bool
+	sys     any
+}
+
+func (fi fileInfo) Name() string       { return fi.name }
+func (fi fileInfo) Size() int64        { return fi.size }
+func (fi fileInfo) Mode() fs.FileMode  { return fs.FileMode(fi.mode) }
+func (fi fileInfo) ModTime() time.Time { return fi.modTime }
+func (fi fileInfo) IsDir() bool        { return fi.isDir }
+func (fi fileInfo) Sys() any           { return fi.sys }
+
 type File struct {
+	info    fileInfo
 	content []byte
 }
 
 var _ disk.ReadWriteFile = (*File)(nil)
 
-func newFile() *File {
-	return &File{content: []byte{}}
+func newFile(name string) *File {
+	return &File{
+		content: []byte{},
+		info:    fileInfo{name: name},
+	}
 }
 
-func (f File) Stat() (fs.FileInfo, error)
+func (f File) Stat() (fs.FileInfo, error) {
+	return f.info, nil
+}
 
 func (f File) Read([]byte) (int, error)
 
