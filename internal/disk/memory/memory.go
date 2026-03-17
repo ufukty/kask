@@ -26,7 +26,11 @@ func (f File) Close() error {
 
 type Dir map[string]any
 
-func (r Dir) lastParent(ss []string) (Dir, error) {
+func (r Dir) Create(path string) (io.WriteCloser, error) {
+	if path == "" {
+		return nil, fmt.Errorf("file name can't be empty")
+	}
+	ss := strings.Split(path, "/")
 	p := r
 	for i, s := range ss[:max(0, len(ss)-1)] {
 		n, ok := p[s]
@@ -38,18 +42,6 @@ func (r Dir) lastParent(ss []string) (Dir, error) {
 			return nil, fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
 		}
 		p = d
-	}
-	return p, nil
-}
-
-func (r Dir) Create(path string) (io.WriteCloser, error) {
-	if path == "" {
-		return nil, fmt.Errorf("file name can't be empty")
-	}
-	ss := strings.Split(path, "/")
-	p, err := r.lastParent(strings.Split(path, "/"))
-	if err != nil {
-		return nil, err
 	}
 	name := ss[len(ss)-1]
 	if _, ok := p[name]; ok {
