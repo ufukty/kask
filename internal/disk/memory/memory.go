@@ -32,7 +32,7 @@ func (r Dir) Create(path string) (io.WriteCloser, error) {
 	}
 	ss := strings.Split(path, "/")
 	p := r
-	for i, s := range ss[:max(0, len(ss)-1)] {
+	for i, s := range ss[:len(ss)-1] {
 		n, ok := p[s]
 		if !ok {
 			return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, i))
@@ -44,6 +44,9 @@ func (r Dir) Create(path string) (io.WriteCloser, error) {
 		p = d
 	}
 	name := ss[len(ss)-1]
+	if name == "" {
+		return nil, fmt.Errorf("unexpected empty name")
+	}
 	if _, ok := p[name]; ok {
 		return nil, fmt.Errorf("target already exists: %s", highlight(ss, len(ss)-1))
 	}
@@ -59,6 +62,9 @@ func (r Dir) MkdirAll(path string) error {
 	ss := strings.Split(path, "/")
 	p := r
 	for i, s := range ss[:max(0, len(ss)-1)] {
+		if s == "" {
+			return fmt.Errorf("unexpected empty name")
+		}
 		n, ok := p[s]
 		if !ok {
 			c := Dir{}
