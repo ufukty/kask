@@ -80,12 +80,7 @@ func TestFile_createWriteRead(t *testing.T) {
 
 	t.Run("read", func(t *testing.T) {
 		got := string(*f)
-		if expected != got {
-			t.Errorf("assert values:\nexpected: %s\ngot     : %s", expected, got)
-		}
-		if len(*f) != len(expected) {
-			t.Errorf("assert data length, expected %d, got %d", len(expected), len(*f))
-		}
+		assert.Results(t, expected, got)
 	})
 
 	t.Run("write again", func(t *testing.T) {
@@ -95,13 +90,7 @@ func TestFile_createWriteRead(t *testing.T) {
 	})
 
 	t.Run("read again", func(t *testing.T) {
-		expected += expected
 		got := string(*f)
-		if expected != got {
-			t.Errorf("assert values:\nexpected: %s\ngot     : %s", expected, got)
-		}
-		if len(*f) != len(expected) {
-			t.Errorf("assert data length, expected %d, got %d", len(expected), len(*f))
-		}
+		assert.Results(t, expected+expected, got)
 	})
 }

@@ -11,6 +11,19 @@ func tescape(s string) string {
 	return strings.ReplaceAll(s, "/", "\\")
 }
 
+func formatstr(expected, got string) string {
+	if len(expected) > 10 || len(got) > 10 {
+		return "assert, values:\nexp: %s\ngot: %s"
+	}
+	return "assert, values: expected: %s got: %s"
+}
+
+func Results(t *testing.T, expected, got string) {
+	if expected != got {
+		t.Errorf(formatstr(expected, got), expected, got)
+	}
+}
+
 func EachResult(t *testing.T, expected, got []string) {
 	if len(expected) != len(got) {
 		t.Errorf("assert lengths: expected %d, got %d", len(expected), len(got))
