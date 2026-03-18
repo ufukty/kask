@@ -67,17 +67,17 @@ func (r *Dir) MkdirAll(path string) error {
 			return fmt.Errorf("unexpected empty name")
 		}
 		n, ok := (*p)[s]
-		if !ok {
+		if ok {
+			d, ok := n.(Dir)
+			if !ok {
+				return fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
+			}
+			p = &d
+		} else {
 			c := Dir{}
 			(*p)[s] = c
 			p = &c
-			continue
 		}
-		d, ok := n.(Dir)
-		if !ok {
-			return fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
-		}
-		p = &d
 	}
 	return nil
 }
