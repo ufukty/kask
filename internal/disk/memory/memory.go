@@ -13,7 +13,6 @@ var (
 	_ disk.WriteFS   = (*Dir)(nil)
 )
 
-// TODO: write after close?
 type File []byte
 
 func (f *File) Write(p []byte) (n int, err error) {
