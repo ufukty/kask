@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"io"
 	"testing"
 
 	"go.ufukty.com/kask/internal/assert"
@@ -47,11 +48,14 @@ func TestDir_mkdirAll_overwriteAsFile(t *testing.T) {
 	})
 }
 
-func TestFile_write(t *testing.T) {
+func TestFile_createWriteRead(t *testing.T) {
 	expected := "Consectetur adipiscing elit."
 	d := &Dir{}
+
+	var w io.WriteCloser
 	t.Run("write", func(t *testing.T) {
-		w, err := d.Create("lorem")
+		var err error
+		w, err = d.Create("lorem")
 		if err != nil {
 			t.Fatalf("prep, unexpected error: %v", err)
 		}
@@ -61,15 +65,36 @@ func TestFile_write(t *testing.T) {
 		}
 	})
 
-	t.Run("read", func(t *testing.T) {
+	var f *File
+	t.Run("find file", func(t *testing.T) {
 		n, ok := (*d)["lorem"]
 		if !ok {
 			t.Fatalf("prep, node doesn't exist")
 		}
-		f, ok := n.(*File)
+		f, ok = n.(*File)
 		if !ok {
 			t.Fatalf("prep, node is not file")
 		}
+	})
+
+	t.Run("read", func(t *testing.T) {
+		got := string(*f)
+		if expected != got {
+			t.Errorf("assert values:\nexpected: %s\ngot     : %s", expected, got)
+		}
+		if len(*f) != len(expected) {
+			t.Errorf("assert data length, expected %d, got %d", len(expected), len(*f))
+		}
+	})
+
+	t.Run("write again", func(t *testing.T) {
+		if _, err := w.Write([]byte(expected)); err != nil {
+			t.Fatalf("act, unexpected error: %v", err)
+		}
+	})
+
+	t.Run("read again", func(t *testing.T) {
+		expected += expected
 		got := string(*f)
 		if expected != got {
 			t.Errorf("assert values:\nexpected: %s\ngot     : %s", expected, got)
