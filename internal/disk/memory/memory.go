@@ -38,11 +38,11 @@ func (r *Dir) Create(path string) (io.WriteCloser, error) {
 		if !ok {
 			return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, i))
 		}
-		d, ok := n.(Dir)
+		d, ok := n.(*Dir)
 		if !ok {
 			return nil, fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
 		}
-		p = &d
+		p = d
 	}
 	name := ss[len(ss)-1]
 	if name == "" {
@@ -51,9 +51,9 @@ func (r *Dir) Create(path string) (io.WriteCloser, error) {
 	if _, ok := (*p)[name]; ok {
 		return nil, fmt.Errorf("target already exists: %s", highlight(ss, len(ss)-1))
 	}
-	f := File{}
+	f := &File{}
 	(*p)[name] = f
-	return &f, nil
+	return f, nil
 }
 
 func (r *Dir) MkdirAll(path string) error {
@@ -68,15 +68,15 @@ func (r *Dir) MkdirAll(path string) error {
 		}
 		n, ok := (*p)[s]
 		if ok {
-			d, ok := n.(Dir)
+			d, ok := n.(*Dir)
 			if !ok {
 				return fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
 			}
-			p = &d
+			p = d
 		} else {
-			c := Dir{}
+			c := &Dir{}
 			(*p)[s] = c
-			p = &c
+			p = c
 		}
 	}
 	return nil

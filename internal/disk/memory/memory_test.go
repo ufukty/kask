@@ -62,16 +62,16 @@ func TestFile_write(t *testing.T) {
 		if !ok {
 			t.Fatalf("prep, node doesn't exist")
 		}
-		f, ok := n.(File)
+		f, ok := n.(*File)
 		if !ok {
 			t.Fatalf("prep, node is not file")
 		}
-		got := string(f)
+		got := string(*f)
 		if expected != got {
 			t.Errorf("assert values:\nexpected: %s\ngot     : %s", expected, got)
 		}
-		if len(f) != len(expected) {
-			t.Errorf("assert data length, expected %d, got %d", len(expected), len(f))
+		if len(*f) != len(expected) {
+			t.Errorf("assert data length, expected %d, got %d", len(expected), len(*f))
 		}
 	})
 }
