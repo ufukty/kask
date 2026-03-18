@@ -15,7 +15,7 @@ func TestDir_create(t *testing.T) {
 }
 
 func TestDir_mkdirAll(t *testing.T) {
-	d := Dir{}
+	d := &Dir{}
 	err := d.MkdirAll("lorem/ipsum/dolor/sit/amet")
 	if err != nil {
 		t.Fatalf("act, unexpected error: %v", err)
@@ -32,7 +32,7 @@ func TestDir_mkdirAll(t *testing.T) {
 }
 
 func TestDir_mkdirAll_overwriteFile(t *testing.T) {
-	d := Dir{}
+	d := &Dir{}
 	_, err := d.Create("lorem")
 	if err != nil {
 		t.Fatalf("prep, unexpected error: %v", err)
@@ -45,7 +45,7 @@ func TestDir_mkdirAll_overwriteFile(t *testing.T) {
 
 func TestFile_write(t *testing.T) {
 	expected := "Consectetur adipiscing elit."
-	d := Dir{}
+	d := &Dir{}
 	t.Run("write", func(t *testing.T) {
 		w, err := d.Create("lorem")
 		if err != nil {
@@ -58,7 +58,7 @@ func TestFile_write(t *testing.T) {
 	})
 
 	t.Run("read", func(t *testing.T) {
-		n, ok := d["lorem"]
+		n, ok := (*d)["lorem"]
 		if !ok {
 			t.Fatalf("prep, node doesn't exist")
 		}
