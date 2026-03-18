@@ -53,14 +53,15 @@ func TestFile_createWriteRead(t *testing.T) {
 	d := &Dir{}
 
 	var w io.WriteCloser
-	t.Run("write", func(t *testing.T) {
+	t.Run("create", func(t *testing.T) {
 		var err error
-		w, err = d.Create("lorem")
-		if err != nil {
+		if w, err = d.Create("lorem"); err != nil {
 			t.Fatalf("prep, unexpected error: %v", err)
 		}
-		_, err = w.Write([]byte(expected))
-		if err != nil {
+	})
+
+	t.Run("write", func(t *testing.T) {
+		if _, err := w.Write([]byte(expected)); err != nil {
 			t.Fatalf("act, unexpected error: %v", err)
 		}
 	})
