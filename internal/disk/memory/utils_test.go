@@ -40,7 +40,7 @@ func walkDir(root any, path string, v func(string, any) bool) bool {
 	return true
 }
 
-func find(d Dir) []string {
+func find(d *Dir) []string {
 	ss := []string{}
 	walkDir(d, ".", func(s string, a any) bool {
 		ss = append(ss, s)
