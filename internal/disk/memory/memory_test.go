@@ -31,16 +31,20 @@ func TestDir_mkdirAll(t *testing.T) {
 	assert.EachResult(t, expected, find(d))
 }
 
-func TestDir_mkdirAll_overwriteFile(t *testing.T) {
+func TestDir_mkdirAll_overwriteAsFile(t *testing.T) {
 	d := &Dir{}
-	_, err := d.Create("lorem")
-	if err != nil {
-		t.Fatalf("prep, unexpected error: %v", err)
-	}
-	err = d.MkdirAll("lorem")
-	if err == nil {
-		t.Fatalf("act, expected success.")
-	}
+
+	t.Run("create as file", func(t *testing.T) {
+		if _, err := d.Create("lorem"); err != nil {
+			t.Fatalf("prep, unexpected error: %v", err)
+		}
+	})
+
+	t.Run("overwrite as dir", func(t *testing.T) {
+		if err := d.MkdirAll("lorem"); err == nil {
+			t.Fatalf("act, unexpected success.")
+		}
+	})
 }
 
 func TestFile_write(t *testing.T) {
