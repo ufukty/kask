@@ -93,4 +93,13 @@ func TestFile_createWriteRead(t *testing.T) {
 		got := string(*f)
 		assert.Results(t, expected+expected, got)
 	})
+
+	f.Close()
+
+	t.Run("write after close", func(t *testing.T) {
+		_, err := f.Write([]byte("Don't stop me."))
+		if err == nil {
+			t.Errorf("unexpected success: %v", err)
+		}
+	})
 }

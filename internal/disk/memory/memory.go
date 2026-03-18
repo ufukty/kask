@@ -17,11 +17,15 @@ var (
 type File []byte
 
 func (f *File) Write(p []byte) (n int, err error) {
+	if *f == nil {
+		return 0, fmt.Errorf("closed")
+	}
 	*f = append(*f, p...)
 	return len(p), nil
 }
 
-func (f File) Close() error {
+func (f *File) Close() error {
+	*f = nil
 	return nil
 }
 
