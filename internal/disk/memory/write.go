@@ -10,7 +10,7 @@ import (
 
 // As in [io.Writer]
 func (fd *descriptor) Write(p []byte) (n int, err error) {
-	if *fd.file == nil {
+	if fd.file == nil {
 		return 0, fmt.Errorf("closed")
 	}
 	*fd.file = append(*fd.file, p...)
