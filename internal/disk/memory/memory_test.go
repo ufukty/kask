@@ -49,20 +49,21 @@ func TestDir_mkdirAll_overwriteAsFile(t *testing.T) {
 }
 
 func TestFileDescriptor_createWriteRead(t *testing.T) {
-	expected := "Consectetur adipiscing elit."
 	d := &Dir{}
 
 	var w io.WriteCloser
 	t.Run("create", func(t *testing.T) {
 		var err error
 		if w, err = d.Create("lorem"); err != nil {
-			t.Fatalf("prep, unexpected error: %v", err)
+			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 
+	expected := "Consectetur adipiscing elit."
+
 	t.Run("write", func(t *testing.T) {
 		if _, err := w.Write([]byte(expected)); err != nil {
-			t.Fatalf("act, unexpected error: %v", err)
+			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 
@@ -73,40 +74,43 @@ func TestFileDescriptor_createWriteRead(t *testing.T) {
 			t.Errorf("act, unexpected error: %v", err)
 		}
 		var ok bool
-		fd, ok = w.(*descriptor)
-		if !ok {
+		if fd, ok = w.(*descriptor); !ok {
 			t.Error("assert, expected descriptor")
 		}
 	})
 
 	t.Run("read", func(t *testing.T) {
 		got := make([]byte, len(expected))
-		_, err := fd.Read(got)
-		if err != nil {
+		if _, err := fd.Read(got); err != nil {
 			t.Errorf("act, unexpected error: %v", err)
 		}
 		assert.Results(t, expected, string(got))
 	})
 
+	expected = "Nam vulputate lectus ligula."
+
 	t.Run("write again", func(t *testing.T) {
 		if _, err := w.Write([]byte(expected)); err != nil {
-			t.Fatalf("act, unexpected error: %v", err)
+			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 
 	t.Run("read again", func(t *testing.T) {
-		got := make([]byte, 2*len(expected))
-		_, err := fd.Read(got)
-		if err != nil {
-			t.Errorf("act, unexpected error: %v", err)
+		got := make([]byte, len(expected))
+		if _, err := fd.Read(got); err != nil {
+			t.Errorf("unexpected error: %v", err)
 		}
-		assert.Results(t, expected+expected, string(got))
+		assert.Results(t, expected, string(got))
 	})
 
-	fd.Close()
+	t.Run("close", func(t *testing.T) {
+		if err := fd.Close(); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
 
 	t.Run("write after close", func(t *testing.T) {
-		_, err := w.Write([]byte("Don't stop me."))
+		_, err := fd.Write([]byte("Don't stop me."))
 		if err == nil {
 			t.Errorf("unexpected success: %v", err)
 		}
