@@ -29,17 +29,9 @@ func (d *Dir) Create(path string) (io.WriteCloser, error) {
 		return nil, fmt.Errorf("file name can't be empty")
 	}
 	ss := strings.Split(path, "/")
-	p := d
-	for i, s := range ss[:len(ss)-1] {
-		n, ok := (*p)[s]
-		if !ok {
-			return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, i))
-		}
-		d, ok := n.(*Dir)
-		if !ok {
-			return nil, fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
-		}
-		p = d
+	p, err := d.findDir(ss[:len(ss)-1])
+	if err != nil {
+		return nil, err
 	}
 	name := ss[len(ss)-1]
 	if name == "" {

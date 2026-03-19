@@ -46,14 +46,9 @@ func (fd *descriptor) Read(p []byte) (int, error) {
 	return len(*fd.file), nil
 }
 
-// As in [fs.FS]
-func (d *Dir) Open(path string) (fs.File, error) {
-	if path == "" {
-		return nil, fmt.Errorf("file path can't be empty")
-	}
-	ss := strings.Split(path, "/")
+func (d *Dir) findDir(ss []string) (*Dir, error) {
 	p := d
-	for i, s := range ss[:len(ss)-1] {
+	for i, s := range ss {
 		n, ok := (*p)[s]
 		if !ok {
 			return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, i))
@@ -63,6 +58,19 @@ func (d *Dir) Open(path string) (fs.File, error) {
 			return nil, fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
 		}
 		p = d
+	}
+	return p, nil
+}
+
+// As in [fs.FS]
+func (d *Dir) Open(path string) (fs.File, error) {
+	if path == "" {
+		return nil, fmt.Errorf("file path can't be empty")
+	}
+	ss := strings.Split(path, "/")
+	p, err := d.findDir(ss[:len(ss)-1])
+	if err != nil {
+		return nil, err
 	}
 	name := ss[len(ss)-1]
 	if name == "" {
