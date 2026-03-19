@@ -79,7 +79,7 @@ func TestFile_createWriteRead(t *testing.T) {
 	})
 
 	t.Run("read", func(t *testing.T) {
-		got := string(*f)
+		got := string(f.c)
 		assert.Results(t, expected, got)
 	})
 
@@ -90,7 +90,7 @@ func TestFile_createWriteRead(t *testing.T) {
 	})
 
 	t.Run("read again", func(t *testing.T) {
-		got := string(*f)
+		got := string(f.c)
 		assert.Results(t, expected+expected, got)
 	})
 

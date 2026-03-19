@@ -6,16 +6,16 @@ import (
 	"strings"
 )
 
-func (f *File) Write(p []byte) (n int, err error) {
-	if *f == nil {
+func (fd *descriptor) Write(p []byte) (n int, err error) {
+	if *fd.file == nil {
 		return 0, fmt.Errorf("closed")
 	}
-	*f = append(*f, p...)
+	*fd.file = append(*fd.file, p...)
 	return len(p), nil
 }
 
-func (f *File) Close() error {
-	*f = nil
+func (fd *descriptor) Close() error {
+	fd.file = nil
 	return nil
 }
 
@@ -45,7 +45,8 @@ func (d *Dir) Create(path string) (io.WriteCloser, error) {
 	}
 	f := &File{}
 	(*p)[name] = f
-	return f, nil
+	fd := &descriptor{file: f, pos: 0} // FIXME: add [FileInfo]
+	return fd, nil
 }
 
 func (d *Dir) MkdirAll(path string) error {
