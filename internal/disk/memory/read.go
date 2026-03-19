@@ -38,7 +38,10 @@ func (fd *descriptor) Read(p []byte) (int, error) {
 	if fd.pos >= len(*fd.file) {
 		return 0, io.EOF
 	}
-	p = (*fd.file)[:len(p)]
+	start, end := fd.pos, min(fd.pos+len(p), len(*fd.file))
+	for i := start; i < end; i++ {
+		p[i] = (*fd.file)[i]
+	}
 	fd.pos += len(p)
 	return len(*fd.file), nil
 }
