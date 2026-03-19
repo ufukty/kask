@@ -23,6 +23,9 @@ func (fd *descriptor) Stat() (fs.FileInfo, error) { return fd.info, nil }
 // than the len(p). It returns [io.EOF] when there is nothing
 // to return. Thus, it may return nil with data less than len(p).
 func (fd *descriptor) Read(p []byte) (int, error) {
+	if fd.file == nil {
+		return 0, fmt.Errorf("closed")
+	}
 	rem := len(*fd.file) - fd.pos
 	if rem > 0 && len(p) == 0 {
 		return 0, ErrNoSpace
