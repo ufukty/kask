@@ -117,3 +117,42 @@ func (d *Dir) ReadFile(name string) ([]byte, error) {
 	}
 	return b, nil
 }
+
+// As in [fs.StatFS]
+func (d *Dir) Stat(path string) (fs.FileInfo, error) {
+	if path == "" {
+		return nil, &fs.PathError{Op: "stat", Path: path, Err: fmt.Errorf("file path can't be empty")}
+	}
+	ss := strings.Split(path, "/")
+	p, err := d.findDir(ss[:len(ss)-1])
+	if err != nil {
+		return nil, &fs.PathError{Op: "stat", Path: path, Err: err}
+	}
+	name := ss[len(ss)-1]
+	if name == "" {
+		return nil, &fs.PathError{Op: "stat", Path: path, Err: fmt.Errorf("unexpected empty name")}
+	}
+	inode, ok := (*p)[name]
+	if !ok {
+		return nil, &fs.PathError{Op: "stat", Path: path, Err: fs.ErrNotExist}
+	}
+	f, isFile := inode.(*File)
+	if isFile {
+		return fileInfo{
+			name:    name,
+			size:    int64(len(*f)),
+			mode:    0o666,
+			modTime: time.Now(),
+			isDir:   false,
+		}, nil
+	} else {
+		return fileInfo{
+			name:    name,
+			size:    0,
+			mode:    fs.ModeDir | 0o755,
+			modTime: time.Now(),
+			isDir:   true,
+		}, nil
+	}
+}
+

@@ -17,6 +17,12 @@ type (
 		isDir   bool
 		sys     any
 	}
+	dirEntry struct {
+		name  string
+		isDir bool
+		typee fs.FileMode
+		info  fs.FileInfo
+	}
 	descriptor struct {
 		file *File
 		pos  int
@@ -35,9 +41,13 @@ var (
 // read
 var (
 	_ fs.FileInfo   = (*fileInfo)(nil)
+	_ fs.DirEntry   = (*dirEntry)(nil)
 	_ fs.File       = (*descriptor)(nil)
 	_ io.Reader     = (*descriptor)(nil)
 	_ io.ReadCloser = (*descriptor)(nil)
 	_ fs.FS         = (*Dir)(nil)
 	_ fs.ReadFileFS = (*Dir)(nil)
+	_ fs.ReadDirFS  = (*Dir)(nil)
+	_ fs.StatFS     = (*Dir)(nil)
+	_ disk.ReadFS   = (*Dir)(nil)
 )
