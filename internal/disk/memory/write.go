@@ -4,16 +4,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
-
-	"go.ufukty.com/kask/internal/disk"
 )
-
-var (
-	_ io.WriteCloser = (*File)(nil)
-	_ disk.WriteFS   = (*Dir)(nil)
-)
-
-type File []byte
 
 func (f *File) Write(p []byte) (n int, err error) {
 	if *f == nil {
@@ -27,8 +18,6 @@ func (f *File) Close() error {
 	*f = nil
 	return nil
 }
-
-type Dir map[string]any
 
 func (d *Dir) Create(path string) (io.WriteCloser, error) {
 	if path == "" {
