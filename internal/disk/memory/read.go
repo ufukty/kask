@@ -76,12 +76,14 @@ func (d *Dir) Open(path string) (fs.File, error) {
 	if name == "" {
 		return nil, fmt.Errorf("unexpected empty name")
 	}
-	_, ok := (*p)[name]
+	inode, ok := (*p)[name]
 	if !ok {
 		return nil, fs.ErrNotExist
 	}
-	f := &File{}
-	(*p)[name] = f
+	f, ok := inode.(*File)
+	if !ok {
+		return nil, fs.ErrInvalid
+	}
 	fd := &descriptor{
 		file: f,
 		pos:  0,
