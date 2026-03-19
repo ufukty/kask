@@ -3,9 +3,12 @@ package memory
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"strings"
+	"time"
 )
 
+// As in [io.Writer]
 func (fd *descriptor) Write(p []byte) (n int, err error) {
 	if *fd.file == nil {
 		return 0, fmt.Errorf("closed")
@@ -14,11 +17,13 @@ func (fd *descriptor) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// As in [io.Closer]
 func (fd *descriptor) Close() error {
 	fd.file = nil
 	return nil
 }
 
+// As in [disk.WriteFS]
 func (d *Dir) Create(path string) (io.WriteCloser, error) {
 	if path == "" {
 		return nil, fmt.Errorf("file name can't be empty")
@@ -45,10 +50,22 @@ func (d *Dir) Create(path string) (io.WriteCloser, error) {
 	}
 	f := &File{}
 	(*p)[name] = f
-	fd := &descriptor{file: f, pos: 0} // FIXME: add [FileInfo]
+	fd := &descriptor{
+		file: f,
+		pos:  0,
+		info: fileInfo{
+			name:    name,
+			size:    int64(len(*f)),
+			mode:    fs.ModeAppend,
+			modTime: time.Now(),
+			isDir:   false,
+			sys:     nil,
+		},
+	}
 	return fd, nil
 }
 
+// As in [disk.WriteFS]
 func (d *Dir) MkdirAll(path string) error {
 	if path == "" {
 		return fmt.Errorf("file name can't be empty")
@@ -75,6 +92,7 @@ func (d *Dir) MkdirAll(path string) error {
 	return nil
 }
 
+// As in [disk.WriteFS]
 func (d *Dir) WriteFile(name string, data []byte) error {
 	f, err := d.Create(name)
 	if err != nil {

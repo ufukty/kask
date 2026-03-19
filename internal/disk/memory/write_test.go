@@ -48,7 +48,7 @@ func TestDir_mkdirAll_overwriteAsFile(t *testing.T) {
 	})
 }
 
-func TestFile_createWriteRead(t *testing.T) {
+func TestFileDescriptor_createWriteRead(t *testing.T) {
 	expected := "Consectetur adipiscing elit."
 	d := &Dir{}
 
@@ -66,21 +66,26 @@ func TestFile_createWriteRead(t *testing.T) {
 		}
 	})
 
-	var f *File
+	var fd *descriptor
 	t.Run("find file", func(t *testing.T) {
-		n, ok := (*d)["lorem"]
-		if !ok {
-			t.Fatalf("prep, node doesn't exist")
+		w, err := d.Open("lorem")
+		if err != nil {
+			t.Errorf("act, unexpected error: %v", err)
 		}
-		f, ok = n.(*File)
+		var ok bool
+		fd, ok = w.(*descriptor)
 		if !ok {
-			t.Fatalf("prep, node is not file")
+			t.Error("assert, expected descriptor")
 		}
 	})
 
 	t.Run("read", func(t *testing.T) {
-		got := string(f.c)
-		assert.Results(t, expected, got)
+		got := make([]byte, len(expected))
+		_, err := fd.Read(got)
+		if err != nil {
+			t.Errorf("act, unexpected error: %v", err)
+		}
+		assert.Results(t, expected, string(got))
 	})
 
 	t.Run("write again", func(t *testing.T) {
@@ -90,14 +95,18 @@ func TestFile_createWriteRead(t *testing.T) {
 	})
 
 	t.Run("read again", func(t *testing.T) {
-		got := string(f.c)
-		assert.Results(t, expected+expected, got)
+		got := make([]byte, 2*len(expected))
+		_, err := fd.Read(got)
+		if err != nil {
+			t.Errorf("act, unexpected error: %v", err)
+		}
+		assert.Results(t, expected+expected, string(got))
 	})
 
-	f.Close()
+	fd.Close()
 
 	t.Run("write after close", func(t *testing.T) {
-		_, err := f.Write([]byte("Don't stop me."))
+		_, err := w.Write([]byte("Don't stop me."))
 		if err == nil {
 			t.Errorf("unexpected success: %v", err)
 		}

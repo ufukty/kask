@@ -10,6 +10,7 @@ import (
 
 var ErrNoSpace = fmt.Errorf("no space")
 
+// As in [fs.FileInfo]
 func (fi fileInfo) Name() string       { return fi.name }
 func (fi fileInfo) Size() int64        { return fi.size }
 func (fi fileInfo) Mode() fs.FileMode  { return fi.mode }
@@ -17,11 +18,15 @@ func (fi fileInfo) ModTime() time.Time { return fi.modTime }
 func (fi fileInfo) IsDir() bool        { return fi.isDir }
 func (fi fileInfo) Sys() any           { return fi.sys }
 
-func (fd *descriptor) Stat() (fs.FileInfo, error) { return fd.info, nil }
+// As in [fs.StatFS]
+func (fd *descriptor) Stat() (fs.FileInfo, error) {
+	return fd.info, nil
+}
 
-// [dile.Read] writes the unread portion of file content shorter
-// than the len(p). It returns [io.EOF] when there is nothing
-// to return. Thus, it may return nil with data less than len(p).
+// Read writes the unread portion of file content shorter than the len(p).
+// It returns [io.EOF] when there is nothing to return.
+// Thus, it may return nil with data less than len(p).
+// As in [io.Reader]
 func (fd *descriptor) Read(p []byte) (int, error) {
 	if fd.file == nil {
 		return 0, fmt.Errorf("closed")
@@ -38,6 +43,7 @@ func (fd *descriptor) Read(p []byte) (int, error) {
 	return len(*fd.file), nil
 }
 
+// As in [fs.FS]
 func (d *Dir) Open(path string) (fs.File, error) {
 	if path == "" {
 		return nil, fmt.Errorf("file path can't be empty")
@@ -64,10 +70,22 @@ func (d *Dir) Open(path string) (fs.File, error) {
 	}
 	f := &File{}
 	(*p)[name] = f
-	fd := &descriptor{file: f, pos: 0} // FIXME: add [FileInfo]
+	fd := &descriptor{
+		file: f,
+		pos:  0,
+		info: fileInfo{
+			name:    name,
+			size:    int64(len(*f)),
+			mode:    fs.ModeAppend,
+			modTime: time.Time{},
+			isDir:   false,
+			sys:     ss,
+		},
+	}
 	return fd, nil
 }
 
+// As in [fs.ReadFileFS]
 func (d *Dir) ReadFile(name string) ([]byte, error) {
 	f, err := d.Open(name)
 	if err != nil {
