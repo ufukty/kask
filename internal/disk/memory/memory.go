@@ -30,12 +30,12 @@ func (f *File) Close() error {
 
 type Dir map[string]any
 
-func (r *Dir) Create(path string) (io.WriteCloser, error) {
+func (d *Dir) Create(path string) (io.WriteCloser, error) {
 	if path == "" {
 		return nil, fmt.Errorf("file name can't be empty")
 	}
 	ss := strings.Split(path, "/")
-	p := r
+	p := d
 	for i, s := range ss[:len(ss)-1] {
 		n, ok := (*p)[s]
 		if !ok {
@@ -59,12 +59,12 @@ func (r *Dir) Create(path string) (io.WriteCloser, error) {
 	return f, nil
 }
 
-func (r *Dir) MkdirAll(path string) error {
+func (d *Dir) MkdirAll(path string) error {
 	if path == "" {
 		return fmt.Errorf("file name can't be empty")
 	}
 	ss := strings.Split(path, "/")
-	p := r
+	p := d
 	for i, s := range ss {
 		if s == "" {
 			return fmt.Errorf("unexpected empty name")
@@ -85,8 +85,8 @@ func (r *Dir) MkdirAll(path string) error {
 	return nil
 }
 
-func (r *Dir) WriteFile(name string, data []byte) error {
-	f, err := r.Create(name)
+func (d *Dir) WriteFile(name string, data []byte) error {
+	f, err := d.Create(name)
 	if err != nil {
 		return fmt.Errorf("creating: %w", err)
 	}
