@@ -65,8 +65,9 @@ func (d *Dir) Open(path string) (fs.File, error) {
 	if name == "" {
 		return nil, fmt.Errorf("unexpected empty name")
 	}
-	if _, ok := (*p)[name]; ok {
-		return nil, fmt.Errorf("target already exists: %s", highlight(ss, len(ss)-1))
+	_, ok := (*p)[name]
+	if !ok {
+		return nil, fs.ErrNotExist
 	}
 	f := &File{}
 	(*p)[name] = f
