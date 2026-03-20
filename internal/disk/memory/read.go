@@ -18,6 +18,12 @@ func (fi fileInfo) ModTime() time.Time { return fi.modTime }
 func (fi fileInfo) IsDir() bool        { return fi.isDir }
 func (fi fileInfo) Sys() any           { return fi.sys }
 
+// As in [fs.DirEntry]
+func (de dirEntry) Name() string               { return de.name }
+func (de dirEntry) IsDir() bool                { return de.isDir }
+func (de dirEntry) Type() fs.FileMode          { return de.typee }
+func (de dirEntry) Info() (fs.FileInfo, error) { return de.info, nil }
+
 // As in [fs.StatFS]
 func (fd *descriptor) Stat() (fs.FileInfo, error) {
 	return fd.info, nil
@@ -49,6 +55,18 @@ func (fd *descriptor) Read(p []byte) (int, error) {
 func (d *Dir) findDir(ss []string) (*Dir, error) {
 	p := d
 	for i, s := range ss {
+		if s == "" {
+			return nil, fmt.Errorf("empty name")
+		}
+		if s == "." {
+			continue
+		}
+		// if s == ".." {
+		// 	if d.Parent != nil {
+		// 		d = d.Parent
+		// 	}
+		// 	continue
+		// }
 		n, ok := (*p)[s]
 		if !ok {
 			return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, i))
@@ -90,7 +108,7 @@ func (d *Dir) Open(path string) (fs.File, error) {
 		info: fileInfo{
 			name:    name,
 			size:    int64(len(*f)),
-			mode:    fs.ModeAppend,
+			mode:    0o666,
 			modTime: time.Time{},
 			isDir:   false,
 			sys:     ss,
@@ -156,3 +174,28 @@ func (d *Dir) Stat(path string) (fs.FileInfo, error) {
 	}
 }
 
+// As in [fs.ReadDirFS]
+func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
+	if path == "" {
+		return nil, &fs.PathError{Op: "stat", Path: path, Err: fmt.Errorf("file path can't be empty")}
+	}
+	p, err := d.findDir(strings.Split(path, "/"))
+	if err != nil {
+		return nil, &fs.PathError{Op: "stat", Path: path, Err: err}
+	}
+	ds := []fs.DirEntry{}
+	for name := range *p {
+		fi, err := d.Stat(name)
+		if err != nil {
+			return nil, &fs.PathError{Op: "stat", Path: path, Err: fmt.Errorf("stat: %w", err)}
+		}
+		di := dirEntry{
+			name:  name,
+			isDir: fi.IsDir(),
+			typee: fi.Mode(),
+			info:  fi,
+		}
+		ds = append(ds, di)
+	}
+	return ds, nil
+}
