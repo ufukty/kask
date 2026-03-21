@@ -136,6 +136,20 @@ func (d *Dir) ReadFile(name string) ([]byte, error) {
 	return b, nil
 }
 
+func (d *Dir) inode(path, name string) (any, error) {
+	if name == "" {
+		return nil, &fs.PathError{Op: "stat", Path: path, Err: fmt.Errorf("unexpected empty name")}
+	}
+	if name == "." {
+		return d, nil
+	}
+	inode, ok := (*d)[name]
+	if !ok {
+		return nil, &fs.PathError{Op: "stat", Path: path, Err: fs.ErrNotExist}
+	}
+	return inode, nil
+}
+
 // As in [fs.StatFS]
 func (d *Dir) Stat(path string) (fs.FileInfo, error) {
 	if path == "" {
@@ -147,14 +161,11 @@ func (d *Dir) Stat(path string) (fs.FileInfo, error) {
 		return nil, &fs.PathError{Op: "stat", Path: path, Err: err}
 	}
 	name := ss[len(ss)-1]
-	if name == "" {
-		return nil, &fs.PathError{Op: "stat", Path: path, Err: fmt.Errorf("unexpected empty name")}
+	node, err := p.inode(path, name)
+	if err != nil {
+		return nil, err
 	}
-	inode, ok := (*p)[name]
-	if !ok {
-		return nil, &fs.PathError{Op: "stat", Path: path, Err: fs.ErrNotExist}
-	}
-	f, isFile := inode.(*File)
+	f, isFile := node.(*File)
 	if isFile {
 		return fileInfo{
 			name:    name,
