@@ -67,6 +67,8 @@ func (d *Dir) MkdirAll(path string) error {
 	for i, s := range ss {
 		if s == "" {
 			return fmt.Errorf("unexpected empty name")
+		} else if s == "." {
+			continue
 		}
 		n, ok := (*p)[s]
 		if ok {
