@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"go.ufukty.com/kask/internal/disk"
+	"go.ufukty.com/kask/internal/disk/memory"
 	"go.ufukty.com/kask/internal/paths"
 	"go.ufukty.com/kask/internal/rewriter"
 	"go.ufukty.com/kask/pkg/kask"
@@ -52,11 +53,11 @@ func breadcrumbs(root *kask.Node) []string {
 	return bs
 }
 
-func buildTestSite(t *testing.T, src, domain string) (*builder, string) {
-	tmp := t.TempDir()
+func buildTestSite(t *testing.T, src, domain string) (*builder, *memory.Dir) {
+	dst := &memory.Dir{}
 	b := newBuilder(builderArgs{
 		Src:     disk.NewReal(src), // TODO: use on-memory FS
-		Dst:     disk.NewReal(tmp), // TODO: use on-memory FS
+		Dst:     dst,
 		Domain:  domain,
 		Dev:     true,
 		Verbose: false,
@@ -64,25 +65,25 @@ func buildTestSite(t *testing.T, src, domain string) (*builder, string) {
 	if err := b.Build(); err != nil {
 		t.Fatalf("prep, builder.Build: %v", err)
 	}
-	return b, tmp
+	return b, dst
 }
 
 func lines(ls ...string) string {
 	return strings.Join(ls, "\n")
 }
 
-func assertfile(t *testing.T, tmp, path string) {
+func assertfile(t *testing.T, fs fs.StatFS, path string) {
 	t.Run(strings.ReplaceAll(path, "/", "\\"), func(t *testing.T) {
-		if !check(disk.NewReal(tmp), path) {
-			t.Log(tmp)
+		if !check(fs, path) {
+			t.Log(fs)
 			t.Errorf("assert, file not found: %s", path)
 		}
 	})
 }
 
-func files(path string) []string {
+func files(dst fs.ReadDirFS) []string {
 	ss := []string{}
-	fs.WalkDir(disk.NewReal(path), ".", func(path string, d fs.DirEntry, err error) error {
+	fs.WalkDir(dst, ".", func(path string, d fs.DirEntry, err error) error {
 		if !d.IsDir() {
 			ss = append(ss, path)
 		}
