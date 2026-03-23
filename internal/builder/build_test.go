@@ -200,7 +200,7 @@ func TestBuilder_cssSplitting(t *testing.T) {
 			t.Errorf("prep, read file: %v", err)
 		}
 		content := string(f)
-		t.Run("!styles.propagate.css", func(t *testing.T) {
+		t.Run("!styles.css", func(t *testing.T) {
 			if strings.Contains(content, `"https://kask.ufukty.com/styles.css"`) {
 				t.Errorf("assert, unexpected link")
 			}
