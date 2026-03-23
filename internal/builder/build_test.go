@@ -195,55 +195,24 @@ func TestBuilder_cssSplitting(t *testing.T) {
 	_, dst := buildTestSite(t, "css-splitting", "https://kask.ufukty.com/")
 
 	t.Run("links", func(t *testing.T) {
-		f, err := dst.ReadFile("a/index.html")
-		if err != nil {
-			t.Errorf("prep, read file: %v", err)
+		expected := map[string]string{
+			"styles.propagate.css":   `"https://kask.ufukty.com/styles.propagate.css"`,
+			"a/styles.propagate.css": `"https://kask.ufukty.com/a/styles.propagate.css"`,
+			"a/styles.css":           `"https://kask.ufukty.com/a/styles.css"`,
 		}
-		content := string(f)
-		t.Run("!styles.css", func(t *testing.T) {
-			if strings.Contains(content, `"https://kask.ufukty.com/styles.css"`) {
-				t.Errorf("assert, unexpected link")
-			}
-		})
-		t.Run("styles.propagate.css", func(t *testing.T) {
-			if !strings.Contains(content, `"https://kask.ufukty.com/styles.propagate.css"`) {
-				t.Errorf("assert, expected link")
-			}
-		})
-		t.Run("a\\styles.propagate.css", func(t *testing.T) {
-			if !strings.Contains(content, `"https://kask.ufukty.com/a/styles.propagate.css"`) {
-				t.Errorf("assert, expected link")
-			}
-		})
-		t.Run("a\\styles.css", func(t *testing.T) {
-			if !strings.Contains(content, `"https://kask.ufukty.com/a/styles.css"`) {
-				t.Errorf("assert, expected link")
-			}
-		})
-		if t.Failed() {
-			fmt.Println(content)
+		unexpected := map[string]string{
+			"styles.css": `"https://kask.ufukty.com/styles.css"`,
 		}
+		assert.NamedResultsInFile(t, expected, unexpected, dst, "a/index.html")
 	})
 
 	t.Run("contents", func(t *testing.T) {
-		tcs := map[string]string{
+		assert.ResultsInFiles(t, dst, map[string]string{
 			"/styles.css":             ":root {}",
 			"/styles.propagate.css":   ":root.propagated {}",
 			"/a/styles.css":           ".a {}",
 			"/a/styles.propagate.css": ".a.propagated {}",
-		}
-
-		for ss, expected := range tcs {
-			t.Run(strings.ReplaceAll(ss, "/", "\\"), func(t *testing.T) {
-				f, err := dst.ReadFile(ss)
-				if err != nil {
-					t.Errorf("prep, read stylesheet: %v", err)
-				}
-				if !strings.Contains(string(f), "") {
-					t.Errorf("assert, not found: %q", expected)
-				}
-			})
-		}
+		})
 	})
 }
 
@@ -396,7 +365,10 @@ func TestBuilder_docs(t *testing.T) {
 
 func TestBuilder_hiddenPagesDst(t *testing.T) {
 	_, dst := buildTestSite(t, "hidden-pages", "/")
-	got := files(dst)
+	got, err := files(dst)
+	if err != nil {
+		t.Errorf("list files: %v", err)
+	}
 	expected := []string{
 		"404.html",
 		"career.html",

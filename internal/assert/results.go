@@ -70,6 +70,23 @@ func ResultInFile(t *testing.T, expected string, fs fs.ReadFileFS, path string) 
 	}
 }
 
+// expected is files to contents
+func ResultsInFiles(t *testing.T, fs fs.ReadFileFS, expected map[string]string) {
+	for file, content := range expected {
+		c, err := fs.ReadFile(file)
+		if err != nil {
+			t.Fatalf("assert, prep: reading file: %v", err)
+		}
+		s := string(c)
+		if !strings.Contains(s, content) {
+			t.Errorf("assert, expected item: %s", content)
+		}
+		if t.Failed() {
+			t.Logf("file contents for %s:\n\n%s", file, s)
+		}
+	}
+}
+
 func EachNamedResultInFile(t *testing.T, expected map[string]string, fs fs.ReadFileFS, path string) {
 	c, err := fs.ReadFile(path)
 	if err != nil {
@@ -80,6 +97,31 @@ func EachNamedResultInFile(t *testing.T, expected map[string]string, fs fs.ReadF
 		t.Run(tescape(tn), func(t *testing.T) {
 			if !strings.Contains(s, expected) {
 				t.Errorf("assert, expected item: %s", expected)
+			}
+		})
+	}
+	if t.Failed() {
+		t.Logf("got:\n\n%s", s)
+	}
+}
+
+func NamedResultsInFile(t *testing.T, expected, unexpected map[string]string, fs fs.ReadFileFS, path string) {
+	c, err := fs.ReadFile(path)
+	if err != nil {
+		t.Fatalf("assert prep, reading file: %v", err)
+	}
+	s := string(c)
+	for tn, expected := range expected {
+		t.Run(tescape(tn), func(t *testing.T) {
+			if !strings.Contains(s, expected) {
+				t.Errorf("assert, expected item: %s", expected)
+			}
+		})
+	}
+	for tn, unexpected := range unexpected {
+		t.Run(tescape(tn), func(t *testing.T) {
+			if strings.Contains(s, unexpected) {
+				t.Errorf("assert, unexpected item: %s", unexpected)
 			}
 		})
 	}
