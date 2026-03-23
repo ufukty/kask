@@ -111,20 +111,24 @@ func NamedResultsInFile(t *testing.T, expected, unexpected map[string]string, fs
 		t.Fatalf("assert prep, reading file: %v", err)
 	}
 	s := string(c)
-	for tn, expected := range expected {
-		t.Run(tescape(tn), func(t *testing.T) {
-			if !strings.Contains(s, expected) {
-				t.Errorf("assert, expected item: %s", expected)
-			}
-		})
-	}
-	for tn, unexpected := range unexpected {
-		t.Run(tescape(tn), func(t *testing.T) {
-			if strings.Contains(s, unexpected) {
-				t.Errorf("assert, unexpected item: %s", unexpected)
-			}
-		})
-	}
+	t.Run("positive", func(t *testing.T) {
+		for tn, expected := range expected {
+			t.Run(tescape(tn), func(t *testing.T) {
+				if !strings.Contains(s, expected) {
+					t.Errorf("assert, expected item: %s", expected)
+				}
+			})
+		}
+	})
+	t.Run("negative", func(t *testing.T) {
+		for tn, unexpected := range unexpected {
+			t.Run(tescape(tn), func(t *testing.T) {
+				if strings.Contains(s, unexpected) {
+					t.Errorf("assert, unexpected item: %s", unexpected)
+				}
+			})
+		}
+	})
 	if t.Failed() {
 		t.Logf("got:\n\n%s", s)
 	}
