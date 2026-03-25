@@ -17,8 +17,11 @@ type (
 		fs.StatFS
 	}
 	WriteFS interface {
+		// As in [os.Create]
 		Create(name string) (io.WriteCloser, error)
+		// As in [os.MkdirAll]
 		MkdirAll(path string) error
+		// As in [os.WriteFile]
 		WriteFile(path string, data []byte) error
 	}
 )
