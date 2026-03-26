@@ -9,48 +9,10 @@ import (
 	"time"
 )
 
-var ErrNoSpace = fmt.Errorf("no space")
-
-// As in [fs.FileInfo]
-func (fi fileInfo) Name() string       { return fi.name }
-func (fi fileInfo) Size() int64        { return fi.size }
-func (fi fileInfo) Mode() fs.FileMode  { return fi.mode }
-func (fi fileInfo) ModTime() time.Time { return fi.modTime }
-func (fi fileInfo) IsDir() bool        { return fi.isDir }
-func (fi fileInfo) Sys() any           { return fi.sys }
-
-// As in [fs.DirEntry]
-func (de dirEntry) Name() string               { return de.name }
-func (de dirEntry) IsDir() bool                { return de.isDir }
-func (de dirEntry) Type() fs.FileMode          { return de.typee }
-func (de dirEntry) Info() (fs.FileInfo, error) { return de.info, nil }
-
-// As in [fs.StatFS]
-func (fd *descriptor) Stat() (fs.FileInfo, error) {
-	return fd.info, nil
-}
-
-// Read writes the unread portion of file content shorter than the len(p).
-// It returns [io.EOF] when there is nothing to return.
-// Thus, it may return nil with data less than len(p).
-// As in [io.Reader]
-func (fd *descriptor) Read(p []byte) (int, error) {
-	if fd.file == nil {
-		return 0, fmt.Errorf("closed")
-	}
-	rem := len(*fd.file) - fd.pos
-	if rem > 0 && len(p) == 0 {
-		return 0, ErrNoSpace
-	}
-	if fd.pos >= len(*fd.file) {
-		return 0, io.EOF
-	}
-	start, end := fd.pos, min(fd.pos+len(p), len(*fd.file))
-	for i := 0; i < end-start; i++ {
-		p[i] = (*fd.file)[i+start]
-	}
-	fd.pos += len(p)
-	return len(*fd.file), nil
+func New() *Dir {
+	d := Dir{}
+	d["."] = &d
+	return &d
 }
 
 func rewriteByTheRoot(path string) string {
@@ -111,6 +73,95 @@ func locate(entry *Dir, path string) (any, error) {
 		}
 	}
 	return cursor, nil
+}
+
+// As in [disk.WriteFS]
+func (d *Dir) Create(path string) (io.WriteCloser, error) {
+	path = filepath.Clean(path)
+	node, err := locate(d, filepath.Dir(path))
+	if err != nil {
+		return nil, fmt.Errorf("locate: %w", err)
+	}
+	dir, ok := node.(*Dir)
+	if !ok {
+		return nil, fmt.Errorf("destination should be a directory")
+	}
+	name := filepath.Base(path)
+	if name == "" {
+		return nil, fmt.Errorf("unexpected empty name")
+	}
+	if _, ok := (*dir)[name]; ok {
+		return nil, fmt.Errorf("exists")
+	}
+	f := &File{}
+	(*dir)[name] = f
+	fd := &descriptor{
+		file: f,
+		pos:  0,
+		info: fileInfo{
+			name:    name,
+			size:    int64(len(*f)),
+			mode:    fs.ModeAppend,
+			modTime: time.Now(),
+			isDir:   false,
+			sys:     nil,
+		},
+	}
+	return fd, nil
+}
+
+// As in [disk.WriteFS]
+func (d *Dir) MkdirAll(path string) error {
+	path = filepath.Clean(path)
+	var cursor *Dir
+	if filepath.IsAbs(path) {
+		root, err := findRoot(d)
+		if err != nil {
+			return fmt.Errorf("finding root: %w", err)
+		}
+		cursor = root
+		path = rewriteByTheRoot(path)
+	} else {
+		cursor = d
+	}
+	if path == "" {
+		return fmt.Errorf("path is empty")
+	}
+	ss := strings.Split(path, "/")
+	for i, s := range ss {
+		if s == "" {
+			return fmt.Errorf("unexpected empty name")
+		}
+		node, ok := (*cursor)[s]
+		if ok {
+			dir, ok := node.(*Dir)
+			if !ok {
+				return fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
+			}
+			cursor = dir
+		} else {
+			child := &Dir{}
+			(*cursor)[s] = child
+			(*child)["."] = child
+			(*child)[".."] = cursor
+			cursor = child
+		}
+	}
+	return nil
+}
+
+// As in [disk.WriteFS]
+func (d *Dir) WriteFile(name string, data []byte) error {
+	name = filepath.Clean(name)
+	f, err := d.Create(name)
+	if err != nil {
+		return fmt.Errorf("create: %w", err)
+	}
+	_, err = f.Write(data)
+	if err != nil {
+		return fmt.Errorf("write: %w", err)
+	}
+	return nil
 }
 
 // As in [fs.FS]
