@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -25,23 +26,24 @@ func (fd *descriptor) Close() error {
 
 // As in [disk.WriteFS]
 func (d *Dir) Create(path string) (io.WriteCloser, error) {
-	if path == "" {
-		return nil, fmt.Errorf("file name can't be empty")
-	}
-	ss := strings.Split(path, "/")
-	p, err := d.findDir(ss[:len(ss)-1])
+	path = filepath.Clean(path)
+	node, err := locate(d, filepath.Dir(path))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("locate: %w", err)
 	}
-	name := ss[len(ss)-1]
+	dir, ok := node.(*Dir)
+	if !ok {
+		return nil, fmt.Errorf("destination should be a directory")
+	}
+	name := filepath.Base(path)
 	if name == "" {
 		return nil, fmt.Errorf("unexpected empty name")
 	}
-	if _, ok := (*p)[name]; ok {
-		return nil, fmt.Errorf("target already exists: %s", highlight(ss, len(ss)-1))
+	if _, ok := (*dir)[name]; ok {
+		return nil, fmt.Errorf("exists")
 	}
 	f := &File{}
-	(*p)[name] = f
+	(*dir)[name] = f
 	fd := &descriptor{
 		file: f,
 		pos:  0,
@@ -59,28 +61,39 @@ func (d *Dir) Create(path string) (io.WriteCloser, error) {
 
 // As in [disk.WriteFS]
 func (d *Dir) MkdirAll(path string) error {
+	path = filepath.Clean(path)
+	var cursor *Dir
+	if filepath.IsAbs(path) {
+		root, err := findRoot(d)
+		if err != nil {
+			return fmt.Errorf("finding root: %w", err)
+		}
+		cursor = root
+		path = rewriteByTheRoot(path)
+	} else {
+		cursor = d
+	}
 	if path == "" {
-		return fmt.Errorf("file name can't be empty")
+		return fmt.Errorf("path is empty")
 	}
 	ss := strings.Split(path, "/")
-	p := d
 	for i, s := range ss {
 		if s == "" {
 			return fmt.Errorf("unexpected empty name")
-		} else if s == "." {
-			continue
 		}
-		n, ok := (*p)[s]
+		node, ok := (*cursor)[s]
 		if ok {
-			d, ok := n.(*Dir)
+			dir, ok := node.(*Dir)
 			if !ok {
 				return fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
 			}
-			p = d
+			cursor = dir
 		} else {
-			c := &Dir{}
-			(*p)[s] = c
-			p = c
+			child := &Dir{}
+			(*cursor)[s] = child
+			(*child)["."] = child
+			(*child)[".."] = cursor
+			cursor = child
 		}
 	}
 	return nil
@@ -88,10 +101,20 @@ func (d *Dir) MkdirAll(path string) error {
 
 // As in [disk.WriteFS]
 func (d *Dir) WriteFile(name string, data []byte) error {
+	name = filepath.Clean(name)
 	f, err := d.Create(name)
 	if err != nil {
-		return fmt.Errorf("creating: %w", err)
+		return fmt.Errorf("create: %w", err)
 	}
-	f.Write(data)
+	_, err = f.Write(data)
+	if err != nil {
+		return fmt.Errorf("write: %w", err)
+	}
 	return nil
+}
+
+func New() *Dir {
+	d := Dir{}
+	d["."] = &d
+	return &d
 }

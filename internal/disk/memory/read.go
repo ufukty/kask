@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -52,55 +53,80 @@ func (fd *descriptor) Read(p []byte) (int, error) {
 	return len(*fd.file), nil
 }
 
-func (d *Dir) findDir(ss []string) (*Dir, error) {
-	p := d
+func rewriteByTheRoot(path string) string {
+	if path == "/" {
+		return "."
+	} else {
+		return strings.TrimPrefix(path, "/")
+	}
+}
+
+func findRoot(dir *Dir) (*Dir, error) {
+	for range 100 {
+		node, ok := (*dir)[".."]
+		if !ok {
+			return dir, nil
+		}
+		parent, ok := (node).(*Dir)
+		if !ok {
+			return nil, fmt.Errorf("unexpected non-dir parent: %T", node)
+		}
+		dir = parent
+	}
+	return nil, fmt.Errorf("directory depth limit is exceeded")
+}
+
+// Allows [*File] only at leaves.
+// Returns either the [*Dir] or [*File] pointed by [string].
+func locate(entry *Dir, path string) (any, error) {
+	path = filepath.Clean(path)
+	if path == "" {
+		return nil, fmt.Errorf("path is empty")
+	}
+	var cursor any
+	if filepath.IsAbs(path) {
+		root, err := findRoot(entry)
+		if err != nil {
+			return nil, fmt.Errorf("finding root: %w", err)
+		}
+		cursor = root
+		path = rewriteByTheRoot(path)
+	} else {
+		cursor = entry
+	}
+	ss := strings.Split(path, "/")
 	for i, s := range ss {
 		if s == "" {
-			return nil, fmt.Errorf("empty name")
+			return nil, fmt.Errorf("destination passes through a node with empty name")
 		}
-		if s == "." {
-			continue
-		}
-		// if s == ".." {
-		// 	if d.Parent != nil {
-		// 		d = d.Parent
-		// 	}
-		// 	continue
-		// }
-		n, ok := (*p)[s]
-		if !ok {
-			return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, i))
-		}
-		d, ok := n.(*Dir)
+		// shouldn't execute when it is a [*File],
+		// which is only possible at a leaf.
+		dir, ok := cursor.(*Dir)
 		if !ok {
 			return nil, fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
 		}
-		p = d
+		cursor, ok = (*dir)[s]
+		if !ok {
+			return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, i))
+		}
 	}
-	return p, nil
+	return cursor, nil
 }
 
 // As in [fs.FS]
 func (d *Dir) Open(path string) (fs.File, error) {
-	if path == "" {
-		return nil, fmt.Errorf("file path can't be empty")
-	}
-	ss := strings.Split(path, "/")
-	p, err := d.findDir(ss[:len(ss)-1])
+	p, err := locate(d, path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("locate: %w", err)
 	}
-	name := ss[len(ss)-1]
+	f, ok := p.(*File)
+	if !ok {
+		ss := strings.Split(path, "/")
+		return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, len(ss)-1))
+	}
+	name := filepath.Base(path)
 	if name == "" {
 		return nil, fmt.Errorf("unexpected empty name")
-	}
-	inode, ok := (*p)[name]
-	if !ok {
-		return nil, fs.ErrNotExist
-	}
-	f, ok := inode.(*File)
-	if !ok {
-		return nil, fs.ErrInvalid
 	}
 	fd := &descriptor{
 		file: f,
@@ -111,7 +137,7 @@ func (d *Dir) Open(path string) (fs.File, error) {
 			mode:    0o666,
 			modTime: time.Time{},
 			isDir:   false,
-			sys:     ss,
+			sys:     nil,
 		},
 	}
 	return fd, nil
@@ -136,47 +162,24 @@ func (d *Dir) ReadFile(name string) ([]byte, error) {
 	return b, nil
 }
 
-func (d *Dir) inode(path, name string) (any, error) {
-	if name == "" {
-		return nil, &fs.PathError{Op: "stat", Path: path, Err: fmt.Errorf("unexpected empty name")}
-	}
-	if name == "." {
-		return d, nil
-	}
-	inode, ok := (*d)[name]
-	if !ok {
-		return nil, &fs.PathError{Op: "stat", Path: path, Err: fs.ErrNotExist}
-	}
-	return inode, nil
-}
-
 // As in [fs.StatFS]
 func (d *Dir) Stat(path string) (fs.FileInfo, error) {
-	if path == "" {
-		return nil, &fs.PathError{Op: "stat", Path: path, Err: fmt.Errorf("file path can't be empty")}
-	}
-	ss := strings.Split(path, "/")
-	p, err := d.findDir(ss[:len(ss)-1])
+	node, err := locate(d, path)
 	if err != nil {
-		return nil, &fs.PathError{Op: "stat", Path: path, Err: err}
+		return nil, fmt.Errorf("locate: %w", err)
 	}
-	name := ss[len(ss)-1]
-	node, err := p.inode(path, name)
-	if err != nil {
-		return nil, err
-	}
-	f, isFile := node.(*File)
+	file, isFile := node.(*File)
 	if isFile {
 		return fileInfo{
-			name:    name,
-			size:    int64(len(*f)),
+			name:    filepath.Base(path),
+			size:    int64(len(*file)),
 			mode:    0o666,
 			modTime: time.Now(),
 			isDir:   false,
 		}, nil
 	} else {
 		return fileInfo{
-			name:    name,
+			name:    filepath.Base(path),
 			size:    0,
 			mode:    fs.ModeDir | 0o755,
 			modTime: time.Now(),
@@ -187,18 +190,19 @@ func (d *Dir) Stat(path string) (fs.FileInfo, error) {
 
 // As in [fs.ReadDirFS]
 func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
-	if path == "" {
-		return nil, &fs.PathError{Op: "stat", Path: path, Err: fmt.Errorf("file path can't be empty")}
-	}
-	p, err := d.findDir(strings.Split(path, "/"))
+	node, err := locate(d, path)
 	if err != nil {
-		return nil, &fs.PathError{Op: "stat", Path: path, Err: err}
+		return nil, fmt.Errorf("locate: %w", err)
+	}
+	dir, ok := node.(*Dir)
+	if !ok {
+		return nil, fmt.Errorf("not a directory")
 	}
 	ds := []fs.DirEntry{}
-	for name := range *p {
-		fi, err := d.Stat(name)
+	for name := range *dir {
+		fi, err := dir.Stat(name)
 		if err != nil {
-			return nil, &fs.PathError{Op: "stat", Path: path, Err: fmt.Errorf("stat: %w", err)}
+			return nil, fmt.Errorf("stat: %w", err)
 		}
 		di := dirEntry{
 			name:  name,

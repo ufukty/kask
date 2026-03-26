@@ -32,6 +32,9 @@ func walkDir(root any, path string, v func(string, any) bool) bool {
 	}
 	if d, ok := root.(*Dir); ok {
 		for name, sub := range *d {
+			if name == "." || name == ".." {
+				continue
+			}
 			if !walkDir(sub, filepath.Join(path, name), v) {
 				return false
 			}

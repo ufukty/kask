@@ -8,7 +8,7 @@ import (
 )
 
 func TestDir_create(t *testing.T) {
-	d := Dir{}
+	d := New()
 	_, err := d.Create("lorem")
 	if err != nil {
 		t.Fatalf("act, unexpected error: %v", err)
@@ -16,13 +16,26 @@ func TestDir_create(t *testing.T) {
 }
 
 func TestDir_mkdirAll(t *testing.T) {
-	d := &Dir{}
-	err := d.MkdirAll("lorem/ipsum/dolor/sit/amet")
-	if err != nil {
-		t.Fatalf("act, unexpected error: %v", err)
-	}
+	d := New()
+
+	t.Run("relative", func(t *testing.T) {
+		err := d.MkdirAll("lorem/ipsum/dolor/sit/amet")
+		if err != nil {
+			t.Fatalf("act, unexpected error: %v", err)
+		}
+	})
+
+	t.Run("absolute", func(t *testing.T) {
+		err := d.MkdirAll("/consectetur/adipiscing")
+		if err != nil {
+			t.Fatalf("act, unexpected error: %v", err)
+		}
+	})
+
 	expected := []string{
 		".",
+		"consectetur",
+		"consectetur/adipiscing",
 		"lorem",
 		"lorem/ipsum",
 		"lorem/ipsum/dolor",
@@ -33,7 +46,7 @@ func TestDir_mkdirAll(t *testing.T) {
 }
 
 func TestDir_mkdirAll_overwriteAsFile(t *testing.T) {
-	d := &Dir{}
+	d := New()
 
 	t.Run("create as file", func(t *testing.T) {
 		if _, err := d.Create("lorem"); err != nil {
@@ -49,7 +62,7 @@ func TestDir_mkdirAll_overwriteAsFile(t *testing.T) {
 }
 
 func TestFileDescriptor_createWriteRead(t *testing.T) {
-	d := &Dir{}
+	d := New()
 
 	var w io.WriteCloser
 	t.Run("create", func(t *testing.T) {
@@ -113,6 +126,35 @@ func TestFileDescriptor_createWriteRead(t *testing.T) {
 		_, err := fd.Write([]byte("Don't stop me."))
 		if err == nil {
 			t.Errorf("unexpected success: %v", err)
+		}
+	})
+}
+
+func TestDir_Stat(t *testing.T) {
+	d := New()
+
+	err := d.MkdirAll("a/b/c/d")
+	if err != nil {
+		t.Fatalf("prep, mkdir all: %v", err)
+	}
+
+	t.Run("relative", func(t *testing.T) {
+		d, err := d.Stat("a/b/c")
+		if err != nil {
+			t.Errorf("act, stat: %v", err)
+		}
+		if d.Name() != "c" {
+			t.Errorf("assert, name: expected %q, got %q", "c", d.Name())
+		}
+	})
+
+	t.Run("absolute", func(t *testing.T) {
+		d, err := d.Stat("/a/b/c")
+		if err != nil {
+			t.Errorf("act, stat: %v", err)
+		}
+		if d.Name() != "c" {
+			t.Errorf("assert, name: expected %q, got %q", "c", d.Name())
 		}
 	})
 }
