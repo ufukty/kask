@@ -32,19 +32,23 @@ type (
 	Dir  map[string]any
 )
 
-// write
 var (
-	_ io.WriteCloser = (*descriptor)(nil)
-	_ disk.WriteFS   = (*Dir)(nil)
+	_ fs.FileInfo = (*fileInfo)(nil)
+	_ fs.DirEntry = (*dirEntry)(nil)
 )
 
-// read
 var (
-	_ fs.FileInfo   = (*fileInfo)(nil)
-	_ fs.DirEntry   = (*dirEntry)(nil)
+	// write
+	_ io.WriteCloser = (*descriptor)(nil)
+	// read
 	_ fs.File       = (*descriptor)(nil)
-	_ io.Reader     = (*descriptor)(nil)
 	_ io.ReadCloser = (*descriptor)(nil)
+)
+
+var (
+	// write
+	_ disk.WriteFS = (*Dir)(nil)
+	// read
 	_ fs.FS         = (*Dir)(nil)
 	_ fs.ReadFileFS = (*Dir)(nil)
 	_ fs.ReadDirFS  = (*Dir)(nil)
