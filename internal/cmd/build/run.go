@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"go.ufukty.com/kask/internal/builder"
+	"go.ufukty.com/kask/internal/disk"
 )
 
 type args struct {
@@ -61,8 +62,8 @@ func Run() error {
 	err = builder.Build(builder.Args{
 		Dev:      a.Dev,
 		Domain:   a.Domain,
-		Dst:      a.Out,
-		Src:      a.In,
+		Dst:      disk.NewReal(a.Out),
+		Src:      disk.NewReal(a.In),
 		Verbose:  a.Verbose,
 		Provider: provider(a),
 	})
