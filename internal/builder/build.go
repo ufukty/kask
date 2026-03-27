@@ -225,12 +225,12 @@ func (b *builder) Build() error {
 	return nil
 }
 
-func Build(args Args) error {
+func newBuilder(args Args) *builder {
 	if !strings.HasSuffix(args.Domain, "/") {
 		args.Domain += "/"
 	}
 	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: args.Domain})
-	b := &builder{
+	return &builder{
 		args:           args,
 		rw:             rw,
 		mr:             markdown.New(args.Src, args.Domain),
@@ -239,5 +239,8 @@ func Build(args Args) error {
 		start:          time.Now(),
 		incorrectLinks: map[string][]string{},
 	}
-	return b.Build()
+}
+
+func Build(args Args) error {
+	return newBuilder(args).Build()
 }
