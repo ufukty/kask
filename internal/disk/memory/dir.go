@@ -61,11 +61,10 @@ func locate(entry *Dir, path string) (any, error) {
 		if s == "" {
 			return nil, fmt.Errorf("destination passes through a node with empty name")
 		}
-		// shouldn't execute when it is a [*File],
-		// which is only possible at a leaf.
 		dir, ok := cursor.(*Dir)
 		if !ok {
-			return nil, fmt.Errorf("destination passes through a file: %s", highlight(ss, i))
+			// destination has passed through a [*File] in previous iteration
+			return nil, fmt.Errorf("destination passes through a file: %s", highlight(ss, i-1))
 		}
 		cursor, ok = (*dir)[s]
 		if !ok {
