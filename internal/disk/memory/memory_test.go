@@ -2,6 +2,7 @@ package memory
 
 import (
 	"io"
+	"io/fs"
 	"testing"
 
 	"go.ufukty.com/kask/internal/assert"
@@ -156,5 +157,52 @@ func TestDir_Stat(t *testing.T) {
 		if d.Name() != "c" {
 			t.Errorf("assert, name: expected %q, got %q", "c", d.Name())
 		}
+	})
+}
+
+func TestDir_fsUtilsInterop(t *testing.T) {
+	d := New()
+
+	t.Run("mkdir", func(t *testing.T) {
+		t.Run("relative", func(t *testing.T) {
+			err := d.MkdirAll("lorem/ipsum/dolor/sit/amet")
+			if err != nil {
+				t.Fatalf("act, unexpected error: %v", err)
+			}
+		})
+		t.Run("absolute", func(t *testing.T) {
+			err := d.MkdirAll("/consectetur/adipiscing")
+			if err != nil {
+				t.Fatalf("act, unexpected error: %v", err)
+			}
+		})
+	})
+
+	got := []string{}
+	t.Run("walk dir", func(t *testing.T) {
+		err := fs.WalkDir(d, ".", func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			got = append(got, path)
+			return nil
+		})
+		if err != nil {
+			t.Errorf("act, WalkDir: %v", err)
+		}
+	})
+
+	t.Run("compare", func(t *testing.T) {
+		expected := []string{
+			".",
+			"consectetur",
+			"consectetur/adipiscing",
+			"lorem",
+			"lorem/ipsum",
+			"lorem/ipsum/dolor",
+			"lorem/ipsum/dolor/sit",
+			"lorem/ipsum/dolor/sit/amet",
+		}
+		assert.EachResult(t, expected, got)
 	})
 }

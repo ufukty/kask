@@ -251,6 +251,9 @@ func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
 	}
 	ds := []fs.DirEntry{}
 	for name := range *dir {
+		if name == "." || name == ".." {
+			continue
+		}
 		fi, err := dir.Stat(name)
 		if err != nil {
 			return nil, fmt.Errorf("stat: %w", err)
