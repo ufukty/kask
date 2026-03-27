@@ -29,7 +29,7 @@ type (
 		info fileInfo
 	}
 	File []byte
-	Dir  map[string]any
+	Dir  map[string]any // use [New] to construct
 )
 
 var (
