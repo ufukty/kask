@@ -264,7 +264,7 @@ func TestBuilder_assetLinking(t *testing.T) {
 }
 
 func TestBuilder_workersConfigurationFile(t *testing.T) {
-	dst := &memory.Dir{}
+	dst := memory.New()
 	args := builderArgs{
 		Src:      disk.NewReal("testdata/workers"),
 		Dst:      dst,
