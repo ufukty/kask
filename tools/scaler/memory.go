@@ -65,7 +65,7 @@ func measure() (uint64, uint64) {
 
 func invoke(src disk.ReadFS) error {
 	dst := memory.New()
-	args := builder.Args{Src: tmp, Dst: dst, Domain: "/"}
+	args := builder.Args{Src: src, Dst: dst, Domain: "/"}
 	err := builder.Build(args)
 	if err != nil {
 		return fmt.Errorf("builder.Build: %w", err)
