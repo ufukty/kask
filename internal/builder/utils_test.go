@@ -56,7 +56,7 @@ func breadcrumbs(root *kask.Node) []string {
 
 func buildTestSite(t *testing.T, src, domain string) (*builder, *memory.Dir) {
 	dst := memory.New()
-	b := newBuilder(builderArgs{
+	b := newBuilder(Args{
 		Src:     disk.NewReal(filepath.Join("testdata", src)), // TODO: use on-memory FS
 		Dst:     dst,
 		Domain:  domain,

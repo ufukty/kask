@@ -66,8 +66,8 @@ func TestBuilder_propagated(t *testing.T) {
 			dst := t.TempDir()
 			fmt.Println("temp folder:", dst)
 			a := Args{
-				Src:     filepath.Join("testdata/propagated", tc),
-				Dst:     dst,
+				Src:     disk.NewReal(filepath.Join("testdata/propagated", tc)),
+				Dst:     disk.NewReal(dst),
 				Dev:     true,
 				Verbose: true,
 			}
@@ -265,12 +265,12 @@ func TestBuilder_assetLinking(t *testing.T) {
 
 func TestBuilder_workersConfigurationFile(t *testing.T) {
 	dst := memory.New()
-	args := builderArgs{
+	args := Args{
 		Src:      disk.NewReal("testdata/workers"),
 		Dst:      dst,
 		Provider: ProviderCloudflareWorkers,
 	}
-	err := newBuilder(args).Build()
+	err := Build(args)
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -351,8 +351,8 @@ func TestBuilder_linkCanonicalization(t *testing.T) {
 
 func TestBuilder_docs(t *testing.T) {
 	err := Build(Args{
-		Src:      "../../docs", // TODO: use on-memory FS
-		Dst:      t.TempDir(),  // TODO: use on-memory FS
+		Src:      disk.NewReal("../../docs"), // TODO: use on-memory FS
+		Dst:      disk.NewReal(t.TempDir()),  // TODO: use on-memory FS
 		Domain:   "https://kask.ufukty.com/",
 		Dev:      false,
 		Verbose:  false,
