@@ -30,7 +30,7 @@ func (p Provider) UrlMode() paths.UrlMode {
 	return paths.UrlModeDefault
 }
 
-type builderArgs struct {
+type Args struct {
 	Src      disk.ReadFS
 	Dst      disk.WriteFS
 	Domain   string
@@ -40,7 +40,7 @@ type builderArgs struct {
 }
 
 type builder struct {
-	args           builderArgs
+	args           Args
 	rw             *rewriter.Rewriter
 	mr             *markdown.Renderer
 	markdown       map[string]*kask.Markdown // src -> content
@@ -225,13 +225,12 @@ func (b *builder) Build() error {
 	return nil
 }
 
-// split for testing
-func newBuilder(args builderArgs) *builder {
+func Build(args Args) error {
 	if !strings.HasSuffix(args.Domain, "/") {
 		args.Domain += "/"
 	}
 	rw := rewriter.New(paths.Paths{Src: ".", Dst: ".", Url: args.Domain})
-	return &builder{
+	b := &builder{
 		args:           args,
 		rw:             rw,
 		mr:             markdown.New(args.Src, args.Domain),
@@ -240,24 +239,5 @@ func newBuilder(args builderArgs) *builder {
 		start:          time.Now(),
 		incorrectLinks: map[string][]string{},
 	}
-}
-
-type Args struct {
-	Src, Dst string
-	Domain   string
-	Dev      bool // suffixes css bundles with unique ids to bypass browser caching
-	Verbose  bool
-	Provider Provider
-}
-
-func Build(args Args) error {
-	bArgs := builderArgs{
-		Src:      disk.NewReal(args.Src),
-		Dst:      disk.NewReal(args.Dst),
-		Domain:   args.Domain,
-		Dev:      args.Dev,
-		Verbose:  args.Verbose,
-		Provider: args.Provider,
-	}
-	return newBuilder(bArgs).Build()
+	return b.Build()
 }
