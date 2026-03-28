@@ -15,6 +15,17 @@
         "-v",
         "-dev"
       ]
+    },
+    {
+      "name": "Scaler (tool)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "./tools/scaler",
+      "args": [
+        "-path",
+        "${workspaceFolder}/docs",
+      ]
     }
   ]
 }
