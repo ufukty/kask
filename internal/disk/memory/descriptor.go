@@ -10,6 +10,7 @@ import (
 var ErrNoSpace = fmt.Errorf("no space")
 
 // As in [io.Writer]
+// TODO: consider forwarding [fd.pos] as bytes written
 func (fd *descriptor) Write(p []byte) (n int, err error) {
 	if fd.file == nil {
 		return 0, fmt.Errorf("closed")
