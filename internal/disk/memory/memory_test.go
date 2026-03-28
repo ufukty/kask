@@ -206,3 +206,24 @@ func TestDir_fsUtilsInterop(t *testing.T) {
 		assert.EachResult(t, expected, got)
 	})
 }
+
+func TestDir_ReadFile(t *testing.T) {
+	d := New()
+	expected := []byte("some content")
+
+	t.Run("write", func(t *testing.T) {
+		if err := d.WriteFile("text.txt", expected); err != nil {
+			t.Fatalf("act: %v", err)
+		}
+	})
+
+	var got []byte
+	t.Run("ReadFile", func(t *testing.T) {
+		var err error
+		if got, err = d.ReadFile("text.txt"); err != nil {
+			t.Fatalf("ReadFile: %v", err)
+		}
+	})
+
+	assert.Results(t, string(expected), string(got))
+}
