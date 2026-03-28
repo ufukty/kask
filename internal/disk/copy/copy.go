@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"path/filepath"
 
 	"go.ufukty.com/kask/internal/disk"
 )
@@ -39,11 +40,11 @@ func Dir(dstFs disk.WriteFS, dst string, srcFs disk.ReadFS, src string) error {
 			return fmt.Errorf("internal: %w", err)
 		}
 		if d.IsDir() {
-			if err := dstFs.MkdirAll(path); err != nil {
+			if err := dstFs.MkdirAll(filepath.Join(dst, path)); err != nil {
 				return fmt.Errorf("mkdir: %w", err)
 			}
 		} else {
-			if err := File(dstFs, dst, srcFs, path); err != nil {
+			if err := File(dstFs, filepath.Join(dst, path), srcFs, path); err != nil {
 				return fmt.Errorf("file: %w", err)
 			}
 		}
