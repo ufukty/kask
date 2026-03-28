@@ -10,6 +10,7 @@ import (
 var ErrNoSpace = fmt.Errorf("no space")
 
 // As in [io.Writer]
+// TODO: consider forwarding [fd.pos] as bytes written
 func (fd *descriptor) Write(p []byte) (n int, err error) {
 	if fd.file == nil {
 		return 0, fmt.Errorf("closed")
@@ -58,10 +59,8 @@ func (fd *descriptor) Read(p []byte) (int, error) {
 	if fd.pos >= len(*fd.file) {
 		return 0, io.EOF
 	}
-	start, end := fd.pos, min(fd.pos+len(p), len(*fd.file))
-	for i := 0; i < end-start; i++ {
-		p[i] = (*fd.file)[i+start]
-	}
-	fd.pos += len(p)
-	return len(*fd.file), nil
+	n := copy(p, (*fd.file)[fd.pos:])
+	fd.pos += n
+	fd.info.size += int64(n)
+	return n, nil
 }
