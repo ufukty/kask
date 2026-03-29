@@ -156,6 +156,7 @@ func (d *Dir) WriteFile(name string, data []byte) error {
 	if err != nil {
 		return fmt.Errorf("create: %w", err)
 	}
+	defer f.Close()
 	_, err = f.Write(data)
 	if err != nil {
 		return fmt.Errorf("write: %w", err)
