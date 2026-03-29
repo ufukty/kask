@@ -17,14 +17,12 @@ type File []byte
 type Dir map[string]any
 
 var (
-	// write
-	_ disk.WriteFS = (*Dir)(nil)
-	// read
-	_ fs.FS         = (*Dir)(nil)
-	_ fs.ReadFileFS = (*Dir)(nil)
-	_ fs.ReadDirFS  = (*Dir)(nil)
-	_ fs.StatFS     = (*Dir)(nil)
-	_ disk.ReadFS   = (*Dir)(nil)
+	_ fs.StatFS     = (*Dir)(nil) // read
+	_ fs.ReadFileFS = (*Dir)(nil) // read
+	_ fs.ReadDirFS  = (*Dir)(nil) // read
+	_ fs.FS         = (*Dir)(nil) // read
+	_ disk.ReadFS   = (*Dir)(nil) // read
+	_ disk.WriteFS  = (*Dir)(nil) // write
 )
 
 func New() *Dir {
