@@ -8,7 +8,7 @@ import (
 	"go.ufukty.com/kask/internal/assert"
 )
 
-func TestDir_create(t *testing.T) {
+func TestDir_Create(t *testing.T) {
 	d := New()
 	_, err := d.Create("lorem")
 	if err != nil {
@@ -16,7 +16,7 @@ func TestDir_create(t *testing.T) {
 	}
 }
 
-func TestDir_mkdirAll(t *testing.T) {
+func TestDir_MkdirAll(t *testing.T) {
 	d := New()
 
 	t.Run("relative", func(t *testing.T) {
@@ -46,7 +46,7 @@ func TestDir_mkdirAll(t *testing.T) {
 	assert.EachResult(t, expected, find(d))
 }
 
-func TestDir_mkdirAll_overwriteAsFile(t *testing.T) {
+func TestDir_MkdirAll_overwriteAsFile(t *testing.T) {
 	d := New()
 
 	t.Run("create as file", func(t *testing.T) {
@@ -62,7 +62,7 @@ func TestDir_mkdirAll_overwriteAsFile(t *testing.T) {
 	})
 }
 
-func TestFileDescriptor_createWriteRead(t *testing.T) {
+func TestDescriptor_createWriteRead(t *testing.T) {
 	d := New()
 
 	var w io.WriteCloser
@@ -243,7 +243,7 @@ func TestDir_Stat(t *testing.T) {
 	})
 }
 
-func TestDir_fsUtilsInterop(t *testing.T) {
+func TestDir_fsWalkDir(t *testing.T) {
 	d := New()
 
 	t.Run("mkdir", func(t *testing.T) {
