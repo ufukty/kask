@@ -35,11 +35,9 @@ type descriptor struct {
 }
 
 var (
-	// write
 	_ io.WriteCloser = (*descriptor)(nil)
-	// read
-	_ fs.File       = (*descriptor)(nil)
-	_ io.ReadCloser = (*descriptor)(nil)
+	_ fs.File        = (*descriptor)(nil)
+	_ io.ReadCloser  = (*descriptor)(nil)
 )
 
 // As in [io.Writer]
