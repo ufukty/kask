@@ -1,27 +1,12 @@
 package memory
 
 import (
-	"io"
 	"io/fs"
-	"time"
 
 	"go.ufukty.com/kask/internal/disk"
 )
 
 type (
-	fileInfo struct {
-		name    string
-		size    int64
-		mode    fs.FileMode
-		modTime time.Time
-		isDir   bool
-		sys     any
-	}
-	descriptor struct {
-		file *File
-		pos  int
-		info fileInfo
-	}
 	File []byte
 	Dir  map[string]any // use [New] to construct
 )
@@ -29,14 +14,6 @@ type (
 var (
 	_ fs.FileInfo = (*fileInfo)(nil)
 	_ fs.DirEntry = (*dirEntry)(nil)
-)
-
-var (
-	// write
-	_ io.WriteCloser = (*descriptor)(nil)
-	// read
-	_ fs.File       = (*descriptor)(nil)
-	_ io.ReadCloser = (*descriptor)(nil)
 )
 
 var (

@@ -9,6 +9,37 @@ import (
 
 var ErrNoSpace = fmt.Errorf("no space")
 
+type fileInfo struct {
+	name    string
+	size    int64
+	mode    fs.FileMode
+	modTime time.Time
+	isDir   bool
+	sys     any
+}
+
+// As in [fs.FileInfo]
+func (fi fileInfo) Name() string       { return fi.name }
+func (fi fileInfo) Size() int64        { return fi.size }
+func (fi fileInfo) Mode() fs.FileMode  { return fi.mode }
+func (fi fileInfo) ModTime() time.Time { return fi.modTime }
+func (fi fileInfo) IsDir() bool        { return fi.isDir }
+func (fi fileInfo) Sys() any           { return fi.sys }
+
+type descriptor struct {
+	file *File
+	pos  int
+	info fileInfo
+}
+
+var (
+	// write
+	_ io.WriteCloser = (*descriptor)(nil)
+	// read
+	_ fs.File       = (*descriptor)(nil)
+	_ io.ReadCloser = (*descriptor)(nil)
+)
+
 // As in [io.Writer]
 // TODO: consider forwarding [fd.pos] as bytes written
 func (fd *descriptor) Write(p []byte) (n int, err error) {
@@ -24,14 +55,6 @@ func (fd *descriptor) Close() error {
 	fd.file = nil
 	return nil
 }
-
-// As in [fs.FileInfo]
-func (fi fileInfo) Name() string       { return fi.name }
-func (fi fileInfo) Size() int64        { return fi.size }
-func (fi fileInfo) Mode() fs.FileMode  { return fi.mode }
-func (fi fileInfo) ModTime() time.Time { return fi.modTime }
-func (fi fileInfo) IsDir() bool        { return fi.isDir }
-func (fi fileInfo) Sys() any           { return fi.sys }
 
 // As in [fs.StatFS]
 func (fd *descriptor) Stat() (fs.FileInfo, error) {
