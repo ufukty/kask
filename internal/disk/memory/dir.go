@@ -251,6 +251,8 @@ func (de dirEntry) IsDir() bool                { return de.isDir }
 func (de dirEntry) Type() fs.FileMode          { return de.typee }
 func (de dirEntry) Info() (fs.FileInfo, error) { return de.info, nil }
 
+var _ fs.DirEntry = (*dirEntry)(nil)
+
 // As in [fs.ReadDirFS]
 func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
 	node, err := locate(d, path)

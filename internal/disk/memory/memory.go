@@ -11,10 +11,6 @@ type (
 	Dir  map[string]any // use [New] to construct
 )
 
-var (
-	_ fs.FileInfo = (*fileInfo)(nil)
-	_ fs.DirEntry = (*dirEntry)(nil)
-)
 
 var (
 	// write

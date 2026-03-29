@@ -26,6 +26,8 @@ func (fi fileInfo) ModTime() time.Time { return fi.modTime }
 func (fi fileInfo) IsDir() bool        { return fi.isDir }
 func (fi fileInfo) Sys() any           { return fi.sys }
 
+var _ fs.FileInfo = (*fileInfo)(nil)
+
 type descriptor struct {
 	file *File
 	pos  int
