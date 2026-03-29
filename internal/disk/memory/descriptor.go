@@ -53,6 +53,9 @@ func (fd *descriptor) Write(p []byte) (n int, err error) {
 
 // As in [io.Closer]
 func (fd *descriptor) Close() error {
+	if fd == nil {
+		return nil
+	}
 	fd.file = nil
 	return nil
 }
