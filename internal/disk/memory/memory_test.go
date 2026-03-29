@@ -136,21 +136,26 @@ func TestDescriptor_statSize(t *testing.T) {
 	input1 := []byte("Fusce vel posuare.")
 	input2 := []byte("Vitae maximus mi bibendum ac.")
 
-	t.Run("create", func(t *testing.T) {
-		err := d.WriteFile("input.txt", input1)
+	var fd *descriptor
+	t.Run("create and open", func(t *testing.T) {
+		wc, err := d.Create("input.txt")
 		if err != nil {
-			t.Fatalf("prep, WriteFile: %v", err)
+			t.Fatalf("act, Open: %v", err)
+		}
+		_, err = wc.Write(input1)
+		if err != nil {
+			t.Fatalf("act, Write: %v", err)
+		}
+		var ok bool
+		fd, ok = wc.(*descriptor)
+		if !ok {
+			t.Fatalf("post, expected writable file descriptor, got %T", wc)
 		}
 	})
 
-	t.Run("compare", func(t *testing.T) {
+	t.Run("compare the file size", func(t *testing.T) {
 		length := int64(len(input1))
-		t.Run("with the size acquired from descriptor", func(t *testing.T) {
-			fd, err := d.Open("input.txt")
-			if err != nil {
-				t.Fatalf("prep, Open: %v", err)
-			}
-			defer fd.Close()
+		t.Run("from descriptor", func(t *testing.T) {
 			fi, err := fd.Stat()
 			if err != nil {
 				t.Fatalf("prep, Stat: %v", err)
@@ -159,7 +164,7 @@ func TestDescriptor_statSize(t *testing.T) {
 				t.Errorf("assert, length: expected %d, got %d", length, fi.Size())
 			}
 		})
-		t.Run("with the size acquired from directory", func(t *testing.T) {
+		t.Run("from directory", func(t *testing.T) {
 			fi, err := d.Stat("input.txt")
 			if err != nil {
 				t.Fatalf("prep, Stat: %v", err)
@@ -171,29 +176,14 @@ func TestDescriptor_statSize(t *testing.T) {
 	})
 
 	t.Run("write more", func(t *testing.T) {
-		f, err := d.Open("input.txt")
-		if err != nil {
-			t.Fatalf("prep, Open: %v", err)
-		}
-		defer f.Close()
-		fd, ok := f.(*descriptor)
-		if !ok {
-			t.Fatalf("prep, expected writable file descriptor, got %T", f)
-		}
-		_, err = fd.Write(input2)
-		if err != nil {
+		if _, err := fd.Write(input2); err != nil {
 			t.Fatalf("act, Write: %v", err)
 		}
 	})
 
-	t.Run("compare again", func(t *testing.T) {
+	t.Run("compare AGAIN the file size", func(t *testing.T) {
 		newLength := int64(len(input1) + len(input2))
-		t.Run("with the size acquired from descriptor", func(t *testing.T) {
-			fd, err := d.Open("input.txt")
-			if err != nil {
-				t.Fatalf("prep, Open: %v", err)
-			}
-			defer fd.Close()
+		t.Run("from descriptor", func(t *testing.T) {
 			fi, err := fd.Stat()
 			if err != nil {
 				t.Fatalf("prep, Stat: %v", err)
@@ -202,7 +192,7 @@ func TestDescriptor_statSize(t *testing.T) {
 				t.Errorf("assert, length: expected %d, got %d", newLength, fi.Size())
 			}
 		})
-		t.Run("with the size acquired from directory", func(t *testing.T) {
+		t.Run("from directory", func(t *testing.T) {
 			fi, err := d.Stat("input.txt")
 			if err != nil {
 				t.Fatalf("prep, Stat: %v", err)
@@ -354,4 +344,26 @@ func TestDescriptor_readEmptyFile(t *testing.T) {
 	if len(got) != 0 {
 		t.Errorf("expected empty, got %d bytes", len(got))
 	}
+}
+
+func TestDescriptor_doubleClose(t *testing.T) {
+	var wc io.WriteCloser
+	t.Run("create", func(t *testing.T) {
+		var err error
+		if wc, err = New().Create("input.txt"); err != nil {
+			t.Fatalf("act: %v", err)
+		}
+	})
+
+	t.Run("close1", func(t *testing.T) {
+		if err := wc.Close(); err != nil {
+			t.Errorf("act: %v", err)
+		}
+	})
+
+	t.Run("close2", func(t *testing.T) {
+		if err := wc.Close(); err != nil {
+			t.Errorf("act: %v", err)
+		}
+	})
 }
