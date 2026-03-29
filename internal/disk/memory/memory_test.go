@@ -131,6 +131,89 @@ func TestFileDescriptor_createWriteRead(t *testing.T) {
 	})
 }
 
+func TestDescriptor_statSize(t *testing.T) {
+	d := New()
+	input1 := []byte("Fusce vel posuare.")
+	input2 := []byte("Vitae maximus mi bibendum ac.")
+
+	t.Run("create", func(t *testing.T) {
+		err := d.WriteFile("input.txt", input1)
+		if err != nil {
+			t.Fatalf("prep, WriteFile: %v", err)
+		}
+	})
+
+	t.Run("compare", func(t *testing.T) {
+		length := int64(len(input1))
+		t.Run("with the size acquired from descriptor", func(t *testing.T) {
+			fd, err := d.Open("input.txt")
+			if err != nil {
+				t.Fatalf("prep, Open: %v", err)
+			}
+			defer fd.Close()
+			fi, err := fd.Stat()
+			if err != nil {
+				t.Fatalf("prep, Stat: %v", err)
+			}
+			if fi.Size() != length {
+				t.Errorf("assert, length: expected %d, got %d", length, fi.Size())
+			}
+		})
+		t.Run("with the size acquired from directory", func(t *testing.T) {
+			fi, err := d.Stat("input.txt")
+			if err != nil {
+				t.Fatalf("prep, Stat: %v", err)
+			}
+			if fi.Size() != length {
+				t.Errorf("assert, length: expected %d, got %d", length, fi.Size())
+			}
+		})
+	})
+
+	t.Run("write more", func(t *testing.T) {
+		f, err := d.Open("input.txt")
+		if err != nil {
+			t.Fatalf("prep, Open: %v", err)
+		}
+		defer f.Close()
+		fd, ok := f.(*descriptor)
+		if !ok {
+			t.Fatalf("prep, expected writable file descriptor, got %T", f)
+		}
+		_, err = fd.Write(input2)
+		if err != nil {
+			t.Fatalf("act, Write: %v", err)
+		}
+	})
+
+	t.Run("compare again", func(t *testing.T) {
+		newLength := int64(len(input1) + len(input2))
+		t.Run("with the size acquired from descriptor", func(t *testing.T) {
+			fd, err := d.Open("input.txt")
+			if err != nil {
+				t.Fatalf("prep, Open: %v", err)
+			}
+			defer fd.Close()
+			fi, err := fd.Stat()
+			if err != nil {
+				t.Fatalf("prep, Stat: %v", err)
+			}
+			if fi.Size() != newLength {
+				t.Errorf("assert, length: expected %d, got %d", newLength, fi.Size())
+			}
+		})
+		t.Run("with the size acquired from directory", func(t *testing.T) {
+			fi, err := d.Stat("input.txt")
+			if err != nil {
+				t.Fatalf("prep, Stat: %v", err)
+			}
+			if fi.Size() != newLength {
+				t.Errorf("assert, length: expected %d, got %d", newLength, fi.Size())
+			}
+		})
+	})
+}
+
 func TestDir_Stat(t *testing.T) {
 	d := New()
 
