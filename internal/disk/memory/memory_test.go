@@ -85,18 +85,18 @@ func TestDescriptor_createWriteRead(t *testing.T) {
 	t.Run("find file", func(t *testing.T) {
 		w, err := d.Open("lorem")
 		if err != nil {
-			t.Errorf("act, unexpected error: %v", err)
+			t.Fatalf("act, unexpected error: %v", err)
 		}
 		var ok bool
 		if fd, ok = w.(*descriptor); !ok {
-			t.Error("assert, expected descriptor")
+			t.Fatal("assert, expected descriptor")
 		}
 	})
 
 	t.Run("read", func(t *testing.T) {
 		got := make([]byte, len(expected))
 		if _, err := fd.Read(got); err != nil {
-			t.Errorf("act, unexpected error: %v", err)
+			t.Fatalf("act, unexpected error: %v", err)
 		}
 		assert.Results(t, expected, string(got))
 	})
@@ -112,21 +112,21 @@ func TestDescriptor_createWriteRead(t *testing.T) {
 	t.Run("read again", func(t *testing.T) {
 		got := make([]byte, len(expected))
 		if _, err := fd.Read(got); err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Fatalf("unexpected error: %v", err)
 		}
 		assert.Results(t, expected, string(got))
 	})
 
 	t.Run("close", func(t *testing.T) {
 		if err := fd.Close(); err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 
 	t.Run("write after close", func(t *testing.T) {
 		_, err := fd.Write([]byte("Don't stop me."))
 		if err == nil {
-			t.Errorf("unexpected success: %v", err)
+			t.Fatalf("unexpected success: %v", err)
 		}
 	})
 }
@@ -215,7 +215,7 @@ func TestDir_Stat(t *testing.T) {
 	t.Run("relative", func(t *testing.T) {
 		d, err := d.Stat("a/b/c")
 		if err != nil {
-			t.Errorf("act, stat: %v", err)
+			t.Fatalf("act, stat: %v", err)
 		}
 		if d.Name() != "c" {
 			t.Errorf("assert, name: expected %q, got %q", "c", d.Name())
@@ -225,7 +225,7 @@ func TestDir_Stat(t *testing.T) {
 	t.Run("absolute", func(t *testing.T) {
 		d, err := d.Stat("/a/b/c")
 		if err != nil {
-			t.Errorf("act, stat: %v", err)
+			t.Fatalf("act, stat: %v", err)
 		}
 		if d.Name() != "c" {
 			t.Errorf("assert, name: expected %q, got %q", "c", d.Name())
@@ -261,7 +261,7 @@ func TestDir_fsWalkDir(t *testing.T) {
 			return nil
 		})
 		if err != nil {
-			t.Errorf("act, WalkDir: %v", err)
+			t.Fatalf("act, WalkDir: %v", err)
 		}
 	})
 
@@ -308,7 +308,7 @@ func TestDir_ReadAll(t *testing.T) {
 	t.Run("write", func(t *testing.T) {
 		err := d.WriteFile("a.txt", []byte(expected))
 		if err != nil {
-			t.Errorf("act: %v", err)
+			t.Fatalf("act: %v", err)
 		}
 	})
 
@@ -316,7 +316,7 @@ func TestDir_ReadAll(t *testing.T) {
 	t.Run("read", func(t *testing.T) {
 		f, err := d.Open("a.txt")
 		if err != nil {
-			t.Errorf("prep: %v", err)
+			t.Fatalf("prep: %v", err)
 		}
 		got, err = io.ReadAll(f)
 		if err != nil {
@@ -357,7 +357,7 @@ func TestDescriptor_doubleClose(t *testing.T) {
 
 	t.Run("close1", func(t *testing.T) {
 		if err := wc.Close(); err != nil {
-			t.Errorf("act: %v", err)
+			t.Fatalf("act: %v", err)
 		}
 	})
 
