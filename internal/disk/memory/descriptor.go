@@ -49,6 +49,7 @@ func (fd *descriptor) Write(p []byte) (n int, err error) {
 		return 0, fmt.Errorf("closed")
 	}
 	*fd.file = append(*fd.file, p...)
+	fd.info.size += int64(n)
 	return len(p), nil
 }
 
@@ -80,6 +81,5 @@ func (fd *descriptor) Read(p []byte) (int, error) {
 	}
 	n := copy(p, (*fd.file)[fd.pos:])
 	fd.pos += n
-	fd.info.size += int64(n)
 	return n, nil
 }
