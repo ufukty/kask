@@ -47,7 +47,7 @@ func (fd *descriptor) Write(p []byte) (n int, err error) {
 		return 0, fmt.Errorf("closed")
 	}
 	*fd.file = append(*fd.file, p...)
-	fd.info.size += int64(n)
+	fd.info.size += int64(len(p))
 	return len(p), nil
 }
 
