@@ -253,3 +253,22 @@ func TestDir_ReadAll(t *testing.T) {
 
 	assert.Results(t, expected, string(got))
 }
+
+func TestDescriptor_readEmptyFile(t *testing.T) {
+	d := New()
+	err := d.WriteFile("empty.txt", []byte{})
+	if err != nil {
+		t.Fatalf("prep, create: %v", err)
+	}
+	fd, err := d.Open("empty.txt")
+	if err != nil {
+		t.Fatalf("prep, open: %v", err)
+	}
+	got, err := io.ReadAll(fd)
+	if err != nil {
+		t.Fatalf("act, ReadAll: %v", err)
+	}
+	if len(got) != 0 {
+		t.Errorf("expected empty, got %d bytes", len(got))
+	}
+}
