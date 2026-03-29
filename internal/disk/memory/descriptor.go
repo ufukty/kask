@@ -43,6 +43,9 @@ var (
 // As in [io.Writer]
 // TODO: consider forwarding [fd.pos] as bytes written
 func (fd *descriptor) Write(p []byte) (n int, err error) {
+	if fd == nil {
+		return -1, fmt.Errorf("descriptor is not initialized")
+	}
 	if fd.file == nil {
 		return 0, fmt.Errorf("closed")
 	}
@@ -70,6 +73,9 @@ func (fd *descriptor) Stat() (fs.FileInfo, error) {
 // Thus, it may return nil with data less than len(p).
 // As in [io.Reader]
 func (fd *descriptor) Read(p []byte) (int, error) {
+	if fd == nil {
+		return -1, fmt.Errorf("descriptor is not initialized")
+	}
 	if fd.file == nil {
 		return 0, fmt.Errorf("closed")
 	}
