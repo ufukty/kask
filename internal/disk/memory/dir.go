@@ -238,6 +238,19 @@ func (d *Dir) Stat(path string) (fs.FileInfo, error) {
 	}
 }
 
+type dirEntry struct {
+	name  string
+	isDir bool
+	typee fs.FileMode
+	info  fs.FileInfo
+}
+
+// As in [fs.DirEntry]
+func (de dirEntry) Name() string               { return de.name }
+func (de dirEntry) IsDir() bool                { return de.isDir }
+func (de dirEntry) Type() fs.FileMode          { return de.typee }
+func (de dirEntry) Info() (fs.FileInfo, error) { return de.info, nil }
+
 // As in [fs.ReadDirFS]
 func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
 	node, err := locate(d, path)

@@ -17,12 +17,6 @@ type (
 		isDir   bool
 		sys     any
 	}
-	dirEntry struct {
-		name  string
-		isDir bool
-		typee fs.FileMode
-		info  fs.FileInfo
-	}
 	descriptor struct {
 		file *File
 		pos  int

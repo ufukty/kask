@@ -33,12 +33,6 @@ func (fi fileInfo) ModTime() time.Time { return fi.modTime }
 func (fi fileInfo) IsDir() bool        { return fi.isDir }
 func (fi fileInfo) Sys() any           { return fi.sys }
 
-// As in [fs.DirEntry]
-func (de dirEntry) Name() string               { return de.name }
-func (de dirEntry) IsDir() bool                { return de.isDir }
-func (de dirEntry) Type() fs.FileMode          { return de.typee }
-func (de dirEntry) Info() (fs.FileInfo, error) { return de.info, nil }
-
 // As in [fs.StatFS]
 func (fd *descriptor) Stat() (fs.FileInfo, error) {
 	return fd.info, nil
