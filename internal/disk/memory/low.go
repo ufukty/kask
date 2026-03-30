@@ -68,7 +68,11 @@ func locate(entry *Dir, path string) (any, error) {
 
 func entries(d *Dir, pos, n int) []fs.DirEntry {
 	ds := []fs.DirEntry{}
-	for _, name := range d.index[pos:min(pos+n, len(d.index))] {
+	from, to := pos, pos+n
+	if n < 0 || len(d.index) < to {
+		to = len(d.index)
+	}
+	for _, name := range d.index[from:to] {
 		node := d.entries[name]
 		fi := fileInfo(node, name)
 		di := entry{

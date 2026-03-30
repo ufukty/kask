@@ -213,5 +213,5 @@ func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
 	if !ok {
 		return nil, ErrIsFile
 	}
-	return entries(dir, 0, len(d.entries)), nil
+	return entries(dir, 0, -1), nil
 }
