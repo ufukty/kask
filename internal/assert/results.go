@@ -40,6 +40,17 @@ func EachResult(t *testing.T, expected, got []string) {
 	}
 }
 
+func Order(t *testing.T, expected, got []string) {
+	if len(expected) != len(got) {
+		t.Errorf("assert lengths: expected %d, got %d", len(expected), len(got))
+	}
+	for i := range len(expected) {
+		if expected[i] != got[i] {
+			t.Fatalf("order is broken at item %d:\n\texp: %s\n\tgot: %s", i, strings.Join(expected, ", "), strings.Join(got, ", "))
+		}
+	}
+}
+
 func EachNamedResult(t *testing.T, expected map[string]string, got []string) {
 	if len(expected) != len(got) {
 		t.Errorf("assert lengths: expected %d, got %d", len(expected), len(got))

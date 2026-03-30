@@ -3,6 +3,7 @@ package memory
 import (
 	"io"
 	"io/fs"
+	"slices"
 	"testing"
 	"testing/fstest"
 
@@ -268,6 +269,74 @@ func TestDir_fsWalkDir(t *testing.T) {
 			"lorem/ipsum/dolor/sit/amet",
 		}
 		assert.EachResult(t, expected, got)
+	})
+}
+
+func TestDir_ReadDir(t *testing.T) {
+	var (
+		d        = New()
+		dirs     = []string{"lorem", "ipsum", "dolor", "sit", "amet"}
+		files    = []string{"consectetur", "adisipcing", "elit"}
+		expected = slices.Concat(dirs, files)
+	)
+	slices.Sort(expected)
+
+	t.Run("make files and dirs", func(t *testing.T) {
+		for _, name := range dirs {
+			if err := d.MkdirAll(name); err != nil {
+				t.Fatalf("act, MkdirAll %q: %v", name, err)
+			}
+		}
+		for _, name := range files {
+			if _, err := d.Create(name); err != nil {
+				t.Fatalf("act, Create %q: %v", name, err)
+			}
+		}
+	})
+
+	t.Run("through Dir.ReadDir", func(t *testing.T) {
+		got := []string{}
+		t.Run("list", func(t *testing.T) {
+			es, err := d.ReadDir(".")
+			if err != nil {
+				t.Fatalf("act, ReadDir: %v", err)
+			}
+			for _, e := range es {
+				got = append(got, e.Name())
+			}
+		})
+		t.Run("compare", func(t *testing.T) {
+			assert.EachResult(t, expected, got)
+		})
+		t.Run("order", func(t *testing.T) {
+			assert.Order(t, expected, got)
+		})
+	})
+	t.Run("through Dir.Open+descriptor.ReadDir(-1)", func(t *testing.T) {
+		got := []string{}
+		t.Run("list", func(t *testing.T) {
+			ds, err := d.Open(".")
+			if err != nil {
+				t.Fatalf("prep, Open: %v", err)
+			}
+			dsr, ok := ds.(*descriptor)
+			if !ok {
+				t.Fatalf("prep, expected Open to return a %q got %T", "descriptor", ds)
+			}
+			es, err := dsr.ReadDir(-1)
+			if err != nil {
+				t.Fatalf("act, ReadDir: %v", err)
+			}
+			for _, e := range es {
+				got = append(got, e.Name())
+			}
+		})
+		t.Run("compare", func(t *testing.T) {
+			assert.EachResult(t, expected, got)
+		})
+		t.Run("order", func(t *testing.T) {
+			assert.Order(t, expected, got)
+		})
 	})
 }
 
