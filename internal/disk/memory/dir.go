@@ -109,7 +109,7 @@ func (d *Dir) MkdirAll(path string) error {
 
 func (d *Dir) insertIndex(name string) {
 	i := 0
-	for ; i < len(d.index) && name < d.index[i]; i++ {
+	for ; i < len(d.index) && d.index[i] < name; i++ {
 		/* i like to move it */
 	}
 	d.index = slices.Insert(d.index, i, name)
