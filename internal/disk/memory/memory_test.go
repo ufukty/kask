@@ -4,6 +4,7 @@ import (
 	"io"
 	"io/fs"
 	"testing"
+	"testing/fstest"
 
 	"go.ufukty.com/kask/internal/assert"
 )
@@ -366,4 +367,21 @@ func TestDescriptor_doubleClose(t *testing.T) {
 			t.Errorf("act: %v", err)
 		}
 	})
+}
+
+// see the package doc for partiallity
+func TestDir_partialFSConformance(t *testing.T) {
+	d := New()
+	if err := d.MkdirAll("a/b"); err != nil {
+		t.Fatalf("prep, MkdirAll: %v", err)
+	}
+	if err := d.WriteFile("a/b/hello.txt", []byte("world")); err != nil {
+		t.Fatalf("prep, WriteFile: %v", err)
+	}
+	if err := d.WriteFile("top.txt", []byte("hi")); err != nil {
+		t.Fatalf("prep, WriteFile2: %v", err)
+	}
+	if err := fstest.TestFS(d, "a/b/hello.txt", "top.txt"); err != nil {
+		t.Fatalf("act: %v", err)
+	}
 }

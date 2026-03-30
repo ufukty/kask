@@ -7,9 +7,15 @@ import (
 	"time"
 )
 
-var ErrNoSpace = fmt.Errorf("no space")
+var (
+	ErrClosed        = fmt.Errorf("closed")
+	ErrIsDir         = fmt.Errorf("node is a directory")
+	ErrIsFile        = fmt.Errorf("node is a file")
+	ErrNoSpace       = fmt.Errorf("no space")
+	ErrUninitialized = fmt.Errorf("uninitialized")
+)
 
-type fileInfo struct {
+type info struct {
 	name    string
 	size    int64
 	mode    fs.FileMode
@@ -19,74 +25,99 @@ type fileInfo struct {
 }
 
 // As in [fs.FileInfo]
-func (fi fileInfo) Name() string       { return fi.name }
-func (fi fileInfo) Size() int64        { return fi.size }
-func (fi fileInfo) Mode() fs.FileMode  { return fi.mode }
-func (fi fileInfo) ModTime() time.Time { return fi.modTime }
-func (fi fileInfo) IsDir() bool        { return fi.isDir }
-func (fi fileInfo) Sys() any           { return fi.sys }
+func (fi info) Name() string       { return fi.name }
+func (fi info) Size() int64        { return fi.size }
+func (fi info) Mode() fs.FileMode  { return fi.mode }
+func (fi info) ModTime() time.Time { return fi.modTime }
+func (fi info) IsDir() bool        { return fi.isDir }
+func (fi info) Sys() any           { return fi.sys }
 
-var _ fs.FileInfo = (*fileInfo)(nil)
+var _ fs.FileInfo = (*info)(nil)
 
+// used for both the files and "dir files".
 type descriptor struct {
-	file *File
-	pos  int
-	info fileInfo
+	data any // [*Dir] | [*File]
+	pos  int // a byte offset or dir entry.
+	info info
 }
 
 var (
 	_ io.WriteCloser = (*descriptor)(nil)
 	_ fs.File        = (*descriptor)(nil)
 	_ io.ReadCloser  = (*descriptor)(nil)
+	_ fs.ReadDirFile = (*descriptor)(nil)
 )
 
 // As in [io.Writer]
 // TODO: consider forwarding [fd.pos] as bytes written
-func (fd *descriptor) Write(p []byte) (n int, err error) {
-	if fd == nil {
-		return -1, fmt.Errorf("descriptor is not initialized")
+func (d *descriptor) Write(p []byte) (n int, err error) {
+	if d == nil {
+		return -1, ErrUninitialized
 	}
-	if fd.file == nil {
-		return 0, fmt.Errorf("closed")
+	f, ok := d.data.(*File)
+	if !ok {
+		return 0, ErrIsDir
 	}
-	*fd.file = append(*fd.file, p...)
-	fd.info.size += int64(len(p))
+	if d.data == nil {
+		return 0, ErrClosed
+	}
+	*f = append(*f, p...)
+	d.info.size += int64(len(p))
 	return len(p), nil
 }
 
 // As in [io.Closer]
-func (fd *descriptor) Close() error {
-	if fd == nil {
+func (d *descriptor) Close() error {
+	if d == nil {
 		return nil
 	}
-	fd.file = nil
+	d.data = nil
 	return nil
 }
 
 // As in [fs.StatFS]
-func (fd *descriptor) Stat() (fs.FileInfo, error) {
-	return fd.info, nil
+func (d *descriptor) Stat() (fs.FileInfo, error) {
+	return d.info, nil
 }
 
 // Read writes the unread portion of file content shorter than the len(p).
 // It returns [io.EOF] when there is nothing to return.
 // Thus, it may return nil with data less than len(p).
-// As in [io.Reader]
-func (fd *descriptor) Read(p []byte) (int, error) {
-	if fd == nil {
-		return -1, fmt.Errorf("descriptor is not initialized")
+// As in [io.Reader] and [fs.File]
+func (d *descriptor) Read(p []byte) (int, error) {
+	if d == nil {
+		return -1, ErrUninitialized
 	}
-	if fd.file == nil {
-		return 0, fmt.Errorf("closed")
+	f, ok := d.data.(*File)
+	if !ok {
+		return 0, ErrIsDir
 	}
-	rem := len(*fd.file) - fd.pos
+	if d.data == nil {
+		return 0, ErrClosed
+	}
+	rem := len(*f) - d.pos
 	if rem > 0 && len(p) == 0 {
 		return 0, ErrNoSpace
 	}
-	if fd.pos >= len(*fd.file) {
+	if d.pos >= len(*f) {
 		return 0, io.EOF
 	}
-	n := copy(p, (*fd.file)[fd.pos:])
-	fd.pos += n
+	n := copy(p, (*f)[d.pos:])
+	d.pos += n
 	return n, nil
+}
+
+// As in [fs.dir]
+func (d *descriptor) ReadDir(n int) ([]fs.DirEntry, error) {
+	if d == nil {
+		return nil, ErrUninitialized
+	}
+	di, ok := d.data.(*Dir)
+	if !ok {
+		return nil, ErrIsFile
+	}
+	if d.data == nil {
+		return nil, ErrClosed
+	}
+	return di.ReadDir(".")
 }

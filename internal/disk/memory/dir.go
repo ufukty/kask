@@ -17,12 +17,12 @@ type File []byte
 type Dir map[string]any
 
 var (
-	_ fs.StatFS     = (*Dir)(nil) // read
-	_ fs.ReadFileFS = (*Dir)(nil) // read
-	_ fs.ReadDirFS  = (*Dir)(nil) // read
-	_ fs.FS         = (*Dir)(nil) // read
-	_ disk.ReadFS   = (*Dir)(nil) // read
 	_ disk.WriteFS  = (*Dir)(nil) // write
+	_ disk.ReadFS   = (*Dir)(nil) // read
+	_ fs.FS         = (*Dir)(nil) // read
+	_ fs.ReadDirFS  = (*Dir)(nil) // read
+	_ fs.ReadFileFS = (*Dir)(nil) // read
+	_ fs.StatFS     = (*Dir)(nil) // read
 )
 
 func New() *Dir {
@@ -111,16 +111,9 @@ func (d *Dir) Create(path string) (io.WriteCloser, error) {
 	f := &File{}
 	(*dir)[name] = f
 	fd := &descriptor{
-		file: f,
+		data: f,
 		pos:  0,
-		info: fileInfo{
-			name:    name,
-			size:    int64(len(*f)),
-			mode:    fs.ModeAppend,
-			modTime: time.Now(),
-			isDir:   false,
-			sys:     nil,
-		},
+		info: fileInfo(f, name),
 	}
 	return fd, nil
 }
@@ -180,34 +173,34 @@ func (d *Dir) WriteFile(name string, data []byte) error {
 	return nil
 }
 
+func fileInfo(node any, base string) info {
+	file, isFile := node.(*File)
+	if isFile {
+		return info{
+			name:    base,
+			size:    int64(len(*file)),
+			mode:    0o666,
+			modTime: time.Now(),
+			isDir:   false,
+		}
+	}
+	return info{
+		name:    base,
+		size:    0,
+		mode:    fs.ModeDir | 0o755,
+		modTime: time.Now(),
+		isDir:   true,
+	}
+}
+
 // As in [fs.FS]
 func (d *Dir) Open(path string) (fs.File, error) {
 	p, err := locate(d, path)
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
 	}
-	f, ok := p.(*File)
-	if !ok {
-		ss := strings.Split(path, "/")
-		return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, len(ss)-1))
-	}
-	name := filepath.Base(path)
-	if name == "" {
-		return nil, fmt.Errorf("unexpected empty name")
-	}
-	fd := &descriptor{
-		file: f,
-		pos:  0,
-		info: fileInfo{
-			name:    name,
-			size:    int64(len(*f)),
-			mode:    0o666,
-			modTime: time.Time{},
-			isDir:   false,
-			sys:     nil,
-		},
-	}
-	return fd, nil
+	fi := fileInfo(p, filepath.Base(path))
+	return &descriptor{data: p, pos: 0, info: fi}, nil
 }
 
 // As in [fs.ReadFileFS]
@@ -235,40 +228,28 @@ func (d *Dir) Stat(path string) (fs.FileInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
 	}
-	file, isFile := node.(*File)
-	if isFile {
-		return fileInfo{
-			name:    filepath.Base(path),
-			size:    int64(len(*file)),
-			mode:    0o666,
-			modTime: time.Now(),
-			isDir:   false,
-		}, nil
-	} else {
-		return fileInfo{
-			name:    filepath.Base(path),
-			size:    0,
-			mode:    fs.ModeDir | 0o755,
-			modTime: time.Now(),
-			isDir:   true,
-		}, nil
-	}
+	return fileInfo(node, filepath.Base(path)), nil
 }
 
-type dirEntry struct {
+type entry struct {
 	name  string
 	isDir bool
-	typee fs.FileMode
-	info  fs.FileInfo
+	mode  fs.FileMode
+	info  info
 }
 
 // As in [fs.DirEntry]
-func (de dirEntry) Name() string               { return de.name }
-func (de dirEntry) IsDir() bool                { return de.isDir }
-func (de dirEntry) Type() fs.FileMode          { return de.typee }
-func (de dirEntry) Info() (fs.FileInfo, error) { return de.info, nil }
+func (e entry) Name() string               { return e.name }
+func (e entry) IsDir() bool                { return e.isDir }
+func (e entry) Type() fs.FileMode          { return e.mode }
+func (e entry) Info() (fs.FileInfo, error) { return e.info, nil }
 
-var _ fs.DirEntry = (*dirEntry)(nil)
+var _ fs.DirEntry = (*entry)(nil)
+
+func isDir(node any) bool {
+	_, ok := node.(*Dir)
+	return ok
+}
 
 // As in [fs.ReadDirFS]
 func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
@@ -278,21 +259,18 @@ func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
 	}
 	dir, ok := node.(*Dir)
 	if !ok {
-		return nil, fmt.Errorf("not a directory")
+		return nil, ErrIsFile
 	}
 	ds := []fs.DirEntry{}
-	for name := range *dir {
+	for name, node := range *dir {
 		if name == "." || name == ".." {
 			continue
 		}
-		fi, err := dir.Stat(name)
-		if err != nil {
-			return nil, fmt.Errorf("stat: %w", err)
-		}
-		di := dirEntry{
+		fi := fileInfo(node, name)
+		di := entry{
 			name:  name,
-			isDir: fi.IsDir(),
-			typee: fi.Mode(),
+			isDir: isDir(node),
+			mode:  fi.Mode(),
 			info:  fi,
 		}
 		ds = append(ds, di)
