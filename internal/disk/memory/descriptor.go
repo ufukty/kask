@@ -11,7 +11,6 @@ var (
 	ErrClosed        = fmt.Errorf("closed")
 	ErrIsDir         = fmt.Errorf("node is a directory")
 	ErrIsFile        = fmt.Errorf("node is a file")
-	ErrNoSpace       = fmt.Errorf("no space")
 	ErrUninitialized = fmt.Errorf("uninitialized")
 )
 
@@ -94,10 +93,6 @@ func (d *descriptor) Read(p []byte) (int, error) {
 	}
 	if d.data == nil {
 		return 0, ErrClosed
-	}
-	rem := len(*f) - d.pos
-	if rem > 0 && len(p) == 0 {
-		return 0, ErrNoSpace
 	}
 	if d.pos >= len(*f) {
 		return 0, io.EOF
