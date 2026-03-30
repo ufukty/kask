@@ -10,8 +10,8 @@ import (
 
 func (d Dir) strings() []string {
 	ss := []string{}
-	for _, name := range slices.Sorted(maps.Keys(d)) {
-		c := d[name]
+	for _, name := range slices.Sorted(maps.Keys(d.entries)) {
+		c := d.entries[name]
 		if d, ok := c.(*Dir); ok {
 			ss = append(ss, tree.List(name, d.strings()))
 		} else if _, ok := c.(*File); ok {
@@ -31,7 +31,7 @@ func walkDir(root any, path string, v func(string, any) bool) bool {
 		return false
 	}
 	if d, ok := root.(*Dir); ok {
-		for name, sub := range *d {
+		for name, sub := range d.entries {
 			if name == "." || name == ".." {
 				continue
 			}

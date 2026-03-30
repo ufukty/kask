@@ -14,7 +14,9 @@ import (
 type File []byte
 
 // use [New] to construct
-type Dir map[string]any
+type Dir struct {
+	entries map[string]any
+}
 
 var (
 	_ disk.WriteFS  = (*Dir)(nil) // write
@@ -26,8 +28,10 @@ var (
 )
 
 func New() *Dir {
-	d := Dir{}
-	d["."] = &d
+	d := Dir{
+		entries: map[string]any{},
+	}
+	d.entries["."] = &d
 	return &d
 }
 
@@ -46,11 +50,11 @@ func (d *Dir) Create(path string) (io.WriteCloser, error) {
 	if name == "" {
 		return nil, fmt.Errorf("unexpected empty name")
 	}
-	if _, ok := (*dir)[name]; ok {
+	if _, ok := dir.entries[name]; ok {
 		return nil, fmt.Errorf("exists")
 	}
 	f := &File{}
-	(*dir)[name] = f
+	dir.entries[name] = f
 	fd := &descriptor{
 		data: f,
 		pos:  0,
@@ -81,7 +85,7 @@ func (d *Dir) MkdirAll(path string) error {
 		if s == "" {
 			return fmt.Errorf("unexpected empty name")
 		}
-		node, ok := (*cursor)[s]
+		node, ok := cursor.entries[s]
 		if ok {
 			dir, ok := node.(*Dir)
 			if !ok {
@@ -89,10 +93,10 @@ func (d *Dir) MkdirAll(path string) error {
 			}
 			cursor = dir
 		} else {
-			child := &Dir{}
-			(*cursor)[s] = child
-			(*child)["."] = child
-			(*child)[".."] = cursor
+			child := New()
+			cursor.entries[s] = child
+			child.entries["."] = child
+			child.entries[".."] = cursor
 			cursor = child
 		}
 	}
@@ -193,27 +197,5 @@ func isDir(node any) bool {
 
 // As in [fs.ReadDirFS]
 func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
-	node, err := locate(d, path)
-	if err != nil {
-		return nil, fmt.Errorf("locate: %w", err)
-	}
-	dir, ok := node.(*Dir)
-	if !ok {
-		return nil, ErrIsFile
-	}
-	ds := []fs.DirEntry{}
-	for name, node := range *dir {
-		if name == "." || name == ".." {
-			continue
-		}
-		fi := fileInfo(node, name)
-		di := entry{
-			name:  name,
-			isDir: isDir(node),
-			mode:  fi.Mode(),
-			info:  fi,
-		}
-		ds = append(ds, di)
-	}
-	return ds, nil
+	return readDir(d, path, 0, len(d.entries))
 }

@@ -10,7 +10,10 @@ package memory
 
 import (
 	"fmt"
+	"io/fs"
+	"maps"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -24,7 +27,7 @@ func rewriteByTheRoot(path string) string {
 
 func findRoot(dir *Dir) (*Dir, error) {
 	for range 100 {
-		node, ok := (*dir)[".."]
+		node, ok := dir.entries[".."]
 		if !ok {
 			return dir, nil
 		}
@@ -65,10 +68,37 @@ func locate(entry *Dir, path string) (any, error) {
 			// destination has passed through a [*File] in previous iteration
 			return nil, fmt.Errorf("destination passes through a file: %s", highlight(ss, i-1))
 		}
-		cursor, ok = (*dir)[s]
+		cursor, ok = dir.entries[s]
 		if !ok {
 			return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, i))
 		}
 	}
 	return cursor, nil
+}
+
+func readDir(d *Dir, path string, pos, n int) ([]fs.DirEntry, error) {
+	node, err := locate(d, path)
+	if err != nil {
+		return nil, fmt.Errorf("locate: %w", err)
+	}
+	dir, ok := node.(*Dir)
+	if !ok {
+		return nil, ErrIsFile
+	}
+	ds := []fs.DirEntry{}
+	for _, name := range slices.Sorted(maps.Keys(dir.entries))[pos:min(pos+n, len(dir.entries))] {
+		if name == "." || name == ".." {
+			continue
+		}
+		node := dir.entries[name]
+		fi := fileInfo(node, name)
+		di := entry{
+			name:  name,
+			isDir: isDir(node),
+			mode:  fi.Mode(),
+			info:  fi,
+		}
+		ds = append(ds, di)
+	}
+	return ds, nil
 }
