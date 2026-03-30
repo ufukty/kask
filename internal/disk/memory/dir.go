@@ -100,15 +100,19 @@ func (d *Dir) MkdirAll(path string) error {
 			cursor.entries[s] = child
 			child.entries["."] = child
 			child.entries[".."] = cursor
+			cursor.insertIndex(s)
 			cursor = child
-			for i := 0; i < len(cursor.index); i++ {
-				if s >= cursor.index[i] {
-					cursor.index = slices.Insert(cursor.index, i, s)
-				}
-			}
 		}
 	}
 	return nil
+}
+
+func (d *Dir) insertIndex(name string) {
+	i := 0
+	for ; i < len(d.index) && name < d.index[i]; i++ {
+		/* i like to move it */
+	}
+	d.index = slices.Insert(d.index, i, name)
 }
 
 // As in [disk.WriteFS]
