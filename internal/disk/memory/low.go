@@ -3,9 +3,7 @@ package memory
 import (
 	"fmt"
 	"io/fs"
-	"maps"
 	"path/filepath"
-	"slices"
 	"strings"
 )
 
@@ -68,21 +66,10 @@ func locate(entry *Dir, path string) (any, error) {
 	return cursor, nil
 }
 
-func readDir(d *Dir, path string, pos, n int) ([]fs.DirEntry, error) {
-	node, err := locate(d, path)
-	if err != nil {
-		return nil, fmt.Errorf("locate: %w", err)
-	}
-	dir, ok := node.(*Dir)
-	if !ok {
-		return nil, ErrIsFile
-	}
+func entries(d *Dir, pos, n int) []fs.DirEntry {
 	ds := []fs.DirEntry{}
-	for _, name := range slices.Sorted(maps.Keys(dir.entries))[pos:min(pos+n, len(dir.entries))] {
-		if name == "." || name == ".." {
-			continue
-		}
-		node := dir.entries[name]
+	for _, name := range d.index[pos:min(pos+n, len(d.index))] {
+		node := d.entries[name]
 		fi := fileInfo(node, name)
 		di := entry{
 			name:  name,
@@ -92,5 +79,5 @@ func readDir(d *Dir, path string, pos, n int) ([]fs.DirEntry, error) {
 		}
 		ds = append(ds, di)
 	}
-	return ds, nil
+	return ds
 }

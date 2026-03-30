@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/fs"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ type File []byte
 // use [New] to construct
 type Dir struct {
 	entries map[string]any
+	index   []string
 }
 
 var (
@@ -98,6 +100,11 @@ func (d *Dir) MkdirAll(path string) error {
 			child.entries["."] = child
 			child.entries[".."] = cursor
 			cursor = child
+			for i := 0; i < len(cursor.index); i++ {
+				if s >= cursor.index[i] {
+					cursor.index = slices.Insert(cursor.index, i, s)
+				}
+			}
 		}
 	}
 	return nil
@@ -197,5 +204,13 @@ func isDir(node any) bool {
 
 // As in [fs.ReadDirFS]
 func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
-	return readDir(d, path, 0, len(d.entries))
+	node, err := locate(d, path)
+	if err != nil {
+		return nil, fmt.Errorf("locate: %w", err)
+	}
+	dir, ok := node.(*Dir)
+	if !ok {
+		return nil, ErrIsFile
+	}
+	return entries(dir, 0, len(d.entries)), nil
 }
