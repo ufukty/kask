@@ -160,8 +160,7 @@ func (d *Dir) MkdirAll(path string) error {
 
 // As in [disk.WriteFS]
 func (d *Dir) WriteFile(name string, data []byte) error {
-	name = filepath.Clean(name)
-	f, err := d.Create(name)
+	f, err := d.Create(filepath.Clean(name))
 	if err != nil {
 		return fmt.Errorf("create: %w", err)
 	}
