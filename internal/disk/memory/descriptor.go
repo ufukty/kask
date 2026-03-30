@@ -102,7 +102,7 @@ func (d *descriptor) Read(p []byte) (int, error) {
 	return n, nil
 }
 
-// As in [fs.dir]
+// As in [fs.ReadDirFile]
 func (d *descriptor) ReadDir(n int) ([]fs.DirEntry, error) {
 	if d == nil {
 		return nil, ErrUninitialized
@@ -114,5 +114,7 @@ func (d *descriptor) ReadDir(n int) ([]fs.DirEntry, error) {
 	if d.data == nil {
 		return nil, ErrClosed
 	}
-	return di.ReadDir(".")
+	es := entries(di, d.pos, n)
+	d.pos += len(es)
+	return es, nil
 }
