@@ -58,6 +58,7 @@ func (d *Dir) Create(path string) (io.WriteCloser, error) {
 	}
 	f := &File{}
 	dir.entries[name] = f
+	dir.insertIndex(name)
 	fd := &descriptor{
 		data: f,
 		pos:  0,
