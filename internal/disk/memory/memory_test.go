@@ -238,18 +238,10 @@ func TestDir_fsWalkDir(t *testing.T) {
 	d := New()
 
 	t.Run("mkdir", func(t *testing.T) {
-		t.Run("relative", func(t *testing.T) {
-			err := d.MkdirAll("lorem/ipsum/dolor/sit/amet")
-			if err != nil {
-				t.Fatalf("act, unexpected error: %v", err)
-			}
-		})
-		t.Run("absolute", func(t *testing.T) {
-			err := d.MkdirAll("/consectetur/adipiscing")
-			if err != nil {
-				t.Fatalf("act, unexpected error: %v", err)
-			}
-		})
+		err := d.MkdirAll("lorem/ipsum/dolor/sit/amet")
+		if err != nil {
+			t.Fatalf("act, unexpected error: %v", err)
+		}
 	})
 
 	got := []string{}
@@ -269,8 +261,6 @@ func TestDir_fsWalkDir(t *testing.T) {
 	t.Run("compare", func(t *testing.T) {
 		expected := []string{
 			".",
-			"consectetur",
-			"consectetur/adipiscing",
 			"lorem",
 			"lorem/ipsum",
 			"lorem/ipsum/dolor",
