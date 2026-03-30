@@ -24,12 +24,12 @@ type info struct {
 }
 
 // As in [fs.FileInfo]
-func (fi info) Name() string       { return fi.name }
-func (fi info) Size() int64        { return fi.size }
-func (fi info) Mode() fs.FileMode  { return fi.mode }
-func (fi info) ModTime() time.Time { return fi.modTime }
-func (fi info) IsDir() bool        { return fi.isDir }
-func (fi info) Sys() any           { return fi.sys }
+func (i info) Name() string       { return i.name }
+func (i info) Size() int64        { return i.size }
+func (i info) Mode() fs.FileMode  { return i.mode }
+func (i info) ModTime() time.Time { return i.modTime }
+func (i info) IsDir() bool        { return i.isDir }
+func (i info) Sys() any           { return i.sys }
 
 var _ fs.FileInfo = (*info)(nil)
 
