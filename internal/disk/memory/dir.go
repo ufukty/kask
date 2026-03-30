@@ -32,6 +32,7 @@ var (
 func New() *Dir {
 	d := Dir{
 		entries: map[string]any{},
+		index:   []string{},
 	}
 	d.entries["."] = &d
 	return &d
