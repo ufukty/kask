@@ -213,5 +213,11 @@ func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
 	if !ok {
 		return nil, ErrIsFile
 	}
-	return entries(dir, 0, -1), nil
+	es, err := entries(dir, 0, -1)
+	if err == io.EOF {
+		return nil, err
+	} else if err != nil {
+		return nil, fmt.Errorf("entries: %w", err)
+	}
+	return es, nil
 }

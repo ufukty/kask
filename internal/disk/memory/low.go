@@ -2,6 +2,7 @@ package memory
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -66,11 +67,14 @@ func locate(entry *Dir, path string) (any, error) {
 	return cursor, nil
 }
 
-func entries(d *Dir, pos, n int) []fs.DirEntry {
+func entries(d *Dir, pos, n int) ([]fs.DirEntry, error) {
 	ds := []fs.DirEntry{}
 	from, to := pos, pos+n
 	if n < 0 || len(d.index) < to {
 		to = len(d.index)
+	}
+	if n > 0 && from == to {
+		return nil, io.EOF
 	}
 	for _, name := range d.index[from:to] {
 		node := d.entries[name]
@@ -83,5 +87,5 @@ func entries(d *Dir, pos, n int) []fs.DirEntry {
 		}
 		ds = append(ds, di)
 	}
-	return ds
+	return ds, nil
 }

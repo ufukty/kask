@@ -114,7 +114,12 @@ func (d *descriptor) ReadDir(n int) ([]fs.DirEntry, error) {
 	if d.data == nil {
 		return nil, ErrClosed
 	}
-	es := entries(di, d.pos, n)
+	es, err := entries(di, d.pos, n)
+	if err == io.EOF {
+		return nil, err
+	} else if err != nil {
+		return nil, fmt.Errorf("entries: %w", err)
+	}
 	d.pos += len(es)
 	return es, nil
 }
