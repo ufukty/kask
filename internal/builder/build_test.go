@@ -208,10 +208,10 @@ func TestBuilder_cssSplitting(t *testing.T) {
 
 	t.Run("contents", func(t *testing.T) {
 		assert.ResultsInFiles(t, dst, map[string]string{
-			"/styles.css":             ":root {}",
-			"/styles.propagate.css":   ":root.propagated {}",
-			"/a/styles.css":           ".a {}",
-			"/a/styles.propagate.css": ".a.propagated {}",
+			"styles.css":             ":root {}",
+			"styles.propagate.css":   ":root.propagated {}",
+			"a/styles.css":           ".a {}",
+			"a/styles.propagate.css": ".a.propagated {}",
 		})
 	})
 }
