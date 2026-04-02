@@ -3,6 +3,7 @@ package disk
 import (
 	"io"
 	"io/fs"
+	_ "os"
 )
 
 // [ReadFS] implementations need to guarantee interoperability with standard
