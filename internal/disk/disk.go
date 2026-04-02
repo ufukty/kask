@@ -7,6 +7,7 @@ import (
 
 // [ReadFS] implementations need to guarantee interoperability with standard
 // library utilities such as [fs.WalkDir] and [template.template.ParseFS].
+// TODO: [fs.GlobFS], [fs.ReadLinkFS], [fs.SubFS]
 type ReadFS interface {
 	fs.FS
 	fs.ReadFileFS
