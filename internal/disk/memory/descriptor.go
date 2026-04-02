@@ -60,7 +60,7 @@ func (d *descriptor) Write(p []byte) (n int, err error) {
 	if d.data == nil {
 		return 0, ErrClosed
 	}
-	*f = append(*f, p...)
+	f.data = append(f.data, p...)
 	d.info.size += int64(len(p))
 	return len(p), nil
 }
@@ -94,10 +94,10 @@ func (d *descriptor) Read(p []byte) (int, error) {
 	if d.data == nil {
 		return 0, ErrClosed
 	}
-	if d.pos >= len(*f) {
+	if d.pos >= len(f.data) {
 		return 0, io.EOF
 	}
-	n := copy(p, (*f)[d.pos:])
+	n := copy(p, f.data[d.pos:])
 	d.pos += n
 	return n, nil
 }

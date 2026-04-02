@@ -4,55 +4,28 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"path/filepath"
 	"strings"
 )
 
-func rewriteByTheRoot(path string) string {
-	if path == "/" {
-		return "."
-	} else {
-		return strings.TrimPrefix(path, "/")
-	}
-}
-
-func findRoot(dir *Dir) (*Dir, error) {
-	for range 100 {
-		node, ok := dir.entries[".."]
-		if !ok {
-			return dir, nil
-		}
-		parent, ok := (node).(*Dir)
-		if !ok {
-			return nil, fmt.Errorf("unexpected non-dir parent: %T", node)
-		}
-		dir = parent
-	}
-	return nil, fmt.Errorf("directory depth limit is exceeded")
+// based on the [fs.ValidPath].
+func isForbidden(s string) bool {
+	return s == "" || s == "." || s == ".."
 }
 
 // Allows [*File] only at leaves.
 // Returns either the [*Dir] or [*File] pointed by [string].
 func locate(entry *Dir, path string) (any, error) {
-	path = filepath.Clean(path)
+	if path == "." {
+		return entry, nil
+	}
 	if path == "" {
 		return nil, fmt.Errorf("path is empty")
 	}
-	var cursor any
-	if filepath.IsAbs(path) {
-		root, err := findRoot(entry)
-		if err != nil {
-			return nil, fmt.Errorf("finding root: %w", err)
-		}
-		cursor = root
-		path = rewriteByTheRoot(path)
-	} else {
-		cursor = entry
-	}
+	var cursor any = entry
 	ss := strings.Split(path, "/")
 	for i, s := range ss {
-		if s == "" {
-			return nil, fmt.Errorf("destination passes through a node with empty name")
+		if isForbidden(s) {
+			return nil, fmt.Errorf("destination passes through an invalid node: %s", highlight(ss, i))
 		}
 		dir, ok := cursor.(*Dir)
 		if !ok {
@@ -78,7 +51,10 @@ func entries(d *Dir, pos, n int) ([]fs.DirEntry, error) {
 	}
 	for _, name := range d.index[from:to] {
 		node := d.entries[name]
-		fi := fileInfo(node, name)
+		fi, err := fileInfo(node, name)
+		if err != nil {
+			return nil, fmt.Errorf("fileInfo %q: %w", name, err)
+		}
 		di := entry{
 			name:  name,
 			isDir: isDir(node),

@@ -20,25 +20,12 @@ func TestDir_Create(t *testing.T) {
 
 func TestDir_MkdirAll(t *testing.T) {
 	d := New()
-
-	t.Run("relative", func(t *testing.T) {
-		err := d.MkdirAll("lorem/ipsum/dolor/sit/amet")
-		if err != nil {
-			t.Fatalf("act, unexpected error: %v", err)
-		}
-	})
-
-	t.Run("absolute", func(t *testing.T) {
-		err := d.MkdirAll("/consectetur/adipiscing")
-		if err != nil {
-			t.Fatalf("act, unexpected error: %v", err)
-		}
-	})
-
+	err := d.MkdirAll("lorem/ipsum/dolor/sit/amet", 0o755)
+	if err != nil {
+		t.Fatalf("act, unexpected error: %v", err)
+	}
 	expected := []string{
 		".",
-		"consectetur",
-		"consectetur/adipiscing",
 		"lorem",
 		"lorem/ipsum",
 		"lorem/ipsum/dolor",
@@ -58,7 +45,7 @@ func TestDir_MkdirAll_overwriteAsFile(t *testing.T) {
 	})
 
 	t.Run("overwrite as dir", func(t *testing.T) {
-		if err := d.MkdirAll("lorem"); err == nil {
+		if err := d.MkdirAll("lorem", 0o755); err == nil {
 			t.Fatalf("act, unexpected success.")
 		}
 	})
@@ -208,38 +195,24 @@ func TestDescriptor_statSize(t *testing.T) {
 
 func TestDir_Stat(t *testing.T) {
 	d := New()
-
-	err := d.MkdirAll("a/b/c/d")
+	err := d.MkdirAll("a/b/c/d", 0o755)
 	if err != nil {
 		t.Fatalf("prep, mkdir all: %v", err)
 	}
-
-	t.Run("relative", func(t *testing.T) {
-		d, err := d.Stat("a/b/c")
-		if err != nil {
-			t.Fatalf("act, stat: %v", err)
-		}
-		if d.Name() != "c" {
-			t.Errorf("assert, name: expected %q, got %q", "c", d.Name())
-		}
-	})
-
-	t.Run("absolute", func(t *testing.T) {
-		d, err := d.Stat("/a/b/c")
-		if err != nil {
-			t.Fatalf("act, stat: %v", err)
-		}
-		if d.Name() != "c" {
-			t.Errorf("assert, name: expected %q, got %q", "c", d.Name())
-		}
-	})
+	di, err := d.Stat("a/b/c")
+	if err != nil {
+		t.Fatalf("act, stat: %v", err)
+	}
+	if di.Name() != "c" {
+		t.Errorf("assert, name: expected %q, got %q", "c", di.Name())
+	}
 }
 
 func TestDir_fsWalkDir(t *testing.T) {
 	d := New()
 
 	t.Run("mkdir", func(t *testing.T) {
-		err := d.MkdirAll("lorem/ipsum/dolor/sit/amet")
+		err := d.MkdirAll("lorem/ipsum/dolor/sit/amet", 0o755)
 		if err != nil {
 			t.Fatalf("act, unexpected error: %v", err)
 		}
@@ -283,7 +256,7 @@ func TestDir_ReadDir(t *testing.T) {
 
 	t.Run("make files and dirs", func(t *testing.T) {
 		for _, name := range dirs {
-			if err := d.MkdirAll(name); err != nil {
+			if err := d.MkdirAll(name, 0o755); err != nil {
 				t.Fatalf("act, MkdirAll %q: %v", name, err)
 			}
 		}
@@ -345,7 +318,7 @@ func TestDir_ReadFile(t *testing.T) {
 	expected := []byte("some content")
 
 	t.Run("write", func(t *testing.T) {
-		if err := d.WriteFile("text.txt", expected); err != nil {
+		if err := d.WriteFile("text.txt", expected, 0o755); err != nil {
 			t.Fatalf("act: %v", err)
 		}
 	})
@@ -366,7 +339,7 @@ func TestDir_ReadAll(t *testing.T) {
 	expected := "hello world"
 
 	t.Run("write", func(t *testing.T) {
-		err := d.WriteFile("a.txt", []byte(expected))
+		err := d.WriteFile("a.txt", []byte(expected), 0o755)
 		if err != nil {
 			t.Fatalf("act: %v", err)
 		}
@@ -389,7 +362,7 @@ func TestDir_ReadAll(t *testing.T) {
 
 func TestDescriptor_readEmptyFile(t *testing.T) {
 	d := New()
-	err := d.WriteFile("empty.txt", []byte{})
+	err := d.WriteFile("empty.txt", []byte{}, 0o755)
 	if err != nil {
 		t.Fatalf("prep, create: %v", err)
 	}
@@ -431,13 +404,13 @@ func TestDescriptor_doubleClose(t *testing.T) {
 // see the package doc for partiallity
 func TestDir_partialFSConformance(t *testing.T) {
 	d := New()
-	if err := d.MkdirAll("a/b"); err != nil {
+	if err := d.MkdirAll("a/b", 0o755); err != nil {
 		t.Fatalf("prep, MkdirAll: %v", err)
 	}
-	if err := d.WriteFile("a/b/hello.txt", []byte("world")); err != nil {
+	if err := d.WriteFile("a/b/hello.txt", []byte("world"), 0o755); err != nil {
 		t.Fatalf("prep, WriteFile: %v", err)
 	}
-	if err := d.WriteFile("top.txt", []byte("hi")); err != nil {
+	if err := d.WriteFile("top.txt", []byte("hi"), 0o755); err != nil {
 		t.Fatalf("prep, WriteFile2: %v", err)
 	}
 	if err := fstest.TestFS(d, "a/b/hello.txt", "top.txt"); err != nil {

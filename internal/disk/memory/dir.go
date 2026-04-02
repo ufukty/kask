@@ -12,35 +12,37 @@ import (
 	"go.ufukty.com/kask/internal/disk"
 )
 
-type File []byte
+type File struct {
+	data    []byte
+	mode    fs.FileMode
+	modTime time.Time
+}
 
 // use [New] to construct
 type Dir struct {
-	entries map[string]any
+	entries map[string]any // [*Dir] | [*File]
 	index   []string
+	mode    fs.FileMode
+	modTime time.Time
 }
 
 var (
-	_ disk.WriteFS  = (*Dir)(nil) // write
-	_ disk.ReadFS   = (*Dir)(nil) // read
-	_ fs.FS         = (*Dir)(nil) // read
-	_ fs.ReadDirFS  = (*Dir)(nil) // read
-	_ fs.ReadFileFS = (*Dir)(nil) // read
-	_ fs.StatFS     = (*Dir)(nil) // read
+	_ disk.WriteFS = (*Dir)(nil)
+	_ disk.ReadFS  = (*Dir)(nil)
 )
 
 func New() *Dir {
 	d := Dir{
 		entries: map[string]any{},
 		index:   []string{},
+		mode:    fs.ModeDir,
+		modTime: time.Now(),
 	}
-	d.entries["."] = &d
 	return &d
 }
 
 // As in [disk.WriteFS]
 func (d *Dir) Create(path string) (disk.File, error) {
-	path = filepath.Clean(path)
 	node, err := locate(d, filepath.Dir(path))
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
@@ -59,35 +61,31 @@ func (d *Dir) Create(path string) (disk.File, error) {
 	f := &File{}
 	dir.entries[name] = f
 	dir.insertIndex(name)
+	fi, err := fileInfo(f, name)
+	if err != nil {
+		return nil, fmt.Errorf("fileInfo: %w", err)
+	}
 	fd := &descriptor{
 		data: f,
 		pos:  0,
-		info: fileInfo(f, name),
+		info: fi,
 	}
 	return fd, nil
 }
 
 // As in [disk.WriteFS]
-func (d *Dir) MkdirAll(path string) error {
-	path = filepath.Clean(path)
-	var cursor *Dir
-	if filepath.IsAbs(path) {
-		root, err := findRoot(d)
-		if err != nil {
-			return fmt.Errorf("finding root: %w", err)
-		}
-		cursor = root
-		path = rewriteByTheRoot(path)
-	} else {
-		cursor = d
+func (d *Dir) MkdirAll(path string, perm fs.FileMode) error {
+	if path == "." {
+		return nil
 	}
+	cursor := d
 	if path == "" {
 		return fmt.Errorf("path is empty")
 	}
 	ss := strings.Split(path, "/")
 	for i, s := range ss {
-		if s == "" {
-			return fmt.Errorf("unexpected empty name")
+		if isForbidden(s) {
+			return fmt.Errorf("destination passes through an invalid node: %s", highlight(ss, i))
 		}
 		node, ok := cursor.entries[s]
 		if ok {
@@ -99,8 +97,6 @@ func (d *Dir) MkdirAll(path string) error {
 		} else {
 			child := New()
 			cursor.entries[s] = child
-			child.entries["."] = child
-			child.entries[".."] = cursor
 			cursor.insertIndex(s)
 			cursor = child
 		}
@@ -117,7 +113,7 @@ func (d *Dir) insertIndex(name string) {
 }
 
 // As in [disk.WriteFS]
-func (d *Dir) WriteFile(name string, data []byte) error {
+func (d *Dir) WriteFile(name string, data []byte, perm fs.FileMode) error {
 	f, err := d.Create(filepath.Clean(name))
 	if err != nil {
 		return fmt.Errorf("create: %w", err)
@@ -130,23 +126,26 @@ func (d *Dir) WriteFile(name string, data []byte) error {
 	return nil
 }
 
-func fileInfo(node any, base string) info {
-	file, isFile := node.(*File)
-	if isFile {
+func fileInfo(node any, base string) (info, error) {
+	switch node := node.(type) {
+	case *File:
 		return info{
 			name:    base,
-			size:    int64(len(*file)),
-			mode:    0o666,
-			modTime: time.Now(),
+			size:    int64(len(node.data)),
+			mode:    node.mode,
+			modTime: node.modTime,
 			isDir:   false,
-		}
-	}
-	return info{
-		name:    base,
-		size:    0,
-		mode:    fs.ModeDir | 0o755,
-		modTime: time.Now(),
-		isDir:   true,
+		}, nil
+	case *Dir:
+		return info{
+			name:    base,
+			size:    0,
+			mode:    node.mode,
+			modTime: node.modTime,
+			isDir:   true,
+		}, nil
+	default:
+		return info{}, fmt.Errorf("unknown type: %T", node)
 	}
 }
 
@@ -156,7 +155,10 @@ func (d *Dir) Open(path string) (fs.File, error) {
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
 	}
-	fi := fileInfo(p, filepath.Base(path))
+	fi, err := fileInfo(p, filepath.Base(path))
+	if err != nil {
+		return nil, fmt.Errorf("fileInfo: %w", err)
+	}
 	return &descriptor{data: p, pos: 0, info: fi}, nil
 }
 
@@ -185,7 +187,11 @@ func (d *Dir) Stat(path string) (fs.FileInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
 	}
-	return fileInfo(node, filepath.Base(path)), nil
+	fi, err := fileInfo(node, filepath.Base(path))
+	if err != nil {
+		return nil, fmt.Errorf("fileInfo: %w", err)
+	}
+	return fi, nil
 }
 
 type entry struct {
