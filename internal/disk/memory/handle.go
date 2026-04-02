@@ -54,12 +54,12 @@ func (d *handle) Write(p []byte) (n int, err error) {
 	if d == nil {
 		return -1, ErrUninitialized
 	}
+	if d.data == nil {
+		return 0, ErrClosed
+	}
 	f, ok := d.data.(*File)
 	if !ok {
 		return 0, ErrIsDir
-	}
-	if d.data == nil {
-		return 0, ErrClosed
 	}
 	f.data = append(f.data, p...)
 	d.info.size += int64(len(p))
@@ -88,12 +88,12 @@ func (d *handle) Read(p []byte) (int, error) {
 	if d == nil {
 		return -1, ErrUninitialized
 	}
+	if d.data == nil {
+		return 0, ErrClosed
+	}
 	f, ok := d.data.(*File)
 	if !ok {
 		return 0, ErrIsDir
-	}
-	if d.data == nil {
-		return 0, ErrClosed
 	}
 	if d.pos >= len(f.data) {
 		return 0, io.EOF
@@ -108,12 +108,12 @@ func (d *handle) ReadDir(n int) ([]fs.DirEntry, error) {
 	if d == nil {
 		return nil, ErrUninitialized
 	}
+	if d.data == nil {
+		return nil, ErrClosed
+	}
 	di, ok := d.data.(*Dir)
 	if !ok {
 		return nil, ErrIsFile
-	}
-	if d.data == nil {
-		return nil, ErrClosed
 	}
 	es, err := entries(di, d.pos, n)
 	if err == io.EOF {
