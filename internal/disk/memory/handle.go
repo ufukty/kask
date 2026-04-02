@@ -34,22 +34,23 @@ func (i info) Sys() any           { return i.sys }
 var _ fs.FileInfo = (*info)(nil)
 
 // used for both the files and "dir files".
-type descriptor struct {
+type handle struct {
 	data any // [*Dir] | [*File]
 	pos  int // a byte offset or dir entry.
 	info info
 }
 
 var (
-	_ io.WriteCloser = (*descriptor)(nil)
-	_ fs.File        = (*descriptor)(nil)
-	_ io.ReadCloser  = (*descriptor)(nil)
-	_ fs.ReadDirFile = (*descriptor)(nil)
+	_ fs.File        = (*handle)(nil)
+	_ fs.ReadDirFile = (*handle)(nil)
+	_ io.Closer      = (*handle)(nil)
+	_ io.Reader      = (*handle)(nil)
+	_ io.Writer      = (*handle)(nil)
 )
 
 // As in [io.Writer]
 // TODO: consider forwarding [fd.pos] as bytes written
-func (d *descriptor) Write(p []byte) (n int, err error) {
+func (d *handle) Write(p []byte) (n int, err error) {
 	if d == nil {
 		return -1, ErrUninitialized
 	}
@@ -66,7 +67,7 @@ func (d *descriptor) Write(p []byte) (n int, err error) {
 }
 
 // As in [io.Closer]
-func (d *descriptor) Close() error {
+func (d *handle) Close() error {
 	if d == nil {
 		return nil
 	}
@@ -75,7 +76,7 @@ func (d *descriptor) Close() error {
 }
 
 // As in [fs.StatFS]
-func (d *descriptor) Stat() (fs.FileInfo, error) {
+func (d *handle) Stat() (fs.FileInfo, error) {
 	return d.info, nil
 }
 
@@ -83,7 +84,7 @@ func (d *descriptor) Stat() (fs.FileInfo, error) {
 // It returns [io.EOF] when there is nothing to return.
 // Thus, it may return nil with data less than len(p).
 // As in [io.Reader] and [fs.File]
-func (d *descriptor) Read(p []byte) (int, error) {
+func (d *handle) Read(p []byte) (int, error) {
 	if d == nil {
 		return -1, ErrUninitialized
 	}
@@ -103,7 +104,7 @@ func (d *descriptor) Read(p []byte) (int, error) {
 }
 
 // As in [fs.ReadDirFile]
-func (d *descriptor) ReadDir(n int) ([]fs.DirEntry, error) {
+func (d *handle) ReadDir(n int) ([]fs.DirEntry, error) {
 	if d == nil {
 		return nil, ErrUninitialized
 	}

@@ -70,14 +70,14 @@ func TestDescriptor_createWriteRead(t *testing.T) {
 		}
 	})
 
-	var fd *descriptor
+	var fd *handle
 	t.Run("find file", func(t *testing.T) {
 		w, err := d.Open("lorem")
 		if err != nil {
 			t.Fatalf("act, unexpected error: %v", err)
 		}
 		var ok bool
-		if fd, ok = w.(*descriptor); !ok {
+		if fd, ok = w.(*handle); !ok {
 			t.Fatal("assert, expected descriptor")
 		}
 	})
@@ -125,7 +125,7 @@ func TestDescriptor_statSize(t *testing.T) {
 	input1 := []byte("Fusce vel posuare.")
 	input2 := []byte("Vitae maximus mi bibendum ac.")
 
-	var fd *descriptor
+	var fd *handle
 	t.Run("create and open", func(t *testing.T) {
 		wc, err := d.Create("input.txt")
 		if err != nil {
@@ -136,7 +136,7 @@ func TestDescriptor_statSize(t *testing.T) {
 			t.Fatalf("act, Write: %v", err)
 		}
 		var ok bool
-		fd, ok = wc.(*descriptor)
+		fd, ok = wc.(*handle)
 		if !ok {
 			t.Fatalf("post, expected writable file descriptor, got %T", wc)
 		}
@@ -292,7 +292,7 @@ func TestDir_ReadDir(t *testing.T) {
 			if err != nil {
 				t.Fatalf("prep, Open: %v", err)
 			}
-			dsr, ok := ds.(*descriptor)
+			dsr, ok := ds.(*handle)
 			if !ok {
 				t.Fatalf("prep, expected Open to return a %q got %T", "descriptor", ds)
 			}

@@ -65,7 +65,7 @@ func (d *Dir) Create(path string) (disk.File, error) {
 	if err != nil {
 		return nil, fmt.Errorf("fileInfo: %w", err)
 	}
-	fd := &descriptor{
+	fd := &handle{
 		data: f,
 		pos:  0,
 		info: fi,
@@ -159,7 +159,7 @@ func (d *Dir) Open(path string) (fs.File, error) {
 	if err != nil {
 		return nil, fmt.Errorf("fileInfo: %w", err)
 	}
-	return &descriptor{data: p, pos: 0, info: fi}, nil
+	return &handle{data: p, pos: 0, info: fi}, nil
 }
 
 // As in [fs.ReadFileFS]
