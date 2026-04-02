@@ -122,14 +122,14 @@ func (b *builder) execPage(d *dir2, p paths.Paths) error {
 	if err != nil {
 		return fmt.Errorf("post-processing rendered html: %w", err)
 	}
-	if err = b.args.Dst.WriteFile(p.Dst, bs); err != nil {
+	if err = b.args.Dst.WriteFile(p.Dst, bs, 0o666); err != nil {
 		return fmt.Errorf("writing into disk: %w", err)
 	}
 	return nil
 }
 
 func (b *builder) print(d *dir2) error {
-	if err := b.args.Dst.MkdirAll(d.paths.Dst); err != nil {
+	if err := b.args.Dst.MkdirAll(d.paths.Dst, 0o755); err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
 	incorrectLinks := false
