@@ -1,7 +1,6 @@
 package disk
 
 import (
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -32,7 +31,7 @@ func (r Real) ReadDir(name string) ([]fs.DirEntry, error) {
 	return os.ReadDir(filepath.Join(r.root, name))
 }
 
-func (r Real) Create(name string) (io.WriteCloser, error) {
+func (r Real) Create(name string) (File, error) {
 	return os.Create(filepath.Join(r.root, name))
 }
 
@@ -40,10 +39,10 @@ func (r Real) Stat(name string) (fs.FileInfo, error) {
 	return os.Stat(filepath.Join(r.root, name))
 }
 
-func (r Real) MkdirAll(path string) error {
-	return os.MkdirAll(filepath.Join(r.root, path), 0o755)
+func (r Real) MkdirAll(path string, perm fs.FileMode) error {
+	return os.MkdirAll(filepath.Join(r.root, path), perm)
 }
 
-func (r Real) WriteFile(name string, data []byte) error {
-	return os.WriteFile(filepath.Join(r.root, name), data, 0o666)
+func (r Real) WriteFile(name string, data []byte, perm fs.FileMode) error {
+	return os.WriteFile(filepath.Join(r.root, name), data, perm)
 }
