@@ -39,7 +39,7 @@ func New() *Dir {
 }
 
 // As in [disk.WriteFS]
-func (d *Dir) Create(path string) (io.WriteCloser, error) {
+func (d *Dir) Create(path string) (disk.File, error) {
 	path = filepath.Clean(path)
 	node, err := locate(d, filepath.Dir(path))
 	if err != nil {
