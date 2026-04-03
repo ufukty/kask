@@ -226,7 +226,7 @@ func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
 	}
 	es, err := entries(dir, 0, -1)
 	if err == io.EOF {
-		return nil, err
+		return []fs.DirEntry{}, nil
 	} else if err != nil {
 		return nil, fmt.Errorf("entries: %w", err)
 	}
