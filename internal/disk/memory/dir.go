@@ -114,7 +114,7 @@ func (d *Dir) insertIndex(name string) {
 
 // As in [disk.WriteFS]
 func (d *Dir) WriteFile(name string, data []byte, perm fs.FileMode) error {
-	f, err := d.Create(filepath.Clean(name))
+	f, err := d.Create(name)
 	if err != nil {
 		return fmt.Errorf("create: %w", err)
 	}
