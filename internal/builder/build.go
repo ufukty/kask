@@ -222,6 +222,9 @@ func (b *builder) Build() error {
 	if err := b.createDeploymentConfiguration(root2); err != nil {
 		return fmt.Errorf("copying assets folders: %w", err)
 	}
+	if err := b.sitemap(); err != nil {
+		return fmt.Errorf("creating sitemap.xml and robots.txt: %w", err)
+	}
 	return nil
 }
 
