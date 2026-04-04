@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/fs"
 	"strings"
-	"time"
 )
 
 // based on the [fs.ValidPath].
@@ -39,39 +38,6 @@ func locate(entry *Dir, path string) (any, error) {
 		}
 	}
 	return cursor, nil
-}
-
-func size(node any) int64 {
-	switch node := node.(type) {
-	case *Dir:
-		return 0
-	case *File:
-		return int64(len(node.data))
-	default:
-		panic(fmt.Sprintf("unexpected node type %T", node))
-	}
-}
-
-func mode(node any) fs.FileMode {
-	switch node := node.(type) {
-	case *Dir:
-		return node.mode
-	case *File:
-		return node.mode
-	default:
-		panic(fmt.Sprintf("unexpected node type %T", node))
-	}
-}
-
-func modTime(node any) time.Time {
-	switch node := node.(type) {
-	case *Dir:
-		return node.modTime
-	case *File:
-		return node.modTime
-	default:
-		panic(fmt.Sprintf("unexpected node type %T", node))
-	}
 }
 
 func entries(d *Dir, pos, n int) ([]fs.DirEntry, error) {
