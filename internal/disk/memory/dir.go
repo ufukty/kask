@@ -149,7 +149,7 @@ func (d *Dir) ReadFile(name string) ([]byte, error) {
 	}
 	b := make([]byte, s.Size())
 	_, err = f.Read(b)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		return nil, fmt.Errorf("read: %w", err)
 	}
 	return b, nil
