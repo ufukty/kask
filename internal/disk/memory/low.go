@@ -44,7 +44,7 @@ func locate(entry *Dir, path string) (any, error) {
 func size(node any) int64 {
 	switch node := node.(type) {
 	case *Dir:
-		return int64(len(node.entries))
+		return 0
 	case *File:
 		return int64(len(node.data))
 	default:
