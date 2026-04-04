@@ -34,7 +34,7 @@ func locate(entry *Dir, path string) (any, error) {
 		}
 		cursor, ok = dir.entries[s]
 		if !ok {
-			return nil, fmt.Errorf("destination passes through a missing directory: %s", highlight(ss, i))
+			return nil, fmt.Errorf("destination passes through a node that doesn't exist: %s", highlight(ss, i))
 		}
 	}
 	return cursor, nil
