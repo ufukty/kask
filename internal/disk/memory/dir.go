@@ -31,14 +31,18 @@ var (
 	_ disk.ReadFS  = (*Dir)(nil)
 )
 
-func New() *Dir {
+func newDir(perm fs.FileMode) *Dir {
 	d := Dir{
 		entries: map[string]any{},
 		index:   []string{},
-		mode:    fs.ModeDir,
+		mode:    fs.ModeDir | perm,
 		modTime: time.Now(),
 	}
 	return &d
+}
+
+func New() *Dir {
+	return newDir(0o755)
 }
 
 // As in [disk.WriteFS]
@@ -58,7 +62,7 @@ func (d *Dir) Create(path string) (disk.File, error) {
 	if _, ok := dir.entries[name]; ok {
 		return nil, fmt.Errorf("exists")
 	}
-	f := &File{}
+	f := &File{mode: 0o666}
 	dir.entries[name] = f
 	dir.insertIndex(name)
 	fi, err := fileInfo(f, name)
@@ -95,7 +99,7 @@ func (d *Dir) MkdirAll(path string, perm fs.FileMode) error {
 			}
 			cursor = dir
 		} else {
-			child := New()
+			child := newDir(perm)
 			cursor.entries[s] = child
 			cursor.insertIndex(s)
 			cursor = child
