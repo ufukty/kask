@@ -32,7 +32,11 @@ func TestDir_MkdirAll(t *testing.T) {
 		"lorem/ipsum/dolor/sit",
 		"lorem/ipsum/dolor/sit/amet",
 	}
-	assert.EachResult(t, expected, find(d))
+	got, err := find(d)
+	if err != nil {
+		t.Fatalf("assert-prep, find: %v", err)
+	}
+	assert.EachResult(t, expected, got)
 }
 
 func TestDir_MkdirAll_overwriteAsFile(t *testing.T) {

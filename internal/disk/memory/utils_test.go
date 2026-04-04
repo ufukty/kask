@@ -1,8 +1,8 @@
 package memory
 
 import (
+	"io/fs"
 	"maps"
-	slashpath "path"
 	"slices"
 
 	"go.ufukty.com/gommons/pkg/tree"
@@ -25,29 +25,17 @@ func (d Dir) String() string {
 	return tree.List(".", d.strings())
 }
 
-// use dot for path
-func walkDir(root any, path string, v func(string, any) bool) bool {
-	if !v(path, root) {
-		return false
-	}
-	if d, ok := root.(*Dir); ok {
-		for name, sub := range d.entries {
-			if name == "." || name == ".." {
-				continue
-			}
-			if !walkDir(sub, slashpath.Join(path, name), v) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-func find(d *Dir) []string {
+func find(d *Dir) ([]string, error) {
 	ss := []string{}
-	walkDir(d, ".", func(s string, a any) bool {
-		ss = append(ss, s)
-		return true
+	err := fs.WalkDir(d, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		ss = append(ss, path)
+		return nil
 	})
-	return ss
+	if err != nil {
+		return nil, err
+	}
+	return ss, nil
 }
