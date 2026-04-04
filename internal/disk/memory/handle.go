@@ -30,7 +30,6 @@ var (
 )
 
 // As in [io.Writer]
-// TODO: consider forwarding [fd.pos] as bytes written
 func (d *handle) Write(p []byte) (n int, err error) {
 	if d == nil {
 		return 0, ErrUninitialized
