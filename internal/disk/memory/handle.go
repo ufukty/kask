@@ -33,7 +33,7 @@ var (
 // TODO: consider forwarding [fd.pos] as bytes written
 func (d *handle) Write(p []byte) (n int, err error) {
 	if d == nil {
-		return -1, ErrUninitialized
+		return 0, ErrUninitialized
 	}
 	if d.data == nil {
 		return 0, ErrClosed
@@ -67,7 +67,7 @@ func (d *handle) Stat() (fs.FileInfo, error) {
 // As in [io.Reader] and [fs.File]
 func (d *handle) Read(p []byte) (int, error) {
 	if d == nil {
-		return -1, ErrUninitialized
+		return 0, ErrUninitialized
 	}
 	if d.data == nil {
 		return 0, ErrClosed
