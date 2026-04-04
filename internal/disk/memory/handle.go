@@ -58,6 +58,12 @@ func (d *handle) Close() error {
 
 // As in [fs.StatFS]
 func (d *handle) Stat() (fs.FileInfo, error) {
+	if d == nil {
+		return nil, ErrUninitialized
+	}
+	if d.data == nil {
+		return nil, ErrClosed
+	}
 	return info{name: d.name, node: d.data}, nil
 }
 
