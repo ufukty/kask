@@ -44,6 +44,7 @@ func (d *handle) Write(p []byte) (n int, err error) {
 	}
 	f.data = append(f.data, p...)
 	f.modTime = time.Now()
+	d.pos += len(p)
 	return len(p), nil
 }
 
