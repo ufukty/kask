@@ -351,8 +351,8 @@ func TestBuilder_linkCanonicalization(t *testing.T) {
 
 func TestBuilder_docs(t *testing.T) {
 	err := Build(Args{
-		Src:      "../../docs", // TODO: use on-memory FS
-		Dst:      t.TempDir(),  // TODO: use on-memory FS
+		Src:      "../../docs", // TODO: use in-memory FS
+		Dst:      t.TempDir(),  // TODO: use in-memory FS
 		Domain:   "https://kask.ufukty.com/",
 		Dev:      false,
 		Verbose:  false,
