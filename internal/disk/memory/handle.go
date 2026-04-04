@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"time"
 )
 
 var (
@@ -13,67 +12,6 @@ var (
 	ErrIsFile        = fmt.Errorf("node is a file")
 	ErrUninitialized = fmt.Errorf("uninitialized")
 )
-
-type info struct {
-	name string
-	node any // [*Dir] | [*File]
-}
-
-var _ fs.FileInfo = (*info)(nil)
-
-// Unlike other [info] methods, [info.Name] returns the value saved
-// at the stat time.
-// As in [fs.FileInfo.Name]
-func (i info) Name() string {
-	return i.name
-}
-
-// As in [fs.FileInfo.Size]
-func (i info) Size() int64 {
-	switch node := i.node.(type) {
-	case *Dir:
-		return int64(len(node.entries))
-	case *File:
-		return int64(len(node.data))
-	default:
-		panic(fmt.Sprintf("unexpected node type %T", i.node))
-	}
-}
-
-// As in [fs.FileInfo.Mode]
-func (i info) Mode() fs.FileMode {
-	switch node := i.node.(type) {
-	case *Dir:
-		return node.mode
-	case *File:
-		return node.mode
-	default:
-		panic(fmt.Sprintf("unexpected node type %T", i.node))
-	}
-}
-
-// As in [fs.FileInfo.ModTime]
-func (i info) ModTime() time.Time {
-	switch node := i.node.(type) {
-	case *Dir:
-		return node.modTime
-	case *File:
-		return node.modTime
-	default:
-		panic(fmt.Sprintf("unexpected node type %T", i.node))
-	}
-}
-
-// As in [fs.FileInfo.IsDir]
-func (i info) IsDir() bool {
-	_, ok := i.node.(*Dir)
-	return ok
-}
-
-// As in [fs.FileInfo.Sys]
-func (i info) Sys() any {
-	return nil
-}
 
 // used for both the files and "dir files".
 type handle struct {

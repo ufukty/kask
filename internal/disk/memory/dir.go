@@ -163,33 +163,6 @@ func (d *Dir) Stat(path string) (fs.FileInfo, error) {
 	return info{name: slashpath.Base(path), node: node}, nil
 }
 
-type entry struct {
-	name string
-	node any // [*Dir] | [*File]
-}
-
-var _ fs.DirEntry = (*entry)(nil)
-
-// As in [fs.DirEntry.Name]
-func (e entry) Name() string {
-	return e.name
-}
-
-// As in [fs.DirEntry.IsDir]
-func (e entry) IsDir() bool {
-	return mode(e.node).IsDir()
-}
-
-// As in [fs.DirEntry.Type]
-func (e entry) Type() fs.FileMode {
-	return mode(e.node).Type()
-}
-
-// As in [fs.DirEntry.Info]
-func (e entry) Info() (fs.FileInfo, error) {
-	return info{name: e.name, node: e.node}, nil
-}
-
 // As in [fs.ReadDirFS]
 func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
 	node, err := locate(d, path)
