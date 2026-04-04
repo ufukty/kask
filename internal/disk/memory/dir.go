@@ -45,8 +45,7 @@ func New() *Dir {
 	return newDir(0o755)
 }
 
-// As in [disk.WriteFS]
-func (d *Dir) Create(path string) (disk.File, error) {
+func (d *Dir) create(path string, perm fs.FileMode) (disk.File, error) {
 	node, err := locate(d, slashpath.Dir(path))
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
@@ -62,12 +61,17 @@ func (d *Dir) Create(path string) (disk.File, error) {
 	if _, ok := dir.entries[name]; ok {
 		return nil, fmt.Errorf("exists")
 	}
-	f := &File{mode: 0o666, modTime: time.Now()}
+	f := &File{mode: perm, modTime: time.Now()}
 	dir.entries[name] = f
 	dir.insertIndex(name)
 	dir.modTime = time.Now()
 	fd := &handle{name: name, data: f, pos: 0}
 	return fd, nil
+}
+
+// As in [disk.WriteFS]
+func (d *Dir) Create(path string) (disk.File, error) {
+	return d.create(path, 0o666)
 }
 
 // As in [disk.WriteFS]
@@ -112,13 +116,12 @@ func (d *Dir) insertIndex(name string) {
 
 // As in [disk.WriteFS]
 func (d *Dir) WriteFile(name string, data []byte, perm fs.FileMode) error {
-	f, err := d.Create(name)
+	f, err := d.create(name, perm)
 	if err != nil {
 		return fmt.Errorf("create: %w", err)
 	}
 	defer f.Close()
-	_, err = f.Write(data)
-	if err != nil {
+	if _, err = f.Write(data); err != nil {
 		return fmt.Errorf("write: %w", err)
 	}
 	return nil
