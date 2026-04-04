@@ -62,14 +62,11 @@ func (d *Dir) Create(path string) (disk.File, error) {
 	if _, ok := dir.entries[name]; ok {
 		return nil, fmt.Errorf("exists")
 	}
-	f := &File{mode: 0o666}
+	f := &File{mode: 0o666, modTime: time.Now()}
 	dir.entries[name] = f
 	dir.insertIndex(name)
-	fd := &handle{
-		name: name,
-		data: f,
-		pos:  0,
-	}
+	dir.modTime = time.Now()
+	fd := &handle{name: name, data: f, pos: 0}
 	return fd, nil
 }
 
@@ -98,6 +95,7 @@ func (d *Dir) MkdirAll(path string, perm fs.FileMode) error {
 			child := newDir(perm)
 			cursor.entries[s] = child
 			cursor.insertIndex(s)
+			cursor.modTime = time.Now()
 			cursor = child
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"time"
 )
 
 var (
@@ -42,6 +43,7 @@ func (d *handle) Write(p []byte) (n int, err error) {
 		return 0, ErrIsDir
 	}
 	f.data = append(f.data, p...)
+	f.modTime = time.Now()
 	return len(p), nil
 }
 
