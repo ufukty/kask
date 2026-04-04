@@ -8,7 +8,7 @@ import (
 )
 
 func (b *builder) copyAssetDir(path paths.Paths) error {
-	err := b.args.Dst.MkdirAll(path.Dst)
+	err := b.args.Dst.MkdirAll(path.Dst, 0755)
 	if err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}

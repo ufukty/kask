@@ -4,80 +4,49 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"path/filepath"
+	slashpath "path"
+	"slices"
 	"strings"
 	"time"
+
+	"go.ufukty.com/kask/internal/disk"
 )
 
-func New() *Dir {
-	d := Dir{}
-	d["."] = &d
+type File struct {
+	data    []byte
+	mode    fs.FileMode
+	modTime time.Time
+}
+
+// use [New] to construct
+type Dir struct {
+	entries map[string]any // [*Dir] | [*File]
+	index   []string
+	mode    fs.FileMode
+	modTime time.Time
+}
+
+var (
+	_ disk.WriteFS = (*Dir)(nil)
+	_ disk.ReadFS  = (*Dir)(nil)
+)
+
+func newDir(perm fs.FileMode) *Dir {
+	d := Dir{
+		entries: map[string]any{},
+		index:   []string{},
+		mode:    fs.ModeDir | perm,
+		modTime: time.Now(),
+	}
 	return &d
 }
 
-func rewriteByTheRoot(path string) string {
-	if path == "/" {
-		return "."
-	} else {
-		return strings.TrimPrefix(path, "/")
-	}
+func New() *Dir {
+	return newDir(0o755)
 }
 
-func findRoot(dir *Dir) (*Dir, error) {
-	for range 100 {
-		node, ok := (*dir)[".."]
-		if !ok {
-			return dir, nil
-		}
-		parent, ok := (node).(*Dir)
-		if !ok {
-			return nil, fmt.Errorf("unexpected non-dir parent: %T", node)
-		}
-		dir = parent
-	}
-	return nil, fmt.Errorf("directory depth limit is exceeded")
-}
-
-// Allows [*File] only at leaves.
-// Returns either the [*Dir] or [*File] pointed by [string].
-func locate(entry *Dir, path string) (any, error) {
-	path = filepath.Clean(path)
-	if path == "" {
-		return nil, fmt.Errorf("path is empty")
-	}
-	var cursor any
-	if filepath.IsAbs(path) {
-		root, err := findRoot(entry)
-		if err != nil {
-			return nil, fmt.Errorf("finding root: %w", err)
-		}
-		cursor = root
-		path = rewriteByTheRoot(path)
-	} else {
-		cursor = entry
-	}
-	ss := strings.Split(path, "/")
-	for i, s := range ss {
-		if s == "" {
-			return nil, fmt.Errorf("destination passes through a node with empty name")
-		}
-		dir, ok := cursor.(*Dir)
-		if !ok {
-			// destination has passed through a [*File] in previous iteration
-			return nil, fmt.Errorf("destination passes through a file: %s", highlight(ss, i-1))
-		}
-		cursor, ok = (*dir)[s]
-		if !ok {
-			return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, i))
-		}
-	}
-	return cursor, nil
-}
-
-// As in [disk.WriteFS]
-func (d *Dir) Create(path string) (io.WriteCloser, error) {
-	path = filepath.Clean(path)
-	node, err := locate(d, filepath.Dir(path))
+func (d *Dir) create(path string, perm fs.FileMode) (disk.File, error) {
+	node, err := locate(d, slashpath.Dir(path))
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
 	}
@@ -85,53 +54,41 @@ func (d *Dir) Create(path string) (io.WriteCloser, error) {
 	if !ok {
 		return nil, fmt.Errorf("destination should be a directory")
 	}
-	name := filepath.Base(path)
+	name := slashpath.Base(path)
 	if name == "" {
 		return nil, fmt.Errorf("unexpected empty name")
 	}
-	if _, ok := (*dir)[name]; ok {
+	if _, ok := dir.entries[name]; ok {
 		return nil, fmt.Errorf("exists")
 	}
-	f := &File{}
-	(*dir)[name] = f
-	fd := &descriptor{
-		file: f,
-		pos:  0,
-		info: fileInfo{
-			name:    name,
-			size:    int64(len(*f)),
-			mode:    fs.ModeAppend,
-			modTime: time.Now(),
-			isDir:   false,
-			sys:     nil,
-		},
-	}
+	f := &File{mode: perm, modTime: time.Now()}
+	dir.entries[name] = f
+	dir.insertIndex(name)
+	dir.modTime = time.Now()
+	fd := &handle{name: name, data: f, pos: 0}
 	return fd, nil
 }
 
 // As in [disk.WriteFS]
-func (d *Dir) MkdirAll(path string) error {
-	path = filepath.Clean(path)
-	var cursor *Dir
-	if filepath.IsAbs(path) {
-		root, err := findRoot(d)
-		if err != nil {
-			return fmt.Errorf("finding root: %w", err)
-		}
-		cursor = root
-		path = rewriteByTheRoot(path)
-	} else {
-		cursor = d
+func (d *Dir) Create(path string) (disk.File, error) {
+	return d.create(path, 0o666)
+}
+
+// As in [disk.WriteFS]
+func (d *Dir) MkdirAll(path string, perm fs.FileMode) error {
+	if path == "." {
+		return nil
 	}
+	cursor := d
 	if path == "" {
 		return fmt.Errorf("path is empty")
 	}
 	ss := strings.Split(path, "/")
 	for i, s := range ss {
-		if s == "" {
-			return fmt.Errorf("unexpected empty name")
+		if isForbidden(s) {
+			return fmt.Errorf("destination passes through an invalid node: %s", highlight(ss, i))
 		}
-		node, ok := (*cursor)[s]
+		node, ok := cursor.entries[s]
 		if ok {
 			dir, ok := node.(*Dir)
 			if !ok {
@@ -139,25 +96,32 @@ func (d *Dir) MkdirAll(path string) error {
 			}
 			cursor = dir
 		} else {
-			child := &Dir{}
-			(*cursor)[s] = child
-			(*child)["."] = child
-			(*child)[".."] = cursor
+			child := newDir(perm)
+			cursor.entries[s] = child
+			cursor.insertIndex(s)
+			cursor.modTime = time.Now()
 			cursor = child
 		}
 	}
 	return nil
 }
 
+func (d *Dir) insertIndex(name string) {
+	i := 0
+	for ; i < len(d.index) && d.index[i] < name; i++ {
+		/* i like to move it */
+	}
+	d.index = slices.Insert(d.index, i, name)
+}
+
 // As in [disk.WriteFS]
-func (d *Dir) WriteFile(name string, data []byte) error {
-	name = filepath.Clean(name)
-	f, err := d.Create(name)
+func (d *Dir) WriteFile(name string, data []byte, perm fs.FileMode) error {
+	f, err := d.create(name, perm)
 	if err != nil {
 		return fmt.Errorf("create: %w", err)
 	}
-	_, err = f.Write(data)
-	if err != nil {
+	defer f.Close()
+	if _, err = f.Write(data); err != nil {
 		return fmt.Errorf("write: %w", err)
 	}
 	return nil
@@ -169,28 +133,7 @@ func (d *Dir) Open(path string) (fs.File, error) {
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
 	}
-	f, ok := p.(*File)
-	if !ok {
-		ss := strings.Split(path, "/")
-		return nil, fmt.Errorf("destination passes through an unexisting directory: %s", highlight(ss, len(ss)-1))
-	}
-	name := filepath.Base(path)
-	if name == "" {
-		return nil, fmt.Errorf("unexpected empty name")
-	}
-	fd := &descriptor{
-		file: f,
-		pos:  0,
-		info: fileInfo{
-			name:    name,
-			size:    int64(len(*f)),
-			mode:    0o666,
-			modTime: time.Time{},
-			isDir:   false,
-			sys:     nil,
-		},
-	}
-	return fd, nil
+	return &handle{name: slashpath.Base(path), data: p, pos: 0}, nil
 }
 
 // As in [fs.ReadFileFS]
@@ -206,7 +149,7 @@ func (d *Dir) ReadFile(name string) ([]byte, error) {
 	}
 	b := make([]byte, s.Size())
 	_, err = f.Read(b)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		return nil, fmt.Errorf("read: %w", err)
 	}
 	return b, nil
@@ -218,24 +161,7 @@ func (d *Dir) Stat(path string) (fs.FileInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
 	}
-	file, isFile := node.(*File)
-	if isFile {
-		return fileInfo{
-			name:    filepath.Base(path),
-			size:    int64(len(*file)),
-			mode:    0o666,
-			modTime: time.Now(),
-			isDir:   false,
-		}, nil
-	} else {
-		return fileInfo{
-			name:    filepath.Base(path),
-			size:    0,
-			mode:    fs.ModeDir | 0o755,
-			modTime: time.Now(),
-			isDir:   true,
-		}, nil
-	}
+	return info{name: slashpath.Base(path), node: node}, nil
 }
 
 // As in [fs.ReadDirFS]
@@ -246,24 +172,13 @@ func (d *Dir) ReadDir(path string) ([]fs.DirEntry, error) {
 	}
 	dir, ok := node.(*Dir)
 	if !ok {
-		return nil, fmt.Errorf("not a directory")
+		return nil, ErrIsFile
 	}
-	ds := []fs.DirEntry{}
-	for name := range *dir {
-		if name == "." || name == ".." {
-			continue
-		}
-		fi, err := dir.Stat(name)
-		if err != nil {
-			return nil, fmt.Errorf("stat: %w", err)
-		}
-		di := dirEntry{
-			name:  name,
-			isDir: fi.IsDir(),
-			typee: fi.Mode(),
-			info:  fi,
-		}
-		ds = append(ds, di)
+	es, err := entries(dir, 0, -1)
+	if err == io.EOF {
+		return []fs.DirEntry{}, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("entries: %w", err)
 	}
-	return ds, nil
+	return es, nil
 }

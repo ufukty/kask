@@ -1,8 +1,8 @@
 package memory
 
 import (
+	"io/fs"
 	"maps"
-	"path/filepath"
 	"slices"
 
 	"go.ufukty.com/gommons/pkg/tree"
@@ -10,8 +10,8 @@ import (
 
 func (d Dir) strings() []string {
 	ss := []string{}
-	for _, name := range slices.Sorted(maps.Keys(d)) {
-		c := d[name]
+	for _, name := range slices.Sorted(maps.Keys(d.entries)) {
+		c := d.entries[name]
 		if d, ok := c.(*Dir); ok {
 			ss = append(ss, tree.List(name, d.strings()))
 		} else if _, ok := c.(*File); ok {
@@ -25,29 +25,17 @@ func (d Dir) String() string {
 	return tree.List(".", d.strings())
 }
 
-// use dot for path
-func walkDir(root any, path string, v func(string, any) bool) bool {
-	if !v(path, root) {
-		return false
-	}
-	if d, ok := root.(*Dir); ok {
-		for name, sub := range *d {
-			if name == "." || name == ".." {
-				continue
-			}
-			if !walkDir(sub, filepath.Join(path, name), v) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-func find(d *Dir) []string {
+func find(d *Dir) ([]string, error) {
 	ss := []string{}
-	walkDir(d, ".", func(s string, a any) bool {
-		ss = append(ss, s)
-		return true
+	err := fs.WalkDir(d, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		ss = append(ss, path)
+		return nil
 	})
-	return ss
+	if err != nil {
+		return nil, err
+	}
+	return ss, nil
 }

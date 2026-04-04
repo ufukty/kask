@@ -40,7 +40,7 @@ func Dir(dstFs disk.WriteFS, dst string, srcFs disk.ReadFS, src string) error {
 			return fmt.Errorf("internal: %w", err)
 		}
 		if d.IsDir() {
-			if err := dstFs.MkdirAll(filepath.Join(dst, path)); err != nil {
+			if err := dstFs.MkdirAll(filepath.Join(dst, path), 0o755); err != nil {
 				return fmt.Errorf("mkdir: %w", err)
 			}
 		} else {

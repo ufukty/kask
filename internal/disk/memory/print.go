@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"cmp"
 	"slices"
 	"strings"
 )
@@ -13,6 +14,6 @@ const (
 
 func highlight(ss []string, i int) string {
 	return strings.Join(slices.Concat(
-		ss[:max(0, i)], []string{red + bold + ss[i] + reset}, ss[min(i+1, len(ss)):],
+		ss[:max(0, i)], []string{red + bold + cmp.Or(ss[i], "<empty>") + reset}, ss[min(i+1, len(ss)):],
 	), "/")
 }

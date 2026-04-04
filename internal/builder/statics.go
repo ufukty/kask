@@ -12,10 +12,10 @@ func (b *builder) write(dst, content string) error {
 	if b.args.Verbose {
 		fmt.Println("writing", dst)
 	}
-	if err := b.args.Dst.MkdirAll(filepath.Dir(dst)); err != nil {
+	if err := b.args.Dst.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return fmt.Errorf("creating directory: %w", err)
 	}
-	if err := b.args.Dst.WriteFile(dst, []byte(content)); err != nil {
+	if err := b.args.Dst.WriteFile(dst, []byte(content), 0o755); err != nil {
 		return fmt.Errorf("writing: %w", err)
 	}
 	return nil
