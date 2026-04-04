@@ -402,7 +402,7 @@ func TestDescriptor_doubleClose(t *testing.T) {
 }
 
 // see the package doc for partiallity
-func TestDir_partialFSConformance(t *testing.T) {
+func TestDir_TestFS(t *testing.T) {
 	d := New()
 	if err := d.MkdirAll("a/b", 0o755); err != nil {
 		t.Fatalf("prep, MkdirAll: %v", err)
