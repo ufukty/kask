@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"path/filepath"
+	slashpath "path"
 	"slices"
 	"strings"
 	"time"
@@ -43,7 +43,7 @@ func New() *Dir {
 
 // As in [disk.WriteFS]
 func (d *Dir) Create(path string) (disk.File, error) {
-	node, err := locate(d, filepath.Dir(path))
+	node, err := locate(d, slashpath.Dir(path))
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
 	}
@@ -51,7 +51,7 @@ func (d *Dir) Create(path string) (disk.File, error) {
 	if !ok {
 		return nil, fmt.Errorf("destination should be a directory")
 	}
-	name := filepath.Base(path)
+	name := slashpath.Base(path)
 	if name == "" {
 		return nil, fmt.Errorf("unexpected empty name")
 	}
@@ -155,7 +155,7 @@ func (d *Dir) Open(path string) (fs.File, error) {
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
 	}
-	fi, err := fileInfo(p, filepath.Base(path))
+	fi, err := fileInfo(p, slashpath.Base(path))
 	if err != nil {
 		return nil, fmt.Errorf("fileInfo: %w", err)
 	}
@@ -187,7 +187,7 @@ func (d *Dir) Stat(path string) (fs.FileInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
 	}
-	fi, err := fileInfo(node, filepath.Base(path))
+	fi, err := fileInfo(node, slashpath.Base(path))
 	if err != nil {
 		return nil, fmt.Errorf("fileInfo: %w", err)
 	}

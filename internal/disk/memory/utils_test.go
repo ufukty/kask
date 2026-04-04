@@ -2,7 +2,7 @@ package memory
 
 import (
 	"maps"
-	"path/filepath"
+	slashpath "path"
 	"slices"
 
 	"go.ufukty.com/gommons/pkg/tree"
@@ -35,7 +35,7 @@ func walkDir(root any, path string, v func(string, any) bool) bool {
 			if name == "." || name == ".." {
 				continue
 			}
-			if !walkDir(sub, filepath.Join(path, name), v) {
+			if !walkDir(sub, slashpath.Join(path, name), v) {
 				return false
 			}
 		}
