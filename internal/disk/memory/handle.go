@@ -15,29 +15,71 @@ var (
 )
 
 type info struct {
-	name    string
-	size    int64
-	mode    fs.FileMode
-	modTime time.Time
-	isDir   bool
-	sys     any
+	name string
+	node any // [*Dir] | [*File]
 }
-
-// As in [fs.FileInfo]
-func (i info) Name() string       { return i.name }
-func (i info) Size() int64        { return i.size }
-func (i info) Mode() fs.FileMode  { return i.mode }
-func (i info) ModTime() time.Time { return i.modTime }
-func (i info) IsDir() bool        { return i.isDir }
-func (i info) Sys() any           { return i.sys }
 
 var _ fs.FileInfo = (*info)(nil)
 
+// Unlike other [info] methods, [info.Name] returns the value saved
+// at the stat time.
+// As in [fs.FileInfo.Name]
+func (i info) Name() string {
+	return i.name
+}
+
+// As in [fs.FileInfo.Size]
+func (i info) Size() int64 {
+	switch node := i.node.(type) {
+	case *Dir:
+		return int64(len(node.entries))
+	case *File:
+		return int64(len(node.data))
+	default:
+		panic(fmt.Sprintf("unexpected node type %T", i.node))
+	}
+}
+
+// As in [fs.FileInfo.Mode]
+func (i info) Mode() fs.FileMode {
+	switch node := i.node.(type) {
+	case *Dir:
+		return node.mode
+	case *File:
+		return node.mode
+	default:
+		panic(fmt.Sprintf("unexpected node type %T", i.node))
+	}
+}
+
+// As in [fs.FileInfo.ModTime]
+func (i info) ModTime() time.Time {
+	switch node := i.node.(type) {
+	case *Dir:
+		return node.modTime
+	case *File:
+		return node.modTime
+	default:
+		panic(fmt.Sprintf("unexpected node type %T", i.node))
+	}
+}
+
+// As in [fs.FileInfo.IsDir]
+func (i info) IsDir() bool {
+	_, ok := i.node.(*Dir)
+	return ok
+}
+
+// As in [fs.FileInfo.Sys]
+func (i info) Sys() any {
+	return nil
+}
+
 // used for both the files and "dir files".
 type handle struct {
+	name string
 	data any // [*Dir] | [*File]
 	pos  int // a byte offset or dir entry.
-	info info
 }
 
 var (
@@ -62,7 +104,6 @@ func (d *handle) Write(p []byte) (n int, err error) {
 		return 0, ErrIsDir
 	}
 	f.data = append(f.data, p...)
-	d.info.size += int64(len(p))
 	return len(p), nil
 }
 
@@ -77,7 +118,7 @@ func (d *handle) Close() error {
 
 // As in [fs.StatFS]
 func (d *handle) Stat() (fs.FileInfo, error) {
-	return d.info, nil
+	return info{name: d.name, node: d.data}, nil
 }
 
 // Read writes the unread portion of file content shorter than the len(p).

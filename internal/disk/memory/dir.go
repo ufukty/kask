@@ -65,14 +65,10 @@ func (d *Dir) Create(path string) (disk.File, error) {
 	f := &File{mode: 0o666}
 	dir.entries[name] = f
 	dir.insertIndex(name)
-	fi, err := fileInfo(f, name)
-	if err != nil {
-		return nil, fmt.Errorf("fileInfo: %w", err)
-	}
 	fd := &handle{
+		name: name,
 		data: f,
 		pos:  0,
-		info: fi,
 	}
 	return fd, nil
 }
@@ -130,40 +126,13 @@ func (d *Dir) WriteFile(name string, data []byte, perm fs.FileMode) error {
 	return nil
 }
 
-func fileInfo(node any, base string) (info, error) {
-	switch node := node.(type) {
-	case *File:
-		return info{
-			name:    base,
-			size:    int64(len(node.data)),
-			mode:    node.mode,
-			modTime: node.modTime,
-			isDir:   false,
-		}, nil
-	case *Dir:
-		return info{
-			name:    base,
-			size:    0,
-			mode:    node.mode,
-			modTime: node.modTime,
-			isDir:   true,
-		}, nil
-	default:
-		return info{}, fmt.Errorf("unknown type: %T", node)
-	}
-}
-
 // As in [fs.FS]
 func (d *Dir) Open(path string) (fs.File, error) {
 	p, err := locate(d, path)
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
 	}
-	fi, err := fileInfo(p, slashpath.Base(path))
-	if err != nil {
-		return nil, fmt.Errorf("fileInfo: %w", err)
-	}
-	return &handle{data: p, pos: 0, info: fi}, nil
+	return &handle{name: slashpath.Base(path), data: p, pos: 0}, nil
 }
 
 // As in [fs.ReadFileFS]
@@ -191,31 +160,34 @@ func (d *Dir) Stat(path string) (fs.FileInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("locate: %w", err)
 	}
-	fi, err := fileInfo(node, slashpath.Base(path))
-	if err != nil {
-		return nil, fmt.Errorf("fileInfo: %w", err)
-	}
-	return fi, nil
+	return info{name: slashpath.Base(path), node: node}, nil
 }
 
 type entry struct {
-	name  string
-	isDir bool
-	mode  fs.FileMode
-	info  info
+	name string
+	node any // [*Dir] | [*File]
 }
-
-// As in [fs.DirEntry]
-func (e entry) Name() string               { return e.name }
-func (e entry) IsDir() bool                { return e.isDir }
-func (e entry) Type() fs.FileMode          { return e.mode }
-func (e entry) Info() (fs.FileInfo, error) { return e.info, nil }
 
 var _ fs.DirEntry = (*entry)(nil)
 
-func isDir(node any) bool {
-	_, ok := node.(*Dir)
-	return ok
+// As in [fs.DirEntry.Name]
+func (e entry) Name() string {
+	return e.name
+}
+
+// As in [fs.DirEntry.IsDir]
+func (e entry) IsDir() bool {
+	return mode(e.node).IsDir()
+}
+
+// As in [fs.DirEntry.Type]
+func (e entry) Type() fs.FileMode {
+	return mode(e.node).Type()
+}
+
+// As in [fs.DirEntry.Info]
+func (e entry) Info() (fs.FileInfo, error) {
+	return info{name: e.name, node: e.node}, nil
 }
 
 // As in [fs.ReadDirFS]

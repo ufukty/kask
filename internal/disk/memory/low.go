@@ -40,6 +40,17 @@ func locate(entry *Dir, path string) (any, error) {
 	return cursor, nil
 }
 
+func mode(node any) fs.FileMode {
+	switch node := node.(type) {
+	case *Dir:
+		return node.mode
+	case *File:
+		return node.mode
+	default:
+		panic(fmt.Sprintf("unexpected node type %T", node))
+	}
+}
+
 func entries(d *Dir, pos, n int) ([]fs.DirEntry, error) {
 	ds := []fs.DirEntry{}
 	from, to := pos, pos+n
@@ -50,18 +61,7 @@ func entries(d *Dir, pos, n int) ([]fs.DirEntry, error) {
 		return nil, io.EOF
 	}
 	for _, name := range d.index[from:to] {
-		node := d.entries[name]
-		fi, err := fileInfo(node, name)
-		if err != nil {
-			return nil, fmt.Errorf("fileInfo %q: %w", name, err)
-		}
-		di := entry{
-			name:  name,
-			isDir: isDir(node),
-			mode:  fi.Mode(),
-			info:  fi,
-		}
-		ds = append(ds, di)
+		ds = append(ds, entry{name: name, node: d.entries[name]})
 	}
 	return ds, nil
 }
