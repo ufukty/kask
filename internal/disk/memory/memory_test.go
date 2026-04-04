@@ -401,7 +401,6 @@ func TestDescriptor_doubleClose(t *testing.T) {
 	})
 }
 
-// see the package doc for partiallity
 func TestDir_TestFS(t *testing.T) {
 	d := New()
 	if err := d.MkdirAll("a/b", 0o755); err != nil {
