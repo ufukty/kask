@@ -4,13 +4,13 @@ go 1.25.1
 
 require (
 	github.com/alecthomas/chroma v0.10.0
-	github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b
+	github.com/gomarkdown/markdown v0.0.0-20260614204949-e08cff860f76
 	go.ufukty.com/gommons v0.1.1
-	golang.org/x/text v0.29.0
+	golang.org/x/text v0.40.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	github.com/dlclark/regexp2 v1.11.5 // indirect
+	github.com/dlclark/regexp2 v1.12.0 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
 )
